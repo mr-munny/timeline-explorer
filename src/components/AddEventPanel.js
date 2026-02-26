@@ -189,13 +189,13 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
 
           {/* Period */}
           <div>
-            <label style={labelStyle}>Period *</label>
+            <label style={labelStyle}>Time Period *</label>
             <select
               value={form.period}
               onChange={(e) => update("period", e.target.value)}
               style={fieldStyle("period")}
             >
-              <option value="">Select a period...</option>
+              <option value="">Select a time period...</option>
               {periods.map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.label}

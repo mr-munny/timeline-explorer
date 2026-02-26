@@ -111,6 +111,49 @@ export async function saveDefaultPeriods(periods) {
   await set(defaultPeriodsRef, periods);
 }
 
+// Listen to a section's compelling question in real-time
+export function subscribeToCompellingQuestion(section, callback) {
+  const cqRef = ref(db, `sectionSettings/${section}/compellingQuestion`);
+  return onValue(cqRef, (snapshot) => {
+    callback(snapshot.val() || null);
+  });
+}
+
+// Listen to ALL sections' compelling questions (teacher "all" view)
+export function subscribeToAllSectionCompellingQuestions(sections, callback) {
+  const cqMap = {};
+  const unsubscribes = [];
+  for (const sec of sections) {
+    const cqRef = ref(db, `sectionSettings/${sec}/compellingQuestion`);
+    const unsub = onValue(cqRef, (snapshot) => {
+      cqMap[sec] = snapshot.val() || null;
+      callback({ ...cqMap });
+    });
+    unsubscribes.push(unsub);
+  }
+  return () => unsubscribes.forEach((fn) => fn());
+}
+
+// Write compelling question for a section
+export async function saveCompellingQuestion(section, data) {
+  const cqRef = ref(db, `sectionSettings/${section}/compellingQuestion`);
+  await set(cqRef, data);
+}
+
+// Listen to default compelling question template in real-time
+export function subscribeToDefaultCompellingQuestion(callback) {
+  const defaultCQRef = ref(db, "defaultCompellingQuestion");
+  return onValue(defaultCQRef, (snapshot) => {
+    callback(snapshot.val() || null);
+  });
+}
+
+// Write default compelling question template
+export async function saveDefaultCompellingQuestion(data) {
+  const defaultCQRef = ref(db, "defaultCompellingQuestion");
+  await set(defaultCQRef, data);
+}
+
 // Listen to sections in real-time
 export function subscribeToSections(callback) {
   const sectionsRef = ref(db, "sections");

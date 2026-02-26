@@ -21,6 +21,7 @@
 
 # Local dev reference (contains PII)
 HANDOFF.md
+firebase-rules.json
 
 # Local tool config
 .claude/

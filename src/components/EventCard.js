@@ -1,4 +1,4 @@
-import { getUnit } from "../data/constants";
+import { getPeriod } from "../data/constants";
 import { Icon } from "@iconify/react";
 import chevronDown from "@iconify-icons/mdi/chevron-down";
 import deleteOutline from "@iconify-icons/mdi/delete-outline";
@@ -10,31 +10,31 @@ import mapMarkerOutline from "@iconify-icons/mdi/map-marker-outline";
 import schoolOutline from "@iconify-icons/mdi/school-outline";
 import { useTheme } from "../contexts/ThemeContext";
 
-export default function EventCard({ event, isExpanded, onToggle, isTeacher, onDelete }) {
+export default function EventCard({ event, isExpanded, onToggle, isTeacher, onDelete, periods = [] }) {
   const { theme } = useTheme();
-  const unit = getUnit(event.unit);
-  const unitColor = unit?.color || "#6B7280";
-  const unitLabel = unit?.label || event.unit;
+  const period = getPeriod(periods, event.period);
+  const periodColor = period?.color || "#6B7280";
+  const periodLabel = period?.label || event.period;
 
   return (
     <div
       onClick={onToggle}
       style={{
         background: theme.cardBg,
-        border: `1.5px solid ${isExpanded ? unitColor + "60" : theme.cardBorder}`,
+        border: `1.5px solid ${isExpanded ? periodColor + "60" : theme.cardBorder}`,
         borderRadius: 10,
         padding: isExpanded ? "18px 22px" : "14px 20px",
         cursor: "pointer",
         transition: "all 0.2s ease",
-        boxShadow: isExpanded ? `0 8px 24px ${unitColor}12` : "none",
-        borderLeft: `4px solid ${unitColor}`,
+        boxShadow: isExpanded ? `0 8px 24px ${periodColor}12` : "none",
+        borderLeft: `4px solid ${periodColor}`,
       }}
     >
       <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
         {/* Year badge */}
         <div
           style={{
-            background: unitColor,
+            background: periodColor,
             color: "#fff",
             fontSize: 12,
             fontWeight: 700,
@@ -70,12 +70,12 @@ export default function EventCard({ event, isExpanded, onToggle, isTeacher, onDe
               <span
                 style={{
                   fontSize: 10,
-                  color: unitColor,
+                  color: periodColor,
                   fontFamily: "'Overpass Mono', monospace",
                   fontWeight: 600,
                 }}
               >
-                {unit?.short || event.unit}
+                {period?.label.slice(0, 12) || event.period}
               </span>
               <span style={{ fontSize: 10, color: theme.textDivider }}>&middot;</span>
               <span
@@ -165,10 +165,10 @@ export default function EventCard({ event, isExpanded, onToggle, isTeacher, onDe
             <div>
               <span style={{ color: theme.textSecondary, fontWeight: 500, display: "inline-flex", alignItems: "center", gap: 3 }}>
                 <Icon icon={bookOpenPageVariantOutline} width={11} />
-                Unit
+                Period
               </span>
-              <div style={{ color: unitColor, fontWeight: 700, marginTop: 2 }}>
-                {unitLabel}
+              <div style={{ color: periodColor, fontWeight: 700, marginTop: 2 }}>
+                {periodLabel}
               </div>
             </div>
             <div>

@@ -48,12 +48,6 @@ const lightTheme = {
   modalOverlay: "rgba(0,0,0,0.4)",
   modalShadow: "0 24px 48px rgba(0,0,0,0.15)",
 
-  unitBg: {
-    wwi: "#FEE2E2",
-    depression: "#FEF3C7",
-    wwii: "#DBEAFE",
-    coldwar: "#EDE9FE",
-  },
   sourceTypeBg: {
     primary: "#D1FAE5",
     secondary: "#EEF2FF",
@@ -104,12 +98,6 @@ const darkTheme = {
   modalOverlay: "rgba(0,0,0,0.6)",
   modalShadow: "0 24px 48px rgba(0,0,0,0.4)",
 
-  unitBg: {
-    wwi: "#991B1B20",
-    depression: "#92400E20",
-    wwii: "#1E40AF20",
-    coldwar: "#5B21B620",
-  },
   sourceTypeBg: {
     primary: "#05966920",
     secondary: "#6366F120",
@@ -153,11 +141,14 @@ export function ThemeProvider({ children }) {
 
   const theme = useMemo(() => (mode === "dark" ? darkTheme : lightTheme), [mode]);
 
-  const getThemedUnitBg = (unitId) => theme.unitBg[unitId] || null;
+  const getThemedPeriodBg = (period) => {
+    if (!period) return null;
+    return mode === "dark" ? period.color + "20" : period.bg;
+  };
   const getThemedSourceTypeBg = (sourceTypeId) => theme.sourceTypeBg[sourceTypeId] || null;
 
   return (
-    <ThemeContext.Provider value={{ theme, mode, toggleTheme, getThemedUnitBg, getThemedSourceTypeBg }}>
+    <ThemeContext.Provider value={{ theme, mode, toggleTheme, getThemedPeriodBg, getThemedSourceTypeBg }}>
       {children}
     </ThemeContext.Provider>
   );

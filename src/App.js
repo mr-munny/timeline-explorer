@@ -1,9 +1,12 @@
+// TODO: Right-justify the period "Default" toggle button in admin panel
+// TODO: Rename "periods" → "time periods" in all user-facing UI labels
+// TODO: Add "compelling question" toggle/display that lives over the timeline (complex)
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { useAuth } from "./contexts/AuthContext";
 import { useTheme } from "./contexts/ThemeContext";
-import { UNITS, TAGS, getUnit } from "./data/constants";
-import { SECTIONS, TEACHER_EMAIL } from "./firebase";
-import { subscribeToEvents, submitEvent, deleteEvent, seedDatabase } from "./services/database";
+import { PERIOD_COLORS, TAGS, getPeriod } from "./data/constants";
+import { TEACHER_EMAIL } from "./firebase";
+import { subscribeToEvents, submitEvent, deleteEvent, seedDatabase, subscribeToPeriods, subscribeToAllSectionPeriods, savePeriods, subscribeToSections, saveSections, subscribeToDefaultPeriods, saveDefaultPeriods } from "./services/database";
 import SEED_EVENTS from "./data/seedEvents";
 import VisualTimeline from "./components/VisualTimeline";
 import EventCard from "./components/EventCard";
@@ -11,6 +14,7 @@ import AddEventPanel from "./components/AddEventPanel";
 import ContributorSidebar from "./components/ContributorSidebar";
 import ModerationPanel from "./components/ModerationPanel";
 import LoginScreen from "./components/LoginScreen";
+import SectionConfiguration from "./components/SectionConfiguration";
 import { Icon } from "@iconify/react";
 import chartTimelineVariantShimmer from "@iconify-icons/mdi/chart-timeline-variant-shimmer";
 import plusIcon from "@iconify-icons/mdi/plus";
@@ -27,6 +31,8 @@ import cogOutline from "@iconify-icons/mdi/cog-outline";
 import chevronDown from "@iconify-icons/mdi/chevron-down";
 import lockOutline from "@iconify-icons/mdi/lock-outline";
 import lockOpenVariantOutline from "@iconify-icons/mdi/lock-open-variant-outline";
+import closeCircleOutline from "@iconify-icons/mdi/close-circle-outline";
+import pencilOutline from "@iconify-icons/mdi/pencil-outline";
 
 function getInitialSection() {
   const params = new URLSearchParams(window.location.search);
@@ -35,10 +41,10 @@ function getInitialSection() {
 
 export default function App() {
   const { user, loading, authError, login, logout, isTeacher } = useAuth();
-  const { theme, mode, toggleTheme, getThemedUnitBg } = useTheme();
+  const { theme, mode, toggleTheme, getThemedPeriodBg } = useTheme();
   const [allEvents, setAllEvents] = useState([]);
   const [section, setSection] = useState(getInitialSection);
-  const [selectedUnit, setSelectedUnit] = useState("all");
+  const [selectedPeriod, setSelectedPeriod] = useState("all");
   const [selectedTag, setSelectedTag] = useState("all");
   const [expandedEvent, setExpandedEvent] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -56,6 +62,38 @@ export default function App() {
   const [draftStart, setDraftStart] = useState("1910");
   const [draftEnd, setDraftEnd] = useState("2000");
   const [timelineRangeLocked, setTimelineRangeLocked] = useState(true);
+  const [periods, setPeriods] = useState([]);
+  const [periodsLocked, setPeriodsLocked] = useState(true);
+  const [editingPeriodId, setEditingPeriodId] = useState(null);
+  const [draftEraStart, setDraftEraStart] = useState("");
+  const [draftEraEnd, setDraftEraEnd] = useState("");
+  const [allSectionPeriods, setAllSectionPeriods] = useState({});
+  const isEditingPeriodsRef = useRef(false);
+  const [defaultPeriods, setDefaultPeriods] = useState([]);
+  const [editingDefaults, setEditingDefaults] = useState(false);
+  const [sections, setSections] = useState(null);
+  const [sectionsLocked, setSectionsLocked] = useState(true);
+
+  const activeSections = useMemo(() => sections || [], [sections]);
+
+  const getSectionName = useCallback(
+    (id) => activeSections.find((s) => s.id === id)?.name || id,
+    [activeSections]
+  );
+
+  const openPeriodEdit = (period) => {
+    setEditingPeriodId(period.id);
+    setDraftEraStart(String(period.era[0]));
+    setDraftEraEnd(String(period.era[1]));
+  };
+
+  const commitEra = (periodId) => {
+    const s = Number(draftEraStart) || 0;
+    const e = Number(draftEraEnd) || 0;
+    const newPeriods = periods.map((x) => x.id === periodId ? { ...x, era: [s, Math.max(s + 1, e)] } : x);
+    setPeriods(newPeriods);
+    persistPeriods(newPeriods);
+  };
 
   const currentYear = new Date().getFullYear();
   const floorToDecade = (value) => Math.floor(value / 10) * 10;
@@ -64,6 +102,10 @@ export default function App() {
   const switchSection = (newSection) => {
     setSection(newSection);
     setExpandedEvent(null);
+    setPeriodsLocked(true);
+    isEditingPeriodsRef.current = false;
+    setEditingPeriodId(null);
+    setEditingDefaults(false);
     // Update URL without reload
     const url = new URL(window.location);
     url.searchParams.set("section", newSection);
@@ -83,6 +125,91 @@ export default function App() {
 
     return () => unsubscribe();
   }, [user, section, isTeacher]);
+
+  // Subscribe to sections from Firebase
+  useEffect(() => {
+    if (!user) return;
+    const unsub = subscribeToSections((data) => {
+      setSections(data || []);
+    });
+    return () => unsub();
+  }, [user]);
+
+  // Section mutation handlers
+  const handleAddSection = useCallback((name) => {
+    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    const id = activeSections.some((s) => s.id === slug) ? `${slug}-${Date.now()}` : slug;
+    const updated = [...activeSections, { id, name }];
+    setSections(updated);
+    saveSections(updated);
+    if (defaultPeriods.length > 0) {
+      savePeriods(id, defaultPeriods);
+    }
+  }, [activeSections, defaultPeriods]);
+
+  const handleDeleteSection = useCallback((id) => {
+    const updated = activeSections.filter((s) => s.id !== id);
+    setSections(updated);
+    saveSections(updated);
+    if (section === id) {
+      switchSection(updated.length > 0 ? updated[0].id : "all");
+    }
+  }, [activeSections, section]);
+
+  const handleRenameSection = useCallback((id, newName) => {
+    const updated = activeSections.map((s) => s.id === id ? { ...s, name: newName } : s);
+    setSections(updated);
+    saveSections(updated);
+  }, [activeSections]);
+
+  // Subscribe to default periods template
+  useEffect(() => {
+    if (!user) return;
+    const unsub = subscribeToDefaultPeriods((data) => {
+      setDefaultPeriods(data || []);
+    });
+    return () => unsub();
+  }, [user]);
+
+  // Sync default periods into periods state when editing defaults
+  useEffect(() => {
+    if (editingDefaults && !isEditingPeriodsRef.current) {
+      setPeriods(defaultPeriods);
+    }
+  }, [editingDefaults, defaultPeriods]);
+
+  // Subscribe to section-specific periods (when not editing defaults)
+  useEffect(() => {
+    if (!user || editingDefaults) return;
+
+    const effectiveSection = isTeacher && section === "all" ? "all" : section;
+
+    if (effectiveSection === "all") {
+      const unsub = subscribeToAllSectionPeriods(activeSections.map((s) => s.id), (periodsMap) => {
+        if (isEditingPeriodsRef.current) return;
+        setAllSectionPeriods(periodsMap);
+      });
+      return () => unsub();
+    } else {
+      const unsub = subscribeToPeriods(effectiveSection, (data) => {
+        if (isEditingPeriodsRef.current) return;
+        setPeriods(data || []);
+      });
+      return () => unsub();
+    }
+  }, [user, section, isTeacher, activeSections, editingDefaults]);
+
+  // Save periods to the right target (section or defaults + all sections)
+  const persistPeriods = useCallback((newPeriods) => {
+    if (editingDefaults) {
+      saveDefaultPeriods(newPeriods);
+      for (const s of activeSections) {
+        savePeriods(s.id, newPeriods);
+      }
+    } else if (section !== "all") {
+      savePeriods(section, newPeriods);
+    }
+  }, [editingDefaults, section, activeSections]);
 
   // Close admin panel on outside click
   useEffect(() => {
@@ -111,7 +238,7 @@ export default function App() {
   // Filtered + sorted events for display
   const filteredEvents = useMemo(() => {
     let evts = [...approvedEvents];
-    if (selectedUnit !== "all") evts = evts.filter((e) => e.unit === selectedUnit);
+    if (selectedPeriod !== "all") evts = evts.filter((e) => e.period === selectedPeriod);
     if (selectedTag !== "all") evts = evts.filter((e) => (e.tags || []).includes(selectedTag));
     if (isTeacher && sectionFilter !== "all") {
       evts = evts.filter((e) => e.section === sectionFilter);
@@ -130,7 +257,26 @@ export default function App() {
       sortOrder === "chrono" ? a.year - b.year : b.year - a.year
     );
     return evts;
-  }, [approvedEvents, selectedUnit, selectedTag, searchTerm, sortOrder, isTeacher, sectionFilter]);
+  }, [approvedEvents, selectedPeriod, selectedTag, searchTerm, sortOrder, isTeacher, sectionFilter]);
+
+  // Merge periods from all sections for "all" view
+  const mergedPeriods = useMemo(() => {
+    if (section !== "all" || Object.keys(allSectionPeriods).length === 0) return periods;
+    const seen = new Set();
+    const result = [];
+    for (const sec of activeSections) {
+      for (const p of (allSectionPeriods[sec.id] || [])) {
+        if (!seen.has(p.id)) {
+          seen.add(p.id);
+          result.push(p);
+        }
+      }
+    }
+    return result;
+  }, [section, allSectionPeriods, periods, activeSections]);
+
+  const displayPeriods = section === "all" ? mergedPeriods : periods;
+  const findPeriod = (id) => getPeriod(displayPeriods, id);
 
   const handleAddEvent = useCallback(
     async (formData) => {
@@ -139,10 +285,10 @@ export default function App() {
         addedBy: user.displayName || user.email.split("@")[0],
         addedByEmail: user.email,
         addedByUid: user.uid,
-        section: section === "all" ? "Period1" : section,
+        section: section === "all" ? (activeSections[0]?.id || "Period1") : section,
       });
     },
-    [user, section]
+    [user, section, activeSections]
   );
 
   const handleDeleteEvent = useCallback(async (eventId) => {
@@ -308,7 +454,7 @@ export default function App() {
                           border: `1px solid ${theme.borderColor}`,
                           borderRadius: 8,
                           padding: 12,
-                          minWidth: 220,
+                          minWidth: 280,
                           zIndex: 999,
                           boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
                           fontFamily: "'Overpass Mono', monospace",
@@ -441,6 +587,356 @@ export default function App() {
                         }}>
                           {timelineEnd - timelineStart} year span · snaps to decade
                         </div>
+
+                        {/* Divider */}
+                        <div style={{
+                          height: 1,
+                          background: theme.inputBorder,
+                          margin: "10px 0",
+                        }} />
+
+                        {/* Periods section */}
+                        <div style={{
+                          fontSize: 10,
+                          fontWeight: 700,
+                          color: theme.mutedText,
+                          textTransform: "uppercase",
+                          letterSpacing: "0.1em",
+                          marginBottom: 8,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                        }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                            Periods{editingDefaults ? " · Default" : section !== "all" ? ` · ${getSectionName(section)}` : ""}
+                            <button
+                              onClick={() => {
+                                setEditingDefaults((v) => !v);
+                                setPeriodsLocked(true);
+                                isEditingPeriodsRef.current = false;
+                                setEditingPeriodId(null);
+                              }}
+                              title={editingDefaults ? "Switch to section periods" : "Edit default periods (applies to all sections)"}
+                              style={{
+                                fontSize: 8,
+                                fontWeight: 600,
+                                fontFamily: "'Overpass Mono', monospace",
+                                padding: "1px 5px",
+                                borderRadius: 3,
+                                border: `1px solid ${editingDefaults ? theme.teacherGreen : theme.inputBorder}`,
+                                background: editingDefaults ? theme.teacherGreen + "20" : "transparent",
+                                color: editingDefaults ? theme.teacherGreen : theme.textMuted,
+                                cursor: "pointer",
+                                textTransform: "uppercase",
+                                letterSpacing: "0.05em",
+                                transition: "all 0.15s",
+                              }}
+                            >
+                              Default
+                            </button>
+                          </div>
+                          <button
+                            onClick={() => {
+                              setPeriodsLocked((v) => {
+                                isEditingPeriodsRef.current = v;
+                                return !v;
+                              });
+                            }}
+                            title={periodsLocked ? "Unlock to edit" : "Lock periods"}
+                            style={{
+                              background: "none",
+                              border: "none",
+                              padding: 2,
+                              cursor: "pointer",
+                              color: periodsLocked ? theme.textMuted : theme.teacherGreen,
+                              display: "inline-flex",
+                              transition: "color 0.15s",
+                            }}
+                          >
+                            <Icon icon={periodsLocked ? lockOutline : lockOpenVariantOutline} width={12} />
+                          </button>
+                        </div>
+
+                        {editingDefaults && (
+                          <div style={{
+                            fontSize: 9,
+                            color: theme.textMuted,
+                            fontStyle: "italic",
+                            marginBottom: 6,
+                            letterSpacing: "0.03em",
+                          }}>
+                            Edits apply to all sections &amp; new sections
+                          </div>
+                        )}
+
+                        {/* Period list */}
+                        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                          {periods.length === 0 && (
+                            <div style={{
+                              fontSize: 10,
+                              color: theme.textMuted,
+                              fontStyle: "italic",
+                              padding: "4px 6px",
+                            }}>
+                              No periods configured
+                            </div>
+                          )}
+                          {periods.map((p) => {
+                            const isEditing = editingPeriodId === p.id && !periodsLocked;
+                            return (
+                              <div key={p.id}>
+                                <div
+                                  style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: 6,
+                                    padding: "4px 6px",
+                                    borderRadius: 4,
+                                    background: isEditing ? theme.subtleBg : "transparent",
+                                    transition: "background 0.15s",
+                                  }}
+                                >
+                                  <div style={{
+                                    width: 8,
+                                    height: 8,
+                                    borderRadius: "50%",
+                                    background: p.accent,
+                                    flexShrink: 0,
+                                  }} />
+                                  <span style={{
+                                    fontSize: 10,
+                                    color: theme.textPrimary,
+                                    flex: 1,
+                                    overflow: "hidden",
+                                    textOverflow: "ellipsis",
+                                    whiteSpace: "nowrap",
+                                  }}>
+                                    {p.label}
+                                  </span>
+                                  <span style={{
+                                    fontSize: 9,
+                                    color: theme.textMuted,
+                                    flexShrink: 0,
+                                  }}>
+                                    {p.era[0]}–{p.era[1]}
+                                  </span>
+                                  {!periodsLocked && (
+                                    <>
+                                      <button
+                                        onClick={() => isEditing ? setEditingPeriodId(null) : openPeriodEdit(p)}
+                                        title="Edit period"
+                                        style={{
+                                          background: "none",
+                                          border: "none",
+                                          padding: 0,
+                                          cursor: "pointer",
+                                          color: isEditing ? theme.teacherGreen : theme.textMuted,
+                                          display: "inline-flex",
+                                          transition: "color 0.15s",
+                                        }}
+                                      >
+                                        <Icon icon={pencilOutline} width={11} />
+                                      </button>
+                                      <button
+                                        onClick={() => {
+                                          if (!window.confirm(`Delete "${p.label}"? Events assigned to this period will lose their period.`)) return;
+                                          const newPeriods = periods.filter((x) => x.id !== p.id);
+                                          setPeriods(newPeriods);
+                                          persistPeriods(newPeriods);
+                                          if (selectedPeriod === p.id) setSelectedPeriod("all");
+                                          if (editingPeriodId === p.id) setEditingPeriodId(null);
+                                        }}
+                                        title="Delete period"
+                                        onMouseEnter={(e) => e.currentTarget.style.color = theme.errorRed}
+                                        onMouseLeave={(e) => e.currentTarget.style.color = theme.textMuted}
+                                        style={{
+                                          background: "none",
+                                          border: "none",
+                                          padding: 0,
+                                          cursor: "pointer",
+                                          color: theme.textMuted,
+                                          display: "inline-flex",
+                                          transition: "color 0.15s",
+                                        }}
+                                      >
+                                        <Icon icon={closeCircleOutline} width={11} />
+                                      </button>
+                                    </>
+                                  )}
+                                </div>
+
+                                {/* Inline edit form */}
+                                {isEditing && (
+                                  <div style={{
+                                    padding: "8px 6px 6px",
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    gap: 6,
+                                  }}>
+                                    <input
+                                      type="text"
+                                      value={p.label}
+                                      onChange={(e) => {
+                                        const val = e.target.value;
+                                        if (val.trim() || val === "") {
+                                          setPeriods((prev) =>
+                                            prev.map((x) => x.id === p.id ? { ...x, label: val } : x)
+                                          );
+                                        }
+                                      }}
+                                      onBlur={(e) => {
+                                        const finalLabel = e.target.value.trim() || "Untitled Period";
+                                        const newPeriods = periods.map((x) => x.id === p.id ? { ...x, label: finalLabel } : x);
+                                        setPeriods(newPeriods);
+                                        persistPeriods(newPeriods);
+                                      }}
+                                      placeholder="Period label"
+                                      style={{
+                                        padding: "5px 8px",
+                                        border: `1.5px solid ${theme.inputBorder}`,
+                                        borderRadius: 4,
+                                        fontSize: 11,
+                                        fontFamily: "'Overpass Mono', monospace",
+                                        background: theme.inputBg,
+                                        color: theme.textPrimary,
+                                        outline: "none",
+                                        boxSizing: "border-box",
+                                      }}
+                                    />
+                                    <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                                      <input
+                                        type="number"
+                                        value={draftEraStart}
+                                        onChange={(e) => setDraftEraStart(e.target.value)}
+                                        onKeyDown={(e) => { if (e.key === "Enter") e.target.blur(); }}
+                                        onBlur={() => commitEra(p.id)}
+                                        style={{
+                                          width: "100%",
+                                          padding: "5px 6px",
+                                          border: `1.5px solid ${theme.inputBorder}`,
+                                          borderRadius: 4,
+                                          fontSize: 11,
+                                          fontFamily: "'Overpass Mono', monospace",
+                                          background: theme.inputBg,
+                                          color: theme.textPrimary,
+                                          outline: "none",
+                                          boxSizing: "border-box",
+                                          textAlign: "center",
+                                        }}
+                                      />
+                                      <span style={{ fontSize: 10, color: theme.textMuted }}>–</span>
+                                      <input
+                                        type="number"
+                                        value={draftEraEnd}
+                                        onChange={(e) => setDraftEraEnd(e.target.value)}
+                                        onKeyDown={(e) => { if (e.key === "Enter") e.target.blur(); }}
+                                        onBlur={() => commitEra(p.id)}
+                                        style={{
+                                          width: "100%",
+                                          padding: "5px 6px",
+                                          border: `1.5px solid ${theme.inputBorder}`,
+                                          borderRadius: 4,
+                                          fontSize: 11,
+                                          fontFamily: "'Overpass Mono', monospace",
+                                          background: theme.inputBg,
+                                          color: theme.textPrimary,
+                                          outline: "none",
+                                          boxSizing: "border-box",
+                                          textAlign: "center",
+                                        }}
+                                      />
+                                    </div>
+                                    <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                                      {PERIOD_COLORS.map((c, i) => (
+                                        <button
+                                          key={i}
+                                          onClick={() => {
+                                            const newPeriods = periods.map((x) => x.id === p.id ? { ...x, color: c.color, bg: c.bg, accent: c.accent } : x);
+                                            setPeriods(newPeriods);
+                                            persistPeriods(newPeriods);
+                                          }}
+                                          title={`Color ${i + 1}`}
+                                          style={{
+                                            width: 18,
+                                            height: 18,
+                                            borderRadius: "50%",
+                                            background: c.accent,
+                                            border: p.color === c.color ? `2px solid ${theme.textPrimary}` : `2px solid transparent`,
+                                            cursor: "pointer",
+                                            padding: 0,
+                                            transition: "border-color 0.15s",
+                                          }}
+                                        />
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        {/* Add period button */}
+                        {!periodsLocked && (
+                          <button
+                            onClick={() => {
+                              const newId = "period-" + Date.now();
+                              const colorIdx = periods.length % PERIOD_COLORS.length;
+                              const c = PERIOD_COLORS[colorIdx];
+                              const newPeriod = {
+                                id: newId,
+                                label: "New Period",
+                                color: c.color,
+                                bg: c.bg,
+                                accent: c.accent,
+                                era: [timelineStart, timelineEnd],
+                              };
+                              const newPeriods = [...periods, newPeriod];
+                              setPeriods(newPeriods);
+                              persistPeriods(newPeriods);
+                              openPeriodEdit(newPeriod);
+                            }}
+                            style={{
+                              width: "100%",
+                              marginTop: 6,
+                              padding: "5px 0",
+                              border: `1.5px dashed ${theme.inputBorder}`,
+                              borderRadius: 4,
+                              background: "transparent",
+                              color: theme.textSecondary,
+                              fontSize: 10,
+                              fontFamily: "'Overpass Mono', monospace",
+                              fontWeight: 600,
+                              cursor: "pointer",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              gap: 4,
+                              transition: "all 0.15s",
+                            }}
+                          >
+                            <Icon icon={plusIcon} width={12} />
+                            Add Period
+                          </button>
+                        )}
+
+                        {/* Divider */}
+                        <div style={{
+                          height: 1,
+                          background: theme.inputBorder,
+                          margin: "10px 0",
+                        }} />
+
+                        {/* Sections config */}
+                        <SectionConfiguration
+                          sections={activeSections}
+                          locked={sectionsLocked}
+                          onToggleLock={() => setSectionsLocked((v) => !v)}
+                          onAdd={handleAddSection}
+                          onDelete={handleDeleteSection}
+                          onRename={handleRenameSection}
+                          theme={theme}
+                        />
                       </div>
                     )}
                   </div>
@@ -472,18 +968,17 @@ export default function App() {
               >
                 {approvedEvents.length} events &middot; {studentCount} student
                 historians &middot;{" "}
-                {[...new Set(approvedEvents.map((e) => e.unit))].length} units
+                {[...new Set(approvedEvents.map((e) => e.period))].length} periods
               </p>
               {/* View switcher (teacher only) */}
               {isTeacher && (
                 <div style={{ display: "flex", gap: 4, marginTop: 10 }}>
-                  {["all", ...SECTIONS].map((s) => {
-                    const isActive = section === s;
-                    const label = s === "all" ? "All Sections" : s;
+                  {[{ id: "all", name: "All Sections" }, ...activeSections].map((s) => {
+                    const isActive = section === s.id;
                     return (
                       <button
-                        key={s}
-                        onClick={() => switchSection(s)}
+                        key={s.id}
+                        onClick={() => switchSection(s.id)}
                         style={{
                           padding: "5px 12px",
                           borderRadius: 6,
@@ -497,7 +992,7 @@ export default function App() {
                           transition: "all 0.15s",
                         }}
                       >
-                        {label}
+                        {s.name}
                       </button>
                     );
                   })}
@@ -608,11 +1103,12 @@ export default function App() {
         <div style={{ maxWidth: 960, margin: "0 auto" }}>
           <VisualTimeline
             filteredEvents={filteredEvents}
-            onEraClick={setSelectedUnit}
-            selectedUnit={selectedUnit}
+            onEraClick={setSelectedPeriod}
+            selectedPeriod={selectedPeriod}
             timelineStart={timelineStart}
             timelineEnd={timelineEnd}
             currentYear={currentYear}
+            periods={displayPeriods}
           />
         </div>
       </div>
@@ -662,8 +1158,8 @@ export default function App() {
             />
           </div>
           <select
-            value={selectedUnit}
-            onChange={(e) => setSelectedUnit(e.target.value)}
+            value={selectedPeriod}
+            onChange={(e) => setSelectedPeriod(e.target.value)}
             style={{
               padding: "9px 12px",
               border: `1.5px solid ${theme.inputBorder}`,
@@ -673,16 +1169,16 @@ export default function App() {
               background: theme.inputBg,
               cursor: "pointer",
               color:
-                selectedUnit === "all"
+                selectedPeriod === "all"
                   ? theme.textSecondary
-                  : getUnit(selectedUnit)?.color,
-              fontWeight: selectedUnit === "all" ? 500 : 700,
+                  : findPeriod(selectedPeriod)?.color,
+              fontWeight: selectedPeriod === "all" ? 500 : 700,
             }}
           >
-            <option value="all">All Units</option>
-            {UNITS.map((u) => (
-              <option key={u.id} value={u.id}>
-                {u.label}
+            <option value="all">All Periods</option>
+            {displayPeriods.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.label}
               </option>
             ))}
           </select>
@@ -723,9 +1219,9 @@ export default function App() {
               }}
             >
               <option value="all">All Sections</option>
-              {SECTIONS.map((s) => (
-                <option key={s} value={s}>
-                  {s}
+              {activeSections.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
                 </option>
               ))}
             </select>
@@ -767,7 +1263,7 @@ export default function App() {
         </div>
 
         {/* Active filters */}
-        {(selectedUnit !== "all" ||
+        {(selectedPeriod !== "all" ||
           selectedTag !== "all" ||
           searchTerm ||
           sectionFilter !== "all") && (
@@ -789,19 +1285,19 @@ export default function App() {
             >
               Showing:
             </span>
-            {selectedUnit !== "all" && (
+            {selectedPeriod !== "all" && (
               <span
                 style={{
                   fontSize: 10,
-                  background: getThemedUnitBg(selectedUnit) || getUnit(selectedUnit)?.bg,
-                  color: getUnit(selectedUnit)?.color,
+                  background: getThemedPeriodBg(findPeriod(selectedPeriod)) || findPeriod(selectedPeriod)?.bg,
+                  color: findPeriod(selectedPeriod)?.color,
                   padding: "3px 8px",
                   borderRadius: 4,
                   fontFamily: "'Overpass Mono', monospace",
                   fontWeight: 700,
                 }}
               >
-                {getUnit(selectedUnit)?.label}
+                {findPeriod(selectedPeriod)?.label}
               </span>
             )}
             {selectedTag !== "all" && (
@@ -831,7 +1327,7 @@ export default function App() {
                   fontWeight: 600,
                 }}
               >
-                {sectionFilter}
+                {getSectionName(sectionFilter)}
               </span>
             )}
             {searchTerm && (
@@ -850,7 +1346,7 @@ export default function App() {
             )}
             <button
               onClick={() => {
-                setSelectedUnit("all");
+                setSelectedPeriod("all");
                 setSelectedTag("all");
                 setSearchTerm("");
                 setSectionFilter("all");
@@ -918,6 +1414,7 @@ export default function App() {
                   }
                   isTeacher={isTeacher}
                   onDelete={handleDeleteEvent}
+                  periods={displayPeriods}
                 />
               ))
             )}
@@ -964,6 +1461,7 @@ export default function App() {
           userName={user.displayName || user.email.split("@")[0]}
           timelineStart={timelineStart}
           timelineEnd={timelineEnd}
+          periods={displayPeriods}
         />
       )}
 
@@ -972,6 +1470,8 @@ export default function App() {
         <ModerationPanel
           pendingEvents={pendingEvents}
           onClose={() => setShowModeration(false)}
+          periods={displayPeriods}
+          getSectionName={getSectionName}
         />
       )}
     </div>

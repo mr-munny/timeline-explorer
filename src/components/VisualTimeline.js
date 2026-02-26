@@ -1,7 +1,7 @@
-import { UNITS, getUnit } from "../data/constants";
+import { getPeriod } from "../data/constants";
 import { useTheme } from "../contexts/ThemeContext";
 
-export default function VisualTimeline({ filteredEvents, onEraClick, selectedUnit, timelineStart = 1910, timelineEnd = 2000, currentYear }) {
+export default function VisualTimeline({ filteredEvents, onEraClick, selectedPeriod, timelineStart = 1910, timelineEnd = 2000, currentYear, periods = [] }) {
   const { theme } = useTheme();
   const minYear = timelineStart;
   const maxYear = timelineEnd;
@@ -23,14 +23,14 @@ export default function VisualTimeline({ filteredEvents, onEraClick, selectedUni
           background: theme.subtleBg,
         }}
       >
-        {UNITS.map((u) => {
+        {periods.map((u) => {
           const left = getPosition(u.era[0]);
           const width = getPosition(u.era[1]) - left;
-          const isActive = selectedUnit === "all" || selectedUnit === u.id;
+          const isActive = selectedPeriod === "all" || selectedPeriod === u.id;
           return (
             <div
               key={u.id}
-              onClick={() => onEraClick(u.id === selectedUnit ? "all" : u.id)}
+              onClick={() => onEraClick(u.id === selectedPeriod ? "all" : u.id)}
               title={u.label}
               style={{
                 position: "absolute",
@@ -61,7 +61,7 @@ export default function VisualTimeline({ filteredEvents, onEraClick, selectedUni
                   transition: "opacity 0.3s",
                 }}
               >
-                {u.short}
+                {u.label.slice(0, 12)}
               </span>
             </div>
           );
@@ -99,8 +99,8 @@ export default function VisualTimeline({ filteredEvents, onEraClick, selectedUni
       {/* Event markers */}
       <div style={{ position: "relative", height: 28, marginTop: 2 }}>
         {filteredEvents.map((event) => {
-          const unit = getUnit(event.unit);
-          if (!unit) return null;
+          const period = getPeriod(periods, event.period);
+          if (!period) return null;
           const left = getPosition(event.year);
           return (
             <div
@@ -113,9 +113,9 @@ export default function VisualTimeline({ filteredEvents, onEraClick, selectedUni
                 width: 7,
                 height: 7,
                 borderRadius: "50%",
-                background: unit.color,
+                background: period.color,
                 border: `2px solid ${theme.cardBg}`,
-                boxShadow: `0 0 0 1px ${unit.color}40`,
+                boxShadow: `0 0 0 1px ${period.color}40`,
                 transform: "translateX(-50%)",
                 transition: "all 0.3s ease",
                 zIndex: 2,

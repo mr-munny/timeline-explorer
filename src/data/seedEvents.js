@@ -4,7 +4,7 @@ const SEED_EVENTS = [
   {
     title: "Assassination of Archduke Franz Ferdinand",
     year: 1914,
-    unit: "wwi",
+    period: "wwi",
     tags: ["Political", "Military"],
     sourceType: "Primary",
     description:
@@ -21,7 +21,7 @@ const SEED_EVENTS = [
   {
     title: "Sinking of the Lusitania",
     year: 1915,
-    unit: "wwi",
+    period: "wwi",
     tags: ["Military", "Political"],
     sourceType: "Primary",
     description:
@@ -38,7 +38,7 @@ const SEED_EVENTS = [
   {
     title: "U.S. Enters World War I",
     year: 1917,
-    unit: "wwi",
+    period: "wwi",
     tags: ["Political", "Military"],
     sourceType: "Primary",
     description:
@@ -55,7 +55,7 @@ const SEED_EVENTS = [
   {
     title: "Treaty of Versailles Signed",
     year: 1919,
-    unit: "wwi",
+    period: "wwi",
     tags: ["Political", "Legal"],
     sourceType: "Primary",
     description:
@@ -72,7 +72,7 @@ const SEED_EVENTS = [
   {
     title: "19th Amendment Ratified",
     year: 1920,
-    unit: "wwi",
+    period: "wwi",
     tags: ["Political", "Legal", "Social"],
     sourceType: "Primary",
     description:
@@ -89,7 +89,7 @@ const SEED_EVENTS = [
   {
     title: "Stock Market Crash (Black Tuesday)",
     year: 1929,
-    unit: "depression",
+    period: "depression",
     tags: ["Economic", "Political"],
     sourceType: "Primary",
     description:
@@ -106,7 +106,7 @@ const SEED_EVENTS = [
   {
     title: "Dust Bowl Begins",
     year: 1931,
-    unit: "depression",
+    period: "depression",
     tags: ["Economic", "Geographic", "Social"],
     sourceType: "Secondary",
     description:
@@ -123,7 +123,7 @@ const SEED_EVENTS = [
   {
     title: "FDR's New Deal Begins",
     year: 1933,
-    unit: "depression",
+    period: "depression",
     tags: ["Political", "Economic", "Social"],
     sourceType: "Primary",
     description:
@@ -140,7 +140,7 @@ const SEED_EVENTS = [
   {
     title: "Social Security Act Signed",
     year: 1935,
-    unit: "depression",
+    period: "depression",
     tags: ["Political", "Economic", "Legal"],
     sourceType: "Primary",
     description:
@@ -157,7 +157,7 @@ const SEED_EVENTS = [
   {
     title: "Germany Invades Poland",
     year: 1939,
-    unit: "wwii",
+    period: "wwii",
     tags: ["Military", "Political"],
     sourceType: "Primary",
     description:
@@ -174,7 +174,7 @@ const SEED_EVENTS = [
   {
     title: "Attack on Pearl Harbor",
     year: 1941,
-    unit: "wwii",
+    period: "wwii",
     tags: ["Military", "Political"],
     sourceType: "Primary",
     description:
@@ -191,7 +191,7 @@ const SEED_EVENTS = [
   {
     title: "Executive Order 9066: Japanese Internment",
     year: 1942,
-    unit: "wwii",
+    period: "wwii",
     tags: ["Political", "Legal", "Social"],
     sourceType: "Primary",
     description:
@@ -208,7 +208,7 @@ const SEED_EVENTS = [
   {
     title: "D-Day: Allied Invasion of Normandy",
     year: 1944,
-    unit: "wwii",
+    period: "wwii",
     tags: ["Military"],
     sourceType: "Primary",
     description:
@@ -225,7 +225,7 @@ const SEED_EVENTS = [
   {
     title: "Atomic Bombs Dropped on Japan",
     year: 1945,
-    unit: "wwii",
+    period: "wwii",
     tags: ["Military", "Technological", "Political"],
     sourceType: "Primary",
     description:
@@ -242,7 +242,7 @@ const SEED_EVENTS = [
   {
     title: "United Nations Founded",
     year: 1945,
-    unit: "coldwar",
+    period: "coldwar",
     tags: ["Political"],
     sourceType: "Primary",
     description:
@@ -259,7 +259,7 @@ const SEED_EVENTS = [
   {
     title: "Truman Doctrine Announced",
     year: 1947,
-    unit: "coldwar",
+    period: "coldwar",
     tags: ["Political", "Military"],
     sourceType: "Primary",
     description:
@@ -276,7 +276,7 @@ const SEED_EVENTS = [
   {
     title: "Marshall Plan Enacted",
     year: 1948,
-    unit: "coldwar",
+    period: "coldwar",
     tags: ["Economic", "Political"],
     sourceType: "Primary",
     description:
@@ -293,7 +293,7 @@ const SEED_EVENTS = [
   {
     title: "Korean War Begins",
     year: 1950,
-    unit: "coldwar",
+    period: "coldwar",
     tags: ["Military", "Political"],
     sourceType: "Secondary",
     description:
@@ -310,7 +310,7 @@ const SEED_EVENTS = [
   {
     title: "Brown v. Board of Education",
     year: 1954,
-    unit: "coldwar",
+    period: "coldwar",
     tags: ["Legal", "Social", "Political"],
     sourceType: "Primary",
     description:
@@ -327,7 +327,7 @@ const SEED_EVENTS = [
   {
     title: "Sputnik Launched",
     year: 1957,
-    unit: "coldwar",
+    period: "coldwar",
     tags: ["Technological", "Political"],
     sourceType: "Primary",
     description:
@@ -344,7 +344,7 @@ const SEED_EVENTS = [
   {
     title: "Cuban Missile Crisis",
     year: 1962,
-    unit: "coldwar",
+    period: "coldwar",
     tags: ["Military", "Political"],
     sourceType: "Primary",
     description:
@@ -361,7 +361,7 @@ const SEED_EVENTS = [
   {
     title: "Civil Rights Act of 1964",
     year: 1964,
-    unit: "coldwar",
+    period: "coldwar",
     tags: ["Legal", "Political", "Social"],
     sourceType: "Primary",
     description:
@@ -378,7 +378,7 @@ const SEED_EVENTS = [
   {
     title: "Moon Landing (Apollo 11)",
     year: 1969,
-    unit: "coldwar",
+    period: "coldwar",
     tags: ["Technological", "Political"],
     sourceType: "Primary",
     description:
@@ -395,7 +395,7 @@ const SEED_EVENTS = [
   {
     title: "Fall of the Berlin Wall",
     year: 1989,
-    unit: "coldwar",
+    period: "coldwar",
     tags: ["Political", "Social"],
     sourceType: "Primary",
     description:
@@ -412,7 +412,7 @@ const SEED_EVENTS = [
   {
     title: "Dissolution of the Soviet Union",
     year: 1991,
-    unit: "coldwar",
+    period: "coldwar",
     tags: ["Political"],
     sourceType: "Primary",
     description:

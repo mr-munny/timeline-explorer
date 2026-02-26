@@ -3,12 +3,12 @@
 const APPS_SCRIPT_URL = process.env.REACT_APP_APPS_SCRIPT_URL;
 
 // Append a row to the Google Sheet when an event is approved.
-// Sheet must have headers: Title | Year | Unit | Tags | SourceType | Description | SourceNote | AddedBy | Section | ApprovedDate
+// Sheet must have headers: Title | Year | Period | Tags | SourceType | Description | SourceNote | AddedBy | Section | ApprovedDate
 export async function writeToSheet(event) {
   const row = [
     event.title,
     event.year,
-    event.unit,
+    event.period,
     (event.tags || []).join(", "),
     event.sourceType,
     event.description,

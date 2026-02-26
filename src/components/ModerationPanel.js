@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { getUnit, UNITS, TAGS } from "../data/constants";
+import { getPeriod, TAGS } from "../data/constants";
 import { approveEvent, rejectEvent, updateEvent } from "../services/database";
 import { writeToSheet } from "../services/sheets";
 import { Icon } from "@iconify/react";
@@ -10,7 +10,7 @@ import cancelIcon from "@iconify-icons/mdi/cancel";
 import contentSave from "@iconify-icons/mdi/content-save";
 import { useTheme } from "../contexts/ThemeContext";
 
-export default function ModerationPanel({ pendingEvents, onClose }) {
+export default function ModerationPanel({ pendingEvents, onClose, periods = [], getSectionName = (id) => id }) {
   const { theme } = useTheme();
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({});
@@ -44,7 +44,7 @@ export default function ModerationPanel({ pendingEvents, onClose }) {
     setEditForm({
       title: event.title,
       year: event.year,
-      unit: event.unit,
+      period: event.period,
       tags: [...(event.tags || [])],
       sourceType: event.sourceType || "Primary",
       description: event.description,
@@ -174,7 +174,7 @@ export default function ModerationPanel({ pendingEvents, onClose }) {
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {pendingEvents.map((event) => {
-              const unit = getUnit(event.unit);
+              const unit = getPeriod(periods, event.period);
               const isEditing = editingId === event.id;
               const isProcessing = processing === event.id;
 
@@ -220,15 +220,15 @@ export default function ModerationPanel({ pendingEvents, onClose }) {
                         />
                       </div>
                       <select
-                        value={editForm.unit}
+                        value={editForm.period}
                         onChange={(e) =>
-                          setEditForm((f) => ({ ...f, unit: e.target.value }))
+                          setEditForm((f) => ({ ...f, period: e.target.value }))
                         }
                         style={inputStyle}
                       >
-                        {UNITS.map((u) => (
-                          <option key={u.id} value={u.id}>
-                            {u.label}
+                        {periods.map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {p.label}
                           </option>
                         ))}
                       </select>
@@ -359,8 +359,8 @@ export default function ModerationPanel({ pendingEvents, onClose }) {
                               marginTop: 2,
                             }}
                           >
-                            by {event.addedBy} &middot; {event.section} &middot;{" "}
-                            {unit?.short || event.unit}
+                            by {event.addedBy} &middot; {getSectionName(event.section)} &middot;{" "}
+                            {unit?.label?.slice(0, 12) || event.period}
                           </div>
                         </div>
                       </div>

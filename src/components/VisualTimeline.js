@@ -1,6 +1,8 @@
 import { UNITS, getUnit } from "../data/constants";
+import { useTheme } from "../contexts/ThemeContext";
 
 export default function VisualTimeline({ filteredEvents, onEraClick, selectedUnit }) {
+  const { theme } = useTheme();
   const minYear = 1914;
   const maxYear = 1991;
   const totalSpan = maxYear - minYear;
@@ -17,7 +19,7 @@ export default function VisualTimeline({ filteredEvents, onEraClick, selectedUni
           height: 40,
           borderRadius: 6,
           overflow: "hidden",
-          background: "#F3F4F6",
+          background: theme.subtleBg,
         }}
       >
         {UNITS.map((u) => {
@@ -35,8 +37,8 @@ export default function VisualTimeline({ filteredEvents, onEraClick, selectedUni
                 width: `${width}%`,
                 top: 0,
                 bottom: 0,
-                background: isActive ? u.accent + "25" : "#F3F4F6",
-                borderLeft: `2px solid ${isActive ? u.color : "#E5E7EB"}`,
+                background: isActive ? u.accent + "25" : theme.subtleBg,
+                borderLeft: `2px solid ${isActive ? u.color : theme.inputBorder}`,
                 cursor: "pointer",
                 transition: "all 0.3s ease",
                 display: "flex",
@@ -49,7 +51,7 @@ export default function VisualTimeline({ filteredEvents, onEraClick, selectedUni
                 style={{
                   fontSize: 9,
                   fontWeight: 700,
-                  color: isActive ? u.color : "#9CA3AF",
+                  color: isActive ? u.color : theme.textSecondary,
                   fontFamily: "'Overpass Mono', monospace",
                   letterSpacing: "0.05em",
                   textTransform: "uppercase",
@@ -83,7 +85,7 @@ export default function VisualTimeline({ filteredEvents, onEraClick, selectedUni
                 height: 7,
                 borderRadius: "50%",
                 background: unit.color,
-                border: "2px solid #fff",
+                border: `2px solid ${theme.cardBg}`,
                 boxShadow: `0 0 0 1px ${unit.color}40`,
                 transform: "translateX(-50%)",
                 transition: "all 0.3s ease",
@@ -101,7 +103,7 @@ export default function VisualTimeline({ filteredEvents, onEraClick, selectedUni
             key={y}
             style={{
               fontSize: 9,
-              color: "#B0B0B0",
+              color: theme.textMuted,
               fontFamily: "'Overpass Mono', monospace",
               fontWeight: 500,
             }}

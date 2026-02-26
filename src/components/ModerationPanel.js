@@ -8,8 +8,10 @@ import checkIcon from "@iconify-icons/mdi/check";
 import pencilIcon from "@iconify-icons/mdi/pencil";
 import cancelIcon from "@iconify-icons/mdi/cancel";
 import contentSave from "@iconify-icons/mdi/content-save";
+import { useTheme } from "../contexts/ThemeContext";
 
 export default function ModerationPanel({ pendingEvents, onClose }) {
+  const { theme } = useTheme();
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({});
   const [processing, setProcessing] = useState(null);
@@ -72,11 +74,12 @@ export default function ModerationPanel({ pendingEvents, onClose }) {
   const inputStyle = {
     width: "100%",
     padding: "7px 10px",
-    border: "1.5px solid #E5E7EB",
+    border: `1.5px solid ${theme.inputBorder}`,
     borderRadius: 6,
     fontSize: 12,
     fontFamily: "'Overpass Mono', monospace",
-    background: "#fff",
+    background: theme.inputBg,
+    color: theme.textPrimary,
     outline: "none",
     boxSizing: "border-box",
   };
@@ -86,7 +89,7 @@ export default function ModerationPanel({ pendingEvents, onClose }) {
       style={{
         position: "fixed",
         inset: 0,
-        background: "rgba(0,0,0,0.4)",
+        background: theme.modalOverlay,
         backdropFilter: "blur(4px)",
         display: "flex",
         alignItems: "center",
@@ -97,14 +100,14 @@ export default function ModerationPanel({ pendingEvents, onClose }) {
     >
       <div
         style={{
-          background: "#fff",
+          background: theme.cardBg,
           borderRadius: 14,
           padding: "28px",
           width: "100%",
           maxWidth: 640,
           maxHeight: "90vh",
           overflow: "auto",
-          boxShadow: "0 24px 48px rgba(0,0,0,0.15)",
+          boxShadow: theme.modalShadow,
         }}
       >
         <div
@@ -122,6 +125,7 @@ export default function ModerationPanel({ pendingEvents, onClose }) {
                 fontWeight: 700,
                 margin: 0,
                 fontFamily: "'Newsreader', 'Georgia', serif",
+                color: theme.textPrimary,
               }}
             >
               Moderation Queue
@@ -129,7 +133,7 @@ export default function ModerationPanel({ pendingEvents, onClose }) {
             <p
               style={{
                 fontSize: 11,
-                color: "#9CA3AF",
+                color: theme.textSecondary,
                 margin: "4px 0 0",
                 fontFamily: "'Overpass Mono', monospace",
               }}
@@ -144,7 +148,7 @@ export default function ModerationPanel({ pendingEvents, onClose }) {
               background: "none",
               border: "none",
               cursor: "pointer",
-              color: "#9CA3AF",
+              color: theme.textSecondary,
               lineHeight: 1,
               padding: 4,
               display: "flex",
@@ -160,7 +164,7 @@ export default function ModerationPanel({ pendingEvents, onClose }) {
             style={{
               textAlign: "center",
               padding: "32px 20px",
-              color: "#9CA3AF",
+              color: theme.textSecondary,
               fontFamily: "'Overpass Mono', monospace",
               fontSize: 12,
             }}
@@ -178,10 +182,10 @@ export default function ModerationPanel({ pendingEvents, onClose }) {
                 <div
                   key={event.id}
                   style={{
-                    border: "1.5px solid #E5E7EB",
+                    border: `1.5px solid ${theme.inputBorder}`,
                     borderRadius: 10,
                     padding: "16px 18px",
-                    borderLeft: `4px solid ${unit?.color || "#9CA3AF"}`,
+                    borderLeft: `4px solid ${unit?.color || theme.textSecondary}`,
                   }}
                 >
                   {isEditing ? (
@@ -238,12 +242,12 @@ export default function ModerationPanel({ pendingEvents, onClose }) {
                               padding: "3px 8px",
                               borderRadius: 4,
                               border: `1px solid ${
-                                editForm.tags.includes(tag) ? "#1a1a1a" : "#E5E7EB"
+                                editForm.tags.includes(tag) ? theme.activeToggleBg : theme.inputBorder
                               }`,
                               background: editForm.tags.includes(tag)
-                                ? "#1a1a1a"
-                                : "#fff",
-                              color: editForm.tags.includes(tag) ? "#fff" : "#9CA3AF",
+                                ? theme.activeToggleBg
+                                : theme.inputBg,
+                              color: editForm.tags.includes(tag) ? theme.activeToggleText : theme.textSecondary,
                               fontSize: 10,
                               fontFamily: "'Overpass Mono', monospace",
                               cursor: "pointer",
@@ -281,12 +285,12 @@ export default function ModerationPanel({ pendingEvents, onClose }) {
                           style={{
                             padding: "6px 14px",
                             background: "none",
-                            border: "1.5px solid #E5E7EB",
+                            border: `1.5px solid ${theme.inputBorder}`,
                             borderRadius: 6,
                             fontSize: 11,
                             fontFamily: "'Overpass Mono', monospace",
                             cursor: "pointer",
-                            color: "#6B7280",
+                            color: theme.textTertiary,
                           }}
                         >
                           Cancel
@@ -296,8 +300,8 @@ export default function ModerationPanel({ pendingEvents, onClose }) {
                           disabled={isProcessing}
                           style={{
                             padding: "6px 14px",
-                            background: "#1a1a1a",
-                            color: "#fff",
+                            background: theme.activeToggleBg,
+                            color: theme.activeToggleText,
                             border: "none",
                             borderRadius: 6,
                             fontSize: 11,
@@ -324,7 +328,7 @@ export default function ModerationPanel({ pendingEvents, onClose }) {
                       >
                         <div
                           style={{
-                            background: unit?.color || "#6B7280",
+                            background: unit?.color || theme.textTertiary,
                             color: "#fff",
                             fontSize: 11,
                             fontWeight: 700,
@@ -341,7 +345,7 @@ export default function ModerationPanel({ pendingEvents, onClose }) {
                             style={{
                               fontSize: 14,
                               fontWeight: 700,
-                              color: "#1a1a1a",
+                              color: theme.textPrimary,
                               fontFamily: "'Newsreader', 'Georgia', serif",
                             }}
                           >
@@ -350,7 +354,7 @@ export default function ModerationPanel({ pendingEvents, onClose }) {
                           <div
                             style={{
                               fontSize: 10,
-                              color: "#9CA3AF",
+                              color: theme.textSecondary,
                               fontFamily: "'Overpass Mono', monospace",
                               marginTop: 2,
                             }}
@@ -365,7 +369,7 @@ export default function ModerationPanel({ pendingEvents, onClose }) {
                         style={{
                           fontSize: 12,
                           lineHeight: 1.6,
-                          color: "#374151",
+                          color: theme.textDescription,
                           margin: "0 0 8px 0",
                           fontFamily: "'Newsreader', 'Georgia', serif",
                         }}
@@ -376,7 +380,7 @@ export default function ModerationPanel({ pendingEvents, onClose }) {
                       <div
                         style={{
                           fontSize: 10,
-                          color: "#6B7280",
+                          color: theme.textTertiary,
                           fontFamily: "'Overpass Mono', monospace",
                           marginBottom: 10,
                         }}
@@ -394,9 +398,9 @@ export default function ModerationPanel({ pendingEvents, onClose }) {
                           style={{
                             padding: "6px 14px",
                             background: "none",
-                            border: "1.5px solid #EF4444",
+                            border: `1.5px solid ${theme.errorRed}`,
                             borderRadius: 6,
-                            color: "#EF4444",
+                            color: theme.errorRed,
                             fontSize: 11,
                             fontFamily: "'Overpass Mono', monospace",
                             fontWeight: 600,
@@ -412,9 +416,9 @@ export default function ModerationPanel({ pendingEvents, onClose }) {
                           style={{
                             padding: "6px 14px",
                             background: "none",
-                            border: "1.5px solid #E5E7EB",
+                            border: `1.5px solid ${theme.inputBorder}`,
                             borderRadius: 6,
-                            color: "#374151",
+                            color: theme.textDescription,
                             fontSize: 11,
                             fontFamily: "'Overpass Mono', monospace",
                             fontWeight: 600,
@@ -429,7 +433,7 @@ export default function ModerationPanel({ pendingEvents, onClose }) {
                           disabled={isProcessing}
                           style={{
                             padding: "6px 14px",
-                            background: "#059669",
+                            background: theme.successGreen,
                             color: "#fff",
                             border: "none",
                             borderRadius: 6,

@@ -6,7 +6,19 @@ import sendIcon from "@iconify-icons/mdi/send";
 import lightbulbOutline from "@iconify-icons/mdi/lightbulb-outline";
 import { useTheme } from "../contexts/ThemeContext";
 
-export default function AddEventPanel({ onAdd, onClose, userName, timelineStart = 1910, timelineEnd = 2000, periods = [] }) {
+const DEFAULT_FIELD_CONFIG = {
+  title: "mandatory",
+  year: "mandatory",
+  period: "mandatory",
+  tags: "mandatory",
+  sourceType: "mandatory",
+  description: "mandatory",
+  sourceNote: "mandatory",
+  region: "optional",
+};
+
+export default function AddEventPanel({ onAdd, onClose, userName, timelineStart = 1910, timelineEnd = 2000, periods = [], fieldConfig }) {
+  const fc = { ...DEFAULT_FIELD_CONFIG, ...(fieldConfig || {}) };
   const { theme, getThemedSourceTypeBg } = useTheme();
   const [form, setForm] = useState({
     title: "",
@@ -19,6 +31,7 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
     region: "",
   });
   const [errors, setErrors] = useState({});
+  const [warnings, setWarnings] = useState({});
   const [submitting, setSubmitting] = useState(false);
 
   const update = (field, value) => {
@@ -36,14 +49,22 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
 
   const validate = () => {
     const e = {};
-    if (!form.title.trim()) e.title = true;
-    if (!form.year || isNaN(form.year) || form.year < timelineStart || form.year > timelineEnd)
-      e.year = true;
-    if (!form.period) e.period = true;
-    if (form.tags.length === 0) e.tags = true;
-    if (!form.description.trim()) e.description = true;
-    if (!form.sourceNote.trim()) e.sourceNote = true;
+    const w = {};
+    if (fc.title === "mandatory" && !form.title.trim()) e.title = true;
+    if (fc.year !== "hidden") {
+      if (fc.year === "mandatory" && (!form.year || isNaN(form.year))) {
+        e.year = true;
+      } else if (form.year && !isNaN(form.year) && (Number(form.year) < timelineStart || Number(form.year) > timelineEnd)) {
+        w.year = `Year ${form.year} is outside the timeline range (${timelineStart}–${timelineEnd}). It will still be submitted.`;
+      }
+    }
+    if (fc.period === "mandatory" && !form.period) e.period = true;
+    if (fc.tags === "mandatory" && form.tags.length === 0) e.tags = true;
+    if (fc.description === "mandatory" && !form.description.trim()) e.description = true;
+    if (fc.sourceNote === "mandatory" && !form.sourceNote.trim()) e.sourceNote = true;
+    if (fc.region === "mandatory" && !form.region.trim()) e.region = true;
     setErrors(e);
+    setWarnings(w);
     return Object.keys(e).length === 0;
   };
 
@@ -163,9 +184,10 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
 
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           {/* Title + Year row */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 100px", gap: 10 }}>
+          <div style={{ display: "grid", gridTemplateColumns: fc.year !== "hidden" ? "1fr 100px" : "1fr", gap: 10 }}>
+            {fc.title !== "hidden" && (
             <div>
-              <label style={labelStyle}>Event Title *</label>
+              <label style={labelStyle}>Event Title{fc.title === "mandatory" ? " *" : ""}</label>
               <input
                 value={form.title}
                 onChange={(e) => update("title", e.target.value)}
@@ -173,23 +195,47 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
                 style={fieldStyle("title")}
               />
             </div>
+            )}
+            {fc.year !== "hidden" && (
             <div>
-              <label style={labelStyle}>Year * ({timelineStart}–{timelineEnd})</label>
+              <label style={labelStyle}>Year{fc.year === "mandatory" ? " *" : ""}</label>
               <input
                 value={form.year}
                 onChange={(e) => update("year", e.target.value)}
                 placeholder={String(Math.round((timelineStart + timelineEnd) / 2))}
                 type="number"
-                min={timelineStart}
-                max={timelineEnd}
-                style={fieldStyle("year")}
+                style={{
+                  ...fieldStyle("year"),
+                  borderColor: warnings.year ? "#D97706" : (errors.year ? theme.errorRed : theme.inputBorder),
+                }}
               />
             </div>
+            )}
           </div>
 
+          {/* Year out-of-range warning */}
+          {warnings.year && (
+            <div
+              style={{
+                background: "#FEF3C7",
+                border: "1px solid #D97706",
+                borderRadius: 6,
+                padding: "8px 12px",
+                fontSize: 11,
+                fontFamily: "'Overpass Mono', monospace",
+                color: "#92400E",
+                lineHeight: 1.4,
+                marginTop: -6,
+              }}
+            >
+              {warnings.year}
+            </div>
+          )}
+
           {/* Period */}
+          {fc.period !== "hidden" && (
           <div>
-            <label style={labelStyle}>Time Period *</label>
+            <label style={labelStyle}>Time Period{fc.period === "mandatory" ? " *" : ""}</label>
             <select
               value={form.period}
               onChange={(e) => update("period", e.target.value)}
@@ -203,8 +249,10 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
               ))}
             </select>
           </div>
+          )}
 
           {/* Tags */}
+          {fc.tags !== "hidden" && (
           <div>
             <label
               style={{
@@ -212,7 +260,7 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
                 color: errors.tags ? theme.errorRed : theme.textTertiary,
               }}
             >
-              Tags (select at least 1) *
+              Tags{fc.tags === "mandatory" ? " (select at least 1) *" : ""}
             </label>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
               {TAGS.map((tag) => (
@@ -238,10 +286,12 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
               ))}
             </div>
           </div>
+          )}
 
           {/* Source Type */}
+          {fc.sourceType !== "hidden" && (
           <div>
-            <label style={labelStyle}>Source Type *</label>
+            <label style={labelStyle}>Source Type{fc.sourceType === "mandatory" ? " *" : ""}</label>
             <div style={{ display: "flex", gap: 8 }}>
               {SOURCE_TYPES.map((st) => {
                 const isSelected =
@@ -275,10 +325,12 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
               })}
             </div>
           </div>
+          )}
 
           {/* Description */}
+          {fc.description !== "hidden" && (
           <div>
-            <label style={labelStyle}>Description *</label>
+            <label style={labelStyle}>Description{fc.description === "mandatory" ? " *" : ""}</label>
             <textarea
               value={form.description}
               onChange={(e) => update("description", e.target.value)}
@@ -291,10 +343,12 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
               }}
             />
           </div>
+          )}
 
           {/* Source Note */}
+          {fc.sourceNote !== "hidden" && (
           <div>
-            <label style={labelStyle}>Source Citation *</label>
+            <label style={labelStyle}>Source Citation{fc.sourceNote === "mandatory" ? " *" : ""}</label>
             <input
               value={form.sourceNote}
               onChange={(e) => update("sourceNote", e.target.value)}
@@ -302,10 +356,12 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
               style={fieldStyle("sourceNote")}
             />
           </div>
+          )}
 
           {/* Region */}
+          {fc.region !== "hidden" && (
           <div>
-            <label style={labelStyle}>Region (optional)</label>
+            <label style={labelStyle}>Region{fc.region === "optional" ? " (optional)" : fc.region === "mandatory" ? " *" : ""}</label>
             <input
               value={form.region}
               onChange={(e) => update("region", e.target.value)}
@@ -313,6 +369,7 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
               style={fieldStyle("region")}
             />
           </div>
+          )}
 
           {/* Skill connection hint */}
           <div

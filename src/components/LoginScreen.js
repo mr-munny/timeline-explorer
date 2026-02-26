@@ -1,4 +1,4 @@
-import { SCHOOL_DOMAIN } from "../firebase";
+import { SCHOOL_DOMAIN, ALLOW_ALL_DOMAINS } from "../firebase";
 import { Icon } from "@iconify/react";
 import chartTimelineVariantShimmer from "@iconify-icons/mdi/chart-timeline-variant-shimmer";
 import googleIcon from "@iconify-icons/mdi/google";
@@ -135,7 +135,7 @@ export default function LoginScreen({ onLogin, error }) {
             fontFamily: "'Overpass Mono', monospace",
           }}
         >
-          Requires an @{SCHOOL_DOMAIN} account
+          {ALLOW_ALL_DOMAINS ? "Any Google account can sign in" : `Requires an @${SCHOOL_DOMAIN} account`}
         </p>
       </div>
     </div>

@@ -1,5 +1,8 @@
 import { useMemo } from "react";
 import { TEACHER_EMAIL } from "../firebase";
+import { Icon } from "@iconify/react";
+import accountGroup from "@iconify-icons/mdi/account-group";
+import trophyOutline from "@iconify-icons/mdi/trophy-outline";
 
 export default function ContributorSidebar({ events }) {
   const contributors = useMemo(() => {
@@ -39,6 +42,7 @@ export default function ContributorSidebar({ events }) {
           margin: "0 0 12px 0",
         }}
       >
+        <Icon icon={accountGroup} width={13} style={{ verticalAlign: "middle", marginRight: 4 }} />
         Contributors
       </h3>
       <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
@@ -61,6 +65,9 @@ export default function ContributorSidebar({ events }) {
                 fontStyle: c.isTeacher ? "italic" : "normal",
               }}
             >
+              {!c.isTeacher && c === contributors.find((x) => !x.isTeacher) && (
+                <Icon icon={trophyOutline} width={12} style={{ color: "#F59E0B", marginRight: 3, verticalAlign: "middle" }} />
+              )}
               {c.name}
             </span>
             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>

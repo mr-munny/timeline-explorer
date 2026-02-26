@@ -1,5 +1,9 @@
 import { useState } from "react";
 import { UNITS, TAGS, SOURCE_TYPES } from "../data/constants";
+import { Icon } from "@iconify/react";
+import closeIcon from "@iconify-icons/mdi/close";
+import sendIcon from "@iconify-icons/mdi/send";
+import lightbulbOutline from "@iconify-icons/mdi/lightbulb-outline";
 
 export default function AddEventPanel({ onAdd, onClose, userName }) {
   const [form, setForm] = useState({
@@ -141,13 +145,15 @@ export default function AddEventPanel({ onAdd, onClose, userName }) {
             style={{
               background: "none",
               border: "none",
-              fontSize: 22,
               cursor: "pointer",
               color: "#9CA3AF",
               lineHeight: 1,
+              padding: 4,
+              display: "flex",
+              alignItems: "center",
             }}
           >
-            &times;
+            <Icon icon={closeIcon} width={20} />
           </button>
         </div>
 
@@ -319,7 +325,8 @@ export default function AddEventPanel({ onAdd, onClose, userName }) {
               lineHeight: 1.5,
             }}
           >
-            <span style={{ fontWeight: 700, color: "#374151" }}>
+            <span style={{ fontWeight: 700, color: "#374151", display: "inline-flex", alignItems: "center", gap: 4 }}>
+              <Icon icon={lightbulbOutline} width={14} style={{ color: "#F59E0B" }} />
               Historian's Tip:
             </span>{" "}
             Writing a strong event entry practices several skills &mdash; sourcing
@@ -346,7 +353,7 @@ export default function AddEventPanel({ onAdd, onClose, userName }) {
               transition: "all 0.15s",
             }}
           >
-            {submitting ? "Submitting..." : "Submit Event for Approval"}
+            {submitting ? "Submitting..." : <><Icon icon={sendIcon} width={14} style={{ verticalAlign: "middle", marginRight: 5 }} />Submit Event for Approval</>}
           </button>
         </div>
       </div>

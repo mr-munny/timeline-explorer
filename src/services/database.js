@@ -65,6 +65,67 @@ export async function updateEvent(eventId, updates) {
   await update(eventRef, updates);
 }
 
+// Listen to a section's custom periods in real-time
+export function subscribeToPeriods(section, callback) {
+  const periodsRef = ref(db, `sectionSettings/${section}/periods`);
+  return onValue(periodsRef, (snapshot) => {
+    const data = snapshot.val();
+    callback(Array.isArray(data) ? data.filter(Boolean) : null);
+  });
+}
+
+// Listen to ALL sections' periods (teacher "all" view)
+export function subscribeToAllSectionPeriods(sections, callback) {
+  const periodsMap = {};
+  const unsubscribes = [];
+  for (const sec of sections) {
+    const periodsRef = ref(db, `sectionSettings/${sec}/periods`);
+    const unsub = onValue(periodsRef, (snapshot) => {
+      const data = snapshot.val();
+      periodsMap[sec] = Array.isArray(data) ? data.filter(Boolean) : null;
+      callback({ ...periodsMap });
+    });
+    unsubscribes.push(unsub);
+  }
+  return () => unsubscribes.forEach((fn) => fn());
+}
+
+// Write full periods array for a section
+export async function savePeriods(section, periods) {
+  const periodsRef = ref(db, `sectionSettings/${section}/periods`);
+  await set(periodsRef, periods);
+}
+
+// Listen to default periods template in real-time
+export function subscribeToDefaultPeriods(callback) {
+  const defaultPeriodsRef = ref(db, "defaultPeriods");
+  return onValue(defaultPeriodsRef, (snapshot) => {
+    const data = snapshot.val();
+    callback(Array.isArray(data) ? data.filter(Boolean) : null);
+  });
+}
+
+// Write default periods template
+export async function saveDefaultPeriods(periods) {
+  const defaultPeriodsRef = ref(db, "defaultPeriods");
+  await set(defaultPeriodsRef, periods);
+}
+
+// Listen to sections in real-time
+export function subscribeToSections(callback) {
+  const sectionsRef = ref(db, "sections");
+  return onValue(sectionsRef, (snapshot) => {
+    const data = snapshot.val();
+    callback(Array.isArray(data) ? data.filter(Boolean) : null);
+  });
+}
+
+// Write full sections array
+export async function saveSections(sections) {
+  const sectionsRef = ref(db, "sections");
+  await set(sectionsRef, sections);
+}
+
 // One-time seed: push seed events into Firebase
 export async function seedDatabase(seedEvents) {
   for (const event of seedEvents) {

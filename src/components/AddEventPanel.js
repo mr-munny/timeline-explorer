@@ -1,17 +1,17 @@
 import { useState } from "react";
-import { UNITS, TAGS, SOURCE_TYPES } from "../data/constants";
+import { TAGS, SOURCE_TYPES } from "../data/constants";
 import { Icon } from "@iconify/react";
 import closeIcon from "@iconify-icons/mdi/close";
 import sendIcon from "@iconify-icons/mdi/send";
 import lightbulbOutline from "@iconify-icons/mdi/lightbulb-outline";
 import { useTheme } from "../contexts/ThemeContext";
 
-export default function AddEventPanel({ onAdd, onClose, userName, timelineStart = 1910, timelineEnd = 2000 }) {
+export default function AddEventPanel({ onAdd, onClose, userName, timelineStart = 1910, timelineEnd = 2000, periods = [] }) {
   const { theme, getThemedSourceTypeBg } = useTheme();
   const [form, setForm] = useState({
     title: "",
     year: "",
-    unit: "",
+    period: "",
     tags: [],
     sourceType: "Primary",
     description: "",
@@ -39,7 +39,7 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
     if (!form.title.trim()) e.title = true;
     if (!form.year || isNaN(form.year) || form.year < timelineStart || form.year > timelineEnd)
       e.year = true;
-    if (!form.unit) e.unit = true;
+    if (!form.period) e.period = true;
     if (form.tags.length === 0) e.tags = true;
     if (!form.description.trim()) e.description = true;
     if (!form.sourceNote.trim()) e.sourceNote = true;
@@ -187,18 +187,18 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
             </div>
           </div>
 
-          {/* Unit */}
+          {/* Period */}
           <div>
-            <label style={labelStyle}>Unit *</label>
+            <label style={labelStyle}>Period *</label>
             <select
-              value={form.unit}
-              onChange={(e) => update("unit", e.target.value)}
-              style={fieldStyle("unit")}
+              value={form.period}
+              onChange={(e) => update("period", e.target.value)}
+              style={fieldStyle("period")}
             >
-              <option value="">Select a unit...</option>
-              {UNITS.map((u) => (
-                <option key={u.id} value={u.id}>
-                  {u.label}
+              <option value="">Select a period...</option>
+              {periods.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.label}
                 </option>
               ))}
             </select>

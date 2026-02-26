@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { onAuthStateChanged, signInWithPopup, signOut } from "firebase/auth";
-import { auth, googleProvider, SCHOOL_DOMAIN, TEACHER_EMAIL } from "../firebase";
+import { auth, googleProvider, SCHOOL_DOMAIN, TEACHER_EMAIL, ALLOW_ALL_DOMAINS } from "../firebase";
 
 const AuthContext = createContext(null);
 
@@ -13,7 +13,7 @@ export function AuthProvider({ children }) {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       if (firebaseUser) {
         const email = firebaseUser.email || "";
-        if (email.endsWith("@" + SCHOOL_DOMAIN)) {
+        if (ALLOW_ALL_DOMAINS || email.endsWith("@" + SCHOOL_DOMAIN)) {
           setUser(firebaseUser);
           setAuthError(null);
         } else {

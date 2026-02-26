@@ -1,70 +1,98 @@
-# Getting Started with Create React App
+# Timeline Explorer — Historian's Workshop
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+An interactive educational web app where students explore a filterable chronological timeline of 20th-century history events. Students submit events for teacher review; approved events appear on the shared class timeline and are archived to Google Sheets.
 
-## Available Scripts
+**Live site:** https://mr-munny.github.io/timeline-explorer
 
-In the project directory, you can run:
+## Features
 
-### `npm start`
+- **Interactive timeline** with era bands spanning WWI, the Great Depression, WWII, and the Cold War
+- **Filter & search** by unit, tags (Political, Economic, Military, etc.), source type, and free text
+- **Student submissions** — students propose new events that enter a moderation queue
+- **Teacher moderation** — approve, reject, or edit submissions before they go live
+- **Contributor leaderboard** — ranked sidebar showing top student contributors
+- **Google Sheets archival** — approved events are automatically logged to a spreadsheet
+- **Section support** — multiple class periods with isolated event pools
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+## Tech Stack
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+- **React 19** (Create React App) — JavaScript, no TypeScript
+- **Firebase** — Realtime Database + Authentication (Google OAuth)
+- **GitHub Pages** — deployment via `gh-pages`
+- **Google Sheets** — Apps Script webhook for archival
 
-### `npm test`
+## Getting Started
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### Prerequisites
 
-### `npm run build`
+- Node.js (v16+)
+- A Firebase project with Realtime Database and Google Auth enabled
+- A Google Apps Script deployment for Sheets integration (optional)
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### Setup
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/mr-munny/timeline-explorer.git
+   cd timeline-explorer
+   ```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
 
-### `npm run eject`
+3. Create a `.env.local` file from the example:
+   ```bash
+   cp .env.example .env.local
+   ```
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+4. Fill in your environment variables in `.env.local`:
+   | Variable | Purpose |
+   |---|---|
+   | `REACT_APP_TEACHER_EMAIL` | Email that grants teacher/admin role |
+   | `REACT_APP_SCHOOL_DOMAIN` | Allowed email domain (e.g. `school.edu`) |
+   | `REACT_APP_SECTIONS` | Comma-separated section names (e.g. `Period1,Period2`) |
+   | `REACT_APP_APPS_SCRIPT_URL` | Google Apps Script URL for Sheets integration |
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+5. Start the dev server:
+   ```bash
+   npm start
+   ```
 
 ### Deployment
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+```bash
+npm run deploy
+```
 
-### `npm run build` fails to minify
+This builds the app and pushes to the `gh-pages` branch, which GitHub Pages serves automatically.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+## Project Structure
+
+```
+src/
+├── App.js                  # Main container — state, filtering, sorting, layout
+├── index.js                # Entry point, wraps App in AuthProvider
+├── firebase.js             # Firebase config and initialization
+├── components/
+│   ├── AddEventPanel.js    # Student event submission modal
+│   ├── ContributorSidebar.js
+│   ├── EventCard.js        # Expandable event display card
+│   ├── LoginScreen.js      # Google sign-in
+│   ├── ModerationPanel.js  # Teacher review queue
+│   └── VisualTimeline.js   # Era-band timeline visualization
+├── contexts/
+│   └── AuthContext.js      # Auth state + role via Context API
+├── services/
+│   ├── database.js         # Firebase CRUD operations
+│   └── sheets.js           # Google Sheets webhook
+└── data/
+    ├── constants.js        # Units, tags, source types
+    └── seedEvents.js       # 25 sample events for initial seeding
+```
+
+## URL Parameters
+
+- `?section=Period1` — select a class section (default: Period1)
+- `?section=all` — teacher-only cross-section view

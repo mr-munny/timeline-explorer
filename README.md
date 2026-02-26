@@ -1,12 +1,12 @@
-# Timeline Explorer — Historian's Workshop
+# Timeline Explorer
 
-An interactive educational web app where students explore a filterable chronological timeline of 20th-century history events. Students submit events for teacher review; approved events appear on the shared class timeline and are archived to Google Sheets.
+An interactive educational web app where students explore a filterable chronological timeline of history events. Students submit events for teacher review; approved events appear on the shared class timeline and are archived to Google Sheets.
 
 **Live site:** https://mr-munny.github.io/timeline-explorer
 
 ## Features
 
-- **Interactive timeline** with era bands spanning WWI, the Great Depression, WWII, and the Cold War
+- **Interactive timeline** with era bands and visual event markers
 - **Filter & search** by unit, tags (Political, Economic, Military, etc.), source type, and free text
 - **Student submissions** — students propose new events that enter a moderation queue
 - **Teacher moderation** — approve, reject, or edit submissions before they go live

@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { useAuth } from "./contexts/AuthContext";
+import { useTheme } from "./contexts/ThemeContext";
 import { UNITS, TAGS, getUnit } from "./data/constants";
 import { SECTIONS, TEACHER_EMAIL } from "./firebase";
 import { subscribeToEvents, submitEvent, deleteEvent, seedDatabase } from "./services/database";
@@ -30,6 +31,7 @@ function getInitialSection() {
 
 export default function App() {
   const { user, loading, authError, login, logout, isTeacher } = useAuth();
+  const { theme, mode, toggleTheme, getThemedUnitBg } = useTheme();
   const [allEvents, setAllEvents] = useState([]);
   const [section, setSection] = useState(getInitialSection);
   const [selectedUnit, setSelectedUnit] = useState("all");
@@ -146,9 +148,9 @@ export default function App() {
           justifyContent: "center",
           minHeight: "100vh",
           fontFamily: "'Overpass Mono', monospace",
-          color: "#9CA3AF",
+          color: theme.textSecondary,
           fontSize: 13,
-          background: "#F7F7F5",
+          background: theme.pageBg,
         }}
       >
         Loading...
@@ -171,18 +173,20 @@ export default function App() {
     <div
       style={{
         fontFamily: "'Newsreader', 'Georgia', serif",
-        background: "#F7F7F5",
+        background: theme.pageBg,
         minHeight: "100vh",
-        color: "#1a1a1a",
+        color: theme.pageText,
+        colorScheme: mode,
       }}
     >
       <link
         href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,600;6..72,700&family=Overpass+Mono:wght@400;500;600;700&display=swap"
         rel="stylesheet"
       />
+      <style>{`* { transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease; }`}</style>
 
       {/* Header */}
-      <div style={{ background: "#18181B", color: "#fff", padding: "24px 28px 16px" }}>
+      <div style={{ background: theme.headerBg, color: theme.headerText, padding: "24px 28px 16px" }}>
         <div style={{ maxWidth: 960, margin: "0 auto" }}>
           <div
             style={{
@@ -206,11 +210,11 @@ export default function App() {
                   style={{
                     fontSize: 10,
                     fontWeight: 700,
-                    color: "#F59E0B",
+                    color: theme.accentGold,
                     fontFamily: "'Overpass Mono', monospace",
                     letterSpacing: "0.1em",
                     textTransform: "uppercase",
-                    background: "#F59E0B18",
+                    background: theme.accentGoldSubtle,
                     padding: "3px 8px",
                     borderRadius: 4,
                   }}
@@ -222,11 +226,11 @@ export default function App() {
                     style={{
                       fontSize: 10,
                       fontWeight: 700,
-                      color: "#34D399",
+                      color: theme.teacherGreen,
                       fontFamily: "'Overpass Mono', monospace",
                       letterSpacing: "0.1em",
                       textTransform: "uppercase",
-                      background: "#34D39918",
+                      background: theme.teacherGreenSubtle,
                       padding: "3px 8px",
                       borderRadius: 4,
                       display: "inline-flex",
@@ -258,7 +262,7 @@ export default function App() {
               <p
                 style={{
                   fontSize: 11,
-                  color: "#71717A",
+                  color: theme.headerSubtext,
                   margin: "6px 0 0 0",
                   fontFamily: "'Overpass Mono', monospace",
                 }}
@@ -281,8 +285,8 @@ export default function App() {
                           padding: "5px 12px",
                           borderRadius: 6,
                           border: "none",
-                          background: isActive ? "#F59E0B" : "#ffffff18",
-                          color: isActive ? "#18181B" : "#71717A",
+                          background: isActive ? theme.accentGold : theme.headerButtonBg,
+                          color: isActive ? theme.headerBg : theme.headerSubtext,
                           fontSize: 11,
                           fontFamily: "'Overpass Mono', monospace",
                           fontWeight: isActive ? 700 : 500,
@@ -305,8 +309,8 @@ export default function App() {
                   disabled={seeding}
                   style={{
                     padding: "10px 18px",
-                    background: "#6366F1",
-                    color: "#fff",
+                    background: theme.seedPurple,
+                    color: theme.headerText,
                     border: "none",
                     borderRadius: 8,
                     fontSize: 12,
@@ -324,8 +328,8 @@ export default function App() {
                   onClick={() => setShowModeration(true)}
                   style={{
                     padding: "10px 18px",
-                    background: "#EF4444",
-                    color: "#fff",
+                    background: theme.errorRed,
+                    color: theme.headerText,
                     border: "none",
                     borderRadius: 8,
                     fontSize: 12,
@@ -343,8 +347,8 @@ export default function App() {
                 onClick={() => setShowAddPanel(true)}
                 style={{
                   padding: "10px 18px",
-                  background: "#F59E0B",
-                  color: "#18181B",
+                  background: theme.accentGold,
+                  color: theme.headerBg,
                   border: "none",
                   borderRadius: 8,
                   fontSize: 12,
@@ -358,12 +362,29 @@ export default function App() {
                 Add Event
               </button>
               <button
+                onClick={toggleTheme}
+                title={mode === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+                style={{
+                  padding: "10px 14px",
+                  background: "transparent",
+                  color: theme.headerSubtext,
+                  border: `1px solid ${theme.headerBorder}`,
+                  borderRadius: 8,
+                  fontSize: 16,
+                  fontFamily: "'Overpass Mono', monospace",
+                  cursor: "pointer",
+                  lineHeight: 1,
+                }}
+              >
+                {mode === "dark" ? "\u2600" : "\u263E"}
+              </button>
+              <button
                 onClick={logout}
                 style={{
                   padding: "10px 14px",
                   background: "transparent",
-                  color: "#71717A",
-                  border: "1px solid #3f3f46",
+                  color: theme.headerSubtext,
+                  border: `1px solid ${theme.headerBorder}`,
                   borderRadius: 8,
                   fontSize: 11,
                   fontFamily: "'Overpass Mono', monospace",
@@ -380,7 +401,7 @@ export default function App() {
       </div>
 
       {/* Visual Timeline */}
-      <div style={{ background: "#fff", borderBottom: "1px solid #EBEBEB" }}>
+      <div style={{ background: theme.cardBg, borderBottom: `1px solid ${theme.cardBorder}` }}>
         <div style={{ maxWidth: 960, margin: "0 auto" }}>
           <VisualTimeline
             filteredEvents={filteredEvents}
@@ -411,7 +432,7 @@ export default function App() {
                 left: 10,
                 top: "50%",
                 transform: "translateY(-50%)",
-                color: "#9CA3AF",
+                color: theme.textSecondary,
                 pointerEvents: "none",
               }}
             />
@@ -423,11 +444,12 @@ export default function App() {
               style={{
                 width: "100%",
                 padding: "9px 14px 9px 30px",
-                border: "1.5px solid #E5E7EB",
+                border: `1.5px solid ${theme.inputBorder}`,
                 borderRadius: 8,
                 fontSize: 12,
                 fontFamily: "'Overpass Mono', monospace",
-                background: "#fff",
+                background: theme.inputBg,
+                color: theme.textPrimary,
                 outline: "none",
                 boxSizing: "border-box",
               }}
@@ -438,15 +460,15 @@ export default function App() {
             onChange={(e) => setSelectedUnit(e.target.value)}
             style={{
               padding: "9px 12px",
-              border: "1.5px solid #E5E7EB",
+              border: `1.5px solid ${theme.inputBorder}`,
               borderRadius: 8,
               fontSize: 11,
               fontFamily: "'Overpass Mono', monospace",
-              background: "#fff",
+              background: theme.inputBg,
               cursor: "pointer",
               color:
                 selectedUnit === "all"
-                  ? "#9CA3AF"
+                  ? theme.textSecondary
                   : getUnit(selectedUnit)?.color,
               fontWeight: selectedUnit === "all" ? 500 : 700,
             }}
@@ -463,13 +485,13 @@ export default function App() {
             onChange={(e) => setSelectedTag(e.target.value)}
             style={{
               padding: "9px 12px",
-              border: "1.5px solid #E5E7EB",
+              border: `1.5px solid ${theme.inputBorder}`,
               borderRadius: 8,
               fontSize: 11,
               fontFamily: "'Overpass Mono', monospace",
-              background: "#fff",
+              background: theme.inputBg,
               cursor: "pointer",
-              color: selectedTag === "all" ? "#9CA3AF" : "#1a1a1a",
+              color: selectedTag === "all" ? theme.textSecondary : theme.textPrimary,
             }}
           >
             <option value="all">All Tags</option>
@@ -485,13 +507,13 @@ export default function App() {
               onChange={(e) => setSectionFilter(e.target.value)}
               style={{
                 padding: "9px 12px",
-                border: "1.5px solid #E5E7EB",
+                border: `1.5px solid ${theme.inputBorder}`,
                 borderRadius: 8,
                 fontSize: 11,
                 fontFamily: "'Overpass Mono', monospace",
-                background: "#fff",
+                background: theme.inputBg,
                 cursor: "pointer",
-                color: sectionFilter === "all" ? "#9CA3AF" : "#1a1a1a",
+                color: sectionFilter === "all" ? theme.textSecondary : theme.textPrimary,
               }}
             >
               <option value="all">All Sections</option>
@@ -506,13 +528,13 @@ export default function App() {
             onClick={() => setSortOrder((s) => (s === "chrono" ? "reverse" : "chrono"))}
             style={{
               padding: "9px 12px",
-              border: "1.5px solid #E5E7EB",
+              border: `1.5px solid ${theme.inputBorder}`,
               borderRadius: 8,
               fontSize: 11,
               fontFamily: "'Overpass Mono', monospace",
-              background: "#fff",
+              background: theme.inputBg,
               cursor: "pointer",
-              color: "#6B7280",
+              color: theme.textTertiary,
             }}
           >
             <Icon icon={sortOrder === "chrono" ? sortAscending : sortDescending} width={14} style={{ verticalAlign: "middle", marginRight: 3 }} />
@@ -522,12 +544,12 @@ export default function App() {
             onClick={() => setShowContributors((s) => !s)}
             style={{
               padding: "9px 12px",
-              border: `1.5px solid ${showContributors ? "#1a1a1a" : "#E5E7EB"}`,
+              border: `1.5px solid ${showContributors ? theme.activeToggleBg : theme.inputBorder}`,
               borderRadius: 8,
               fontSize: 11,
               fontFamily: "'Overpass Mono', monospace",
-              background: showContributors ? "#1a1a1a" : "#fff",
-              color: showContributors ? "#fff" : "#6B7280",
+              background: showContributors ? theme.activeToggleBg : theme.inputBg,
+              color: showContributors ? theme.activeToggleText : theme.textTertiary,
               cursor: "pointer",
               fontWeight: 600,
               transition: "all 0.15s",
@@ -555,7 +577,7 @@ export default function App() {
             <span
               style={{
                 fontSize: 10,
-                color: "#B0B0B0",
+                color: theme.textMuted,
                 fontFamily: "'Overpass Mono', monospace",
               }}
             >
@@ -565,7 +587,7 @@ export default function App() {
               <span
                 style={{
                   fontSize: 10,
-                  background: getUnit(selectedUnit)?.bg,
+                  background: getThemedUnitBg(selectedUnit) || getUnit(selectedUnit)?.bg,
                   color: getUnit(selectedUnit)?.color,
                   padding: "3px 8px",
                   borderRadius: 4,
@@ -580,8 +602,8 @@ export default function App() {
               <span
                 style={{
                   fontSize: 10,
-                  background: "#F3F4F6",
-                  color: "#374151",
+                  background: theme.subtleBg,
+                  color: theme.textDescription,
                   padding: "3px 8px",
                   borderRadius: 4,
                   fontFamily: "'Overpass Mono', monospace",
@@ -595,8 +617,8 @@ export default function App() {
               <span
                 style={{
                   fontSize: 10,
-                  background: "#F3F4F6",
-                  color: "#374151",
+                  background: theme.subtleBg,
+                  color: theme.textDescription,
                   padding: "3px 8px",
                   borderRadius: 4,
                   fontFamily: "'Overpass Mono', monospace",
@@ -610,8 +632,8 @@ export default function App() {
               <span
                 style={{
                   fontSize: 10,
-                  background: "#F3F4F6",
-                  color: "#374151",
+                  background: theme.subtleBg,
+                  color: theme.textDescription,
                   padding: "3px 8px",
                   borderRadius: 4,
                   fontFamily: "'Overpass Mono', monospace",
@@ -629,7 +651,7 @@ export default function App() {
               }}
               style={{
                 fontSize: 10,
-                color: "#EF4444",
+                color: theme.errorRed,
                 background: "none",
                 border: "none",
                 cursor: "pointer",
@@ -644,7 +666,7 @@ export default function App() {
               style={{
                 marginLeft: "auto",
                 fontSize: 11,
-                color: "#9CA3AF",
+                color: theme.textSecondary,
                 fontFamily: "'Overpass Mono', monospace",
               }}
             >
@@ -670,7 +692,7 @@ export default function App() {
                 style={{
                   textAlign: "center",
                   padding: "48px 20px",
-                  color: "#9CA3AF",
+                  color: theme.textSecondary,
                   fontFamily: "'Overpass Mono', monospace",
                   fontSize: 12,
                 }}
@@ -708,14 +730,14 @@ export default function App() {
           style={{
             marginTop: 32,
             padding: "16px 0",
-            borderTop: "1px solid #EBEBEB",
+            borderTop: `1px solid ${theme.cardBorder}`,
             textAlign: "center",
           }}
         >
           <p
             style={{
               fontSize: 10,
-              color: "#B0B0B0",
+              color: theme.textMuted,
               fontFamily: "'Overpass Mono', monospace",
               margin: 0,
               lineHeight: 1.6,

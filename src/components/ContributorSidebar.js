@@ -3,8 +3,11 @@ import { TEACHER_EMAIL } from "../firebase";
 import { Icon } from "@iconify/react";
 import accountGroup from "@iconify-icons/mdi/account-group";
 import trophyOutline from "@iconify-icons/mdi/trophy-outline";
+import { useTheme } from "../contexts/ThemeContext";
 
 export default function ContributorSidebar({ events }) {
+  const { theme } = useTheme();
+
   const contributors = useMemo(() => {
     const byName = {};
     events.forEach((e) => {
@@ -25,9 +28,9 @@ export default function ContributorSidebar({ events }) {
   return (
     <div
       style={{
-        background: "#fff",
+        background: theme.cardBg,
         borderRadius: 10,
-        border: "1.5px solid #EBEBEB",
+        border: `1.5px solid ${theme.cardBorder}`,
         padding: "16px 18px",
       }}
     >
@@ -35,7 +38,7 @@ export default function ContributorSidebar({ events }) {
         style={{
           fontSize: 11,
           fontWeight: 700,
-          color: "#9CA3AF",
+          color: theme.textSecondary,
           fontFamily: "'Overpass Mono', monospace",
           textTransform: "uppercase",
           letterSpacing: "0.06em",
@@ -60,7 +63,7 @@ export default function ContributorSidebar({ events }) {
               style={{
                 fontSize: 12,
                 fontFamily: "'Overpass Mono', monospace",
-                color: c.isTeacher ? "#6B7280" : "#1a1a1a",
+                color: c.isTeacher ? theme.textTertiary : theme.textPrimary,
                 fontWeight: c.isTeacher ? 500 : 600,
                 fontStyle: c.isTeacher ? "italic" : "normal",
               }}
@@ -76,7 +79,7 @@ export default function ContributorSidebar({ events }) {
                   width: Math.min(c.count * 16, 80),
                   height: 6,
                   borderRadius: 3,
-                  background: c.isTeacher ? "#E5E7EB" : "#1a1a1a",
+                  background: c.isTeacher ? theme.inputBorder : theme.textPrimary,
                   transition: "width 0.3s ease",
                 }}
               />
@@ -84,7 +87,7 @@ export default function ContributorSidebar({ events }) {
                 style={{
                   fontSize: 11,
                   fontFamily: "'Overpass Mono', monospace",
-                  color: "#9CA3AF",
+                  color: theme.textSecondary,
                   fontWeight: 600,
                   minWidth: 16,
                   textAlign: "right",

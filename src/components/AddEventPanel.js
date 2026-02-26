@@ -4,8 +4,10 @@ import { Icon } from "@iconify/react";
 import closeIcon from "@iconify-icons/mdi/close";
 import sendIcon from "@iconify-icons/mdi/send";
 import lightbulbOutline from "@iconify-icons/mdi/lightbulb-outline";
+import { useTheme } from "../contexts/ThemeContext";
 
 export default function AddEventPanel({ onAdd, onClose, userName }) {
+  const { theme, getThemedSourceTypeBg } = useTheme();
   const [form, setForm] = useState({
     title: "",
     year: "",
@@ -62,11 +64,12 @@ export default function AddEventPanel({ onAdd, onClose, userName }) {
   const fieldStyle = (field) => ({
     width: "100%",
     padding: "9px 12px",
-    border: `1.5px solid ${errors[field] ? "#EF4444" : "#E5E7EB"}`,
+    border: `1.5px solid ${errors[field] ? theme.errorRed : theme.inputBorder}`,
     borderRadius: 7,
     fontSize: 13,
     fontFamily: "'Overpass Mono', monospace",
-    background: "#fff",
+    background: theme.inputBg,
+    color: theme.textPrimary,
     outline: "none",
     boxSizing: "border-box",
     transition: "border-color 0.2s",
@@ -75,7 +78,7 @@ export default function AddEventPanel({ onAdd, onClose, userName }) {
   const labelStyle = {
     fontSize: 11,
     fontWeight: 700,
-    color: "#6B7280",
+    color: theme.textTertiary,
     fontFamily: "'Overpass Mono', monospace",
     textTransform: "uppercase",
     letterSpacing: "0.05em",
@@ -88,7 +91,7 @@ export default function AddEventPanel({ onAdd, onClose, userName }) {
       style={{
         position: "fixed",
         inset: 0,
-        background: "rgba(0,0,0,0.4)",
+        background: theme.modalOverlay,
         backdropFilter: "blur(4px)",
         display: "flex",
         alignItems: "center",
@@ -99,14 +102,14 @@ export default function AddEventPanel({ onAdd, onClose, userName }) {
     >
       <div
         style={{
-          background: "#fff",
+          background: theme.cardBg,
           borderRadius: 14,
           padding: "28px 28px 20px",
           width: "100%",
           maxWidth: 520,
           maxHeight: "90vh",
           overflow: "auto",
-          boxShadow: "0 24px 48px rgba(0,0,0,0.15)",
+          boxShadow: theme.modalShadow,
         }}
       >
         <div
@@ -124,6 +127,7 @@ export default function AddEventPanel({ onAdd, onClose, userName }) {
                 fontWeight: 700,
                 margin: 0,
                 fontFamily: "'Newsreader', 'Georgia', serif",
+                color: theme.textPrimary,
               }}
             >
               Add a Historical Event
@@ -131,12 +135,12 @@ export default function AddEventPanel({ onAdd, onClose, userName }) {
             <p
               style={{
                 fontSize: 11,
-                color: "#9CA3AF",
+                color: theme.textSecondary,
                 margin: "4px 0 0",
                 fontFamily: "'Overpass Mono', monospace",
               }}
             >
-              Submitting as <strong style={{ color: "#374151" }}>{userName}</strong> &middot;
+              Submitting as <strong style={{ color: theme.textDescription }}>{userName}</strong> &middot;
               Requires teacher approval
             </p>
           </div>
@@ -146,7 +150,7 @@ export default function AddEventPanel({ onAdd, onClose, userName }) {
               background: "none",
               border: "none",
               cursor: "pointer",
-              color: "#9CA3AF",
+              color: theme.textSecondary,
               lineHeight: 1,
               padding: 4,
               display: "flex",
@@ -203,7 +207,7 @@ export default function AddEventPanel({ onAdd, onClose, userName }) {
             <label
               style={{
                 ...labelStyle,
-                color: errors.tags ? "#EF4444" : "#6B7280",
+                color: errors.tags ? theme.errorRed : theme.textTertiary,
               }}
             >
               Tags (select at least 1) *
@@ -217,9 +221,9 @@ export default function AddEventPanel({ onAdd, onClose, userName }) {
                   style={{
                     padding: "5px 10px",
                     borderRadius: 5,
-                    border: `1.5px solid ${form.tags.includes(tag) ? "#1a1a1a" : "#E5E7EB"}`,
-                    background: form.tags.includes(tag) ? "#1a1a1a" : "#fff",
-                    color: form.tags.includes(tag) ? "#fff" : "#6B7280",
+                    border: `1.5px solid ${form.tags.includes(tag) ? theme.activeToggleBg : theme.inputBorder}`,
+                    background: form.tags.includes(tag) ? theme.activeToggleBg : theme.inputBg,
+                    color: form.tags.includes(tag) ? theme.activeToggleText : theme.textTertiary,
                     fontSize: 11,
                     fontFamily: "'Overpass Mono', monospace",
                     fontWeight: 600,
@@ -237,40 +241,36 @@ export default function AddEventPanel({ onAdd, onClose, userName }) {
           <div>
             <label style={labelStyle}>Source Type *</label>
             <div style={{ display: "flex", gap: 8 }}>
-              {SOURCE_TYPES.map((st) => (
-                <button
-                  key={st.id}
-                  type="button"
-                  onClick={() =>
-                    update("sourceType", st.id === "primary" ? "Primary" : "Secondary")
-                  }
-                  style={{
-                    flex: 1,
-                    padding: "8px 12px",
-                    borderRadius: 7,
-                    border: `1.5px solid ${
-                      form.sourceType === (st.id === "primary" ? "Primary" : "Secondary")
-                        ? st.color
-                        : "#E5E7EB"
-                    }`,
-                    background:
-                      form.sourceType === (st.id === "primary" ? "Primary" : "Secondary")
-                        ? st.bg
-                        : "#fff",
-                    color:
-                      form.sourceType === (st.id === "primary" ? "Primary" : "Secondary")
-                        ? st.color
-                        : "#9CA3AF",
-                    fontSize: 12,
-                    fontFamily: "'Overpass Mono', monospace",
-                    fontWeight: 700,
-                    cursor: "pointer",
-                    transition: "all 0.15s",
-                  }}
-                >
-                  {st.label}
-                </button>
-              ))}
+              {SOURCE_TYPES.map((st) => {
+                const isSelected =
+                  form.sourceType === (st.id === "primary" ? "Primary" : "Secondary");
+                return (
+                  <button
+                    key={st.id}
+                    type="button"
+                    onClick={() =>
+                      update("sourceType", st.id === "primary" ? "Primary" : "Secondary")
+                    }
+                    style={{
+                      flex: 1,
+                      padding: "8px 12px",
+                      borderRadius: 7,
+                      border: `1.5px solid ${isSelected ? st.color : theme.inputBorder}`,
+                      background: isSelected
+                        ? (getThemedSourceTypeBg(st.id) || st.bg)
+                        : theme.inputBg,
+                      color: isSelected ? st.color : theme.textSecondary,
+                      fontSize: 12,
+                      fontFamily: "'Overpass Mono', monospace",
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      transition: "all 0.15s",
+                    }}
+                  >
+                    {st.label}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -315,17 +315,17 @@ export default function AddEventPanel({ onAdd, onClose, userName }) {
           {/* Skill connection hint */}
           <div
             style={{
-              background: "#FAFAF8",
-              border: "1px solid #E5E7EB",
+              background: theme.warmSubtleBg,
+              border: `1px solid ${theme.inputBorder}`,
               borderRadius: 8,
               padding: "10px 14px",
               fontSize: 11,
               fontFamily: "'Overpass Mono', monospace",
-              color: "#6B7280",
+              color: theme.textTertiary,
               lineHeight: 1.5,
             }}
           >
-            <span style={{ fontWeight: 700, color: "#374151", display: "inline-flex", alignItems: "center", gap: 4 }}>
+            <span style={{ fontWeight: 700, color: theme.textDescription, display: "inline-flex", alignItems: "center", gap: 4 }}>
               <Icon icon={lightbulbOutline} width={14} style={{ color: "#F59E0B" }} />
               Historian's Tip:
             </span>{" "}
@@ -341,8 +341,8 @@ export default function AddEventPanel({ onAdd, onClose, userName }) {
             disabled={submitting}
             style={{
               padding: "12px 20px",
-              background: submitting ? "#9CA3AF" : "#1a1a1a",
-              color: "#fff",
+              background: submitting ? theme.textSecondary : theme.activeToggleBg,
+              color: theme.activeToggleText,
               border: "none",
               borderRadius: 8,
               fontSize: 13,

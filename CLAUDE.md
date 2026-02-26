@@ -14,15 +14,6 @@ An interactive educational web app where students explore a filterable chronolog
 - **Deployment:** GitHub Pages via `gh-pages` package
 - **Integration:** Google Sheets via Apps Script webhook
 
-## Quick Reference
-
-```bash
-npm start          # Dev server on port 3000
-npm test           # Jest + React Testing Library (no tests written yet)
-npm run build      # Production build
-npm run deploy     # Build + deploy to GitHub Pages
-```
-
 ## Source Structure
 
 ```
@@ -151,6 +142,12 @@ Copy `.env.example` to `.env.local` and fill in real values:
 1. `npm run deploy` triggers `predeploy` (build) then pushes `/build` to gh-pages branch
 2. GitHub Pages serves from gh-pages branch at the homepage URL
 3. No CI/CD pipelines (GitHub Actions, etc.) are configured
+
+## Git Conventions
+
+- Branch prefixes: feature/, fix/, refactor/, chore/, docs/, test/
+- Format: type/short-description (e.g., feature/admin-panel)
+- Use conventional commits: feat, fix, refactor, chore, docs, test
 
 ## Things to Know
 

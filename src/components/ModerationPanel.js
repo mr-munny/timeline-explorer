@@ -2,6 +2,12 @@ import { useState } from "react";
 import { getUnit, UNITS, TAGS } from "../data/constants";
 import { approveEvent, rejectEvent, updateEvent } from "../services/database";
 import { writeToSheet } from "../services/sheets";
+import { Icon } from "@iconify/react";
+import closeIcon from "@iconify-icons/mdi/close";
+import checkIcon from "@iconify-icons/mdi/check";
+import pencilIcon from "@iconify-icons/mdi/pencil";
+import cancelIcon from "@iconify-icons/mdi/cancel";
+import contentSave from "@iconify-icons/mdi/content-save";
 
 export default function ModerationPanel({ pendingEvents, onClose }) {
   const [editingId, setEditingId] = useState(null);
@@ -137,13 +143,15 @@ export default function ModerationPanel({ pendingEvents, onClose }) {
             style={{
               background: "none",
               border: "none",
-              fontSize: 22,
               cursor: "pointer",
               color: "#9CA3AF",
               lineHeight: 1,
+              padding: 4,
+              display: "flex",
+              alignItems: "center",
             }}
           >
-            &times;
+            <Icon icon={closeIcon} width={20} />
           </button>
         </div>
 
@@ -298,6 +306,7 @@ export default function ModerationPanel({ pendingEvents, onClose }) {
                             cursor: "pointer",
                           }}
                         >
+                          <Icon icon={contentSave} width={13} style={{ verticalAlign: "middle", marginRight: 3 }} />
                           Save Edits
                         </button>
                       </div>
@@ -394,6 +403,7 @@ export default function ModerationPanel({ pendingEvents, onClose }) {
                             cursor: "pointer",
                           }}
                         >
+                          <Icon icon={cancelIcon} width={13} style={{ verticalAlign: "middle", marginRight: 3 }} />
                           Reject
                         </button>
                         <button
@@ -411,6 +421,7 @@ export default function ModerationPanel({ pendingEvents, onClose }) {
                             cursor: "pointer",
                           }}
                         >
+                          <Icon icon={pencilIcon} width={13} style={{ verticalAlign: "middle", marginRight: 3 }} />
                           Edit
                         </button>
                         <button
@@ -428,7 +439,7 @@ export default function ModerationPanel({ pendingEvents, onClose }) {
                             cursor: "pointer",
                           }}
                         >
-                          {isProcessing ? "..." : "Approve"}
+                          {isProcessing ? "..." : <><Icon icon={checkIcon} width={14} style={{ verticalAlign: "middle", marginRight: 3 }} />Approve</>}
                         </button>
                       </div>
                     </>

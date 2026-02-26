@@ -6,7 +6,7 @@ import sendIcon from "@iconify-icons/mdi/send";
 import lightbulbOutline from "@iconify-icons/mdi/lightbulb-outline";
 import { useTheme } from "../contexts/ThemeContext";
 
-export default function AddEventPanel({ onAdd, onClose, userName }) {
+export default function AddEventPanel({ onAdd, onClose, userName, timelineStart = 1910, timelineEnd = 2000 }) {
   const { theme, getThemedSourceTypeBg } = useTheme();
   const [form, setForm] = useState({
     title: "",
@@ -37,7 +37,7 @@ export default function AddEventPanel({ onAdd, onClose, userName }) {
   const validate = () => {
     const e = {};
     if (!form.title.trim()) e.title = true;
-    if (!form.year || isNaN(form.year) || form.year < 1900 || form.year > 2000)
+    if (!form.year || isNaN(form.year) || form.year < timelineStart || form.year > timelineEnd)
       e.year = true;
     if (!form.unit) e.unit = true;
     if (form.tags.length === 0) e.tags = true;
@@ -174,12 +174,14 @@ export default function AddEventPanel({ onAdd, onClose, userName }) {
               />
             </div>
             <div>
-              <label style={labelStyle}>Year *</label>
+              <label style={labelStyle}>Year * ({timelineStart}–{timelineEnd})</label>
               <input
                 value={form.year}
                 onChange={(e) => update("year", e.target.value)}
-                placeholder="1945"
+                placeholder={String(Math.round((timelineStart + timelineEnd) / 2))}
                 type="number"
+                min={timelineStart}
+                max={timelineEnd}
                 style={fieldStyle("year")}
               />
             </div>

@@ -1,11 +1,12 @@
 import { UNITS, getUnit } from "../data/constants";
 import { useTheme } from "../contexts/ThemeContext";
 
-export default function VisualTimeline({ filteredEvents, onEraClick, selectedUnit }) {
+export default function VisualTimeline({ filteredEvents, onEraClick, selectedUnit, timelineStart = 1910, timelineEnd = 2000, currentYear }) {
   const { theme } = useTheme();
-  const minYear = 1914;
-  const maxYear = 1991;
+  const minYear = timelineStart;
+  const maxYear = timelineEnd;
   const totalSpan = maxYear - minYear;
+  const showFutureOverlay = currentYear && maxYear > currentYear;
 
   const getPosition = (year) =>
     Math.max(0, Math.min(100, ((year - minYear) / totalSpan) * 100));
@@ -65,6 +66,34 @@ export default function VisualTimeline({ filteredEvents, onEraClick, selectedUni
             </div>
           );
         })}
+        {/* Future overlay — striped region beyond the current year */}
+        {showFutureOverlay && (() => {
+          const futureLeft = getPosition(currentYear);
+          const futureWidth = 100 - futureLeft;
+          return (
+            <div
+              title={`${currentYear}–${maxYear}: Future`}
+              style={{
+                position: "absolute",
+                left: `${futureLeft}%`,
+                width: `${futureWidth}%`,
+                top: 0,
+                bottom: 0,
+                background: `repeating-linear-gradient(
+                  -45deg,
+                  transparent,
+                  transparent 3px,
+                  ${theme.textMuted}18 3px,
+                  ${theme.textMuted}18 6px
+                )`,
+                borderLeft: `1.5px dashed ${theme.textMuted}60`,
+                pointerEvents: "none",
+                zIndex: 3,
+                transition: "all 0.3s ease",
+              }}
+            />
+          );
+        })()}
       </div>
 
       {/* Event markers */}
@@ -97,15 +126,22 @@ export default function VisualTimeline({ filteredEvents, onEraClick, selectedUni
       </div>
 
       {/* Year labels */}
-      <div style={{ display: "flex", justifyContent: "space-between", padding: "0 2px" }}>
-        {[1914, 1920, 1930, 1940, 1950, 1960, 1970, 1980, 1991].map((y) => (
+      <div style={{ position: "relative", height: 14 }}>
+        {Array.from(
+          { length: Math.floor((maxYear - minYear) / 10) + 1 },
+          (_, i) => minYear + i * 10
+        ).filter((y) => y <= maxYear).map((y) => (
           <span
             key={y}
             style={{
+              position: "absolute",
+              left: `${getPosition(y)}%`,
+              transform: "translateX(-50%)",
               fontSize: 9,
               color: theme.textMuted,
               fontFamily: "'Overpass Mono', monospace",
               fontWeight: 500,
+              whiteSpace: "nowrap",
             }}
           >
             {y}

@@ -1,12 +1,9 @@
-// TODO: Right-justify the period "Default" toggle button in admin panel
-// TODO: Rename "periods" → "time periods" in all user-facing UI labels
-// TODO: Add "compelling question" toggle/display that lives over the timeline (complex)
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { useAuth } from "./contexts/AuthContext";
 import { useTheme } from "./contexts/ThemeContext";
 import { PERIOD_COLORS, TAGS, getPeriod } from "./data/constants";
 import { TEACHER_EMAIL } from "./firebase";
-import { subscribeToEvents, submitEvent, deleteEvent, seedDatabase, subscribeToPeriods, subscribeToAllSectionPeriods, savePeriods, subscribeToSections, saveSections, subscribeToDefaultPeriods, saveDefaultPeriods } from "./services/database";
+import { subscribeToEvents, submitEvent, deleteEvent, seedDatabase, subscribeToPeriods, subscribeToAllSectionPeriods, savePeriods, subscribeToSections, saveSections, subscribeToDefaultPeriods, saveDefaultPeriods, subscribeToCompellingQuestion, subscribeToAllSectionCompellingQuestions, saveCompellingQuestion, subscribeToDefaultCompellingQuestion, saveDefaultCompellingQuestion } from "./services/database";
 import SEED_EVENTS from "./data/seedEvents";
 import VisualTimeline from "./components/VisualTimeline";
 import EventCard from "./components/EventCard";
@@ -33,6 +30,10 @@ import lockOutline from "@iconify-icons/mdi/lock-outline";
 import lockOpenVariantOutline from "@iconify-icons/mdi/lock-open-variant-outline";
 import closeCircleOutline from "@iconify-icons/mdi/close-circle-outline";
 import pencilOutline from "@iconify-icons/mdi/pencil-outline";
+import eyeOutline from "@iconify-icons/mdi/eye-outline";
+import eyeOffOutline from "@iconify-icons/mdi/eye-off-outline";
+import formatQuoteOpenOutline from "@iconify-icons/mdi/format-quote-open-outline";
+import checkIcon from "@iconify-icons/mdi/check";
 
 function getInitialSection() {
   const params = new URLSearchParams(window.location.search);
@@ -73,6 +74,14 @@ export default function App() {
   const [editingDefaults, setEditingDefaults] = useState(false);
   const [sections, setSections] = useState(null);
   const [sectionsLocked, setSectionsLocked] = useState(true);
+  const [compellingQuestion, setCompellingQuestion] = useState({ text: "", enabled: false });
+  const [draftCQText, setDraftCQText] = useState("");
+  const [draftCQEnabled, setDraftCQEnabled] = useState(false);
+  const [cqLocked, setCqLocked] = useState(true);
+  const [cqEditingDefaults, setCqEditingDefaults] = useState(false);
+  const [defaultCompellingQuestion, setDefaultCompellingQuestion] = useState({ text: "", enabled: false });
+  const [allSectionCQs, setAllSectionCQs] = useState({});
+  const isEditingCQRef = useRef(false);
 
   const activeSections = useMemo(() => sections || [], [sections]);
 
@@ -106,6 +115,9 @@ export default function App() {
     isEditingPeriodsRef.current = false;
     setEditingPeriodId(null);
     setEditingDefaults(false);
+    setCqLocked(true);
+    isEditingCQRef.current = false;
+    setCqEditingDefaults(false);
     // Update URL without reload
     const url = new URL(window.location);
     url.searchParams.set("section", newSection);
@@ -145,7 +157,10 @@ export default function App() {
     if (defaultPeriods.length > 0) {
       savePeriods(id, defaultPeriods);
     }
-  }, [activeSections, defaultPeriods]);
+    if (defaultCompellingQuestion.text) {
+      saveCompellingQuestion(id, defaultCompellingQuestion);
+    }
+  }, [activeSections, defaultPeriods, defaultCompellingQuestion]);
 
   const handleDeleteSection = useCallback((id) => {
     const updated = activeSections.filter((s) => s.id !== id);
@@ -210,6 +225,61 @@ export default function App() {
       savePeriods(section, newPeriods);
     }
   }, [editingDefaults, section, activeSections]);
+
+  // Subscribe to default compelling question template
+  useEffect(() => {
+    if (!user) return;
+    const unsub = subscribeToDefaultCompellingQuestion((data) => {
+      setDefaultCompellingQuestion(data || { text: "", enabled: false });
+    });
+    return () => unsub();
+  }, [user]);
+
+  // Sync default CQ into state when editing defaults
+  useEffect(() => {
+    if (cqEditingDefaults && !isEditingCQRef.current) {
+      const cq = defaultCompellingQuestion || { text: "", enabled: false };
+      setCompellingQuestion(cq);
+      setDraftCQText(cq.text);
+      setDraftCQEnabled(cq.enabled);
+    }
+  }, [cqEditingDefaults, defaultCompellingQuestion]);
+
+  // Subscribe to section-specific compelling question (when not editing defaults)
+  useEffect(() => {
+    if (!user || cqEditingDefaults) return;
+
+    const effectiveSection = isTeacher && section === "all" ? "all" : section;
+
+    if (effectiveSection === "all") {
+      const unsub = subscribeToAllSectionCompellingQuestions(activeSections.map((s) => s.id), (cqMap) => {
+        if (isEditingCQRef.current) return;
+        setAllSectionCQs(cqMap);
+      });
+      return () => unsub();
+    } else {
+      const unsub = subscribeToCompellingQuestion(effectiveSection, (data) => {
+        if (isEditingCQRef.current) return;
+        const cq = data || { text: "", enabled: false };
+        setCompellingQuestion(cq);
+        setDraftCQText(cq.text);
+        setDraftCQEnabled(cq.enabled);
+      });
+      return () => unsub();
+    }
+  }, [user, section, isTeacher, activeSections, cqEditingDefaults]);
+
+  // Save compelling question to the right target
+  const persistCompellingQuestion = useCallback((newCQ) => {
+    if (cqEditingDefaults) {
+      saveDefaultCompellingQuestion(newCQ);
+      for (const s of activeSections) {
+        saveCompellingQuestion(s.id, newCQ);
+      }
+    } else if (section !== "all") {
+      saveCompellingQuestion(section, newCQ);
+    }
+  }, [cqEditingDefaults, section, activeSections]);
 
   // Close admin panel on outside click
   useEffect(() => {
@@ -277,6 +347,7 @@ export default function App() {
 
   const displayPeriods = section === "all" ? mergedPeriods : periods;
   const findPeriod = (id) => getPeriod(displayPeriods, id);
+  const displayCQ = section === "all" ? null : compellingQuestion;
 
   const handleAddEvent = useCallback(
     async (formData) => {
@@ -607,8 +678,10 @@ export default function App() {
                           alignItems: "center",
                           justifyContent: "space-between",
                         }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                            Periods{editingDefaults ? " · Default" : section !== "all" ? ` · ${getSectionName(section)}` : ""}
+                          <span>
+                            Time Periods{editingDefaults ? " · Default" : section !== "all" ? ` · ${getSectionName(section)}` : ""}
+                          </span>
+                          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
                             <button
                               onClick={() => {
                                 setEditingDefaults((v) => !v);
@@ -616,7 +689,7 @@ export default function App() {
                                 isEditingPeriodsRef.current = false;
                                 setEditingPeriodId(null);
                               }}
-                              title={editingDefaults ? "Switch to section periods" : "Edit default periods (applies to all sections)"}
+                              title={editingDefaults ? "Switch to section time periods" : "Edit default time periods (applies to all sections)"}
                               style={{
                                 fontSize: 8,
                                 fontWeight: 600,
@@ -634,27 +707,27 @@ export default function App() {
                             >
                               Default
                             </button>
+                            <button
+                              onClick={() => {
+                                setPeriodsLocked((v) => {
+                                  isEditingPeriodsRef.current = v;
+                                  return !v;
+                                });
+                              }}
+                              title={periodsLocked ? "Unlock to edit" : "Lock time periods"}
+                              style={{
+                                background: "none",
+                                border: "none",
+                                padding: 2,
+                                cursor: "pointer",
+                                color: periodsLocked ? theme.textMuted : theme.teacherGreen,
+                                display: "inline-flex",
+                                transition: "color 0.15s",
+                              }}
+                            >
+                              <Icon icon={periodsLocked ? lockOutline : lockOpenVariantOutline} width={12} />
+                            </button>
                           </div>
-                          <button
-                            onClick={() => {
-                              setPeriodsLocked((v) => {
-                                isEditingPeriodsRef.current = v;
-                                return !v;
-                              });
-                            }}
-                            title={periodsLocked ? "Unlock to edit" : "Lock periods"}
-                            style={{
-                              background: "none",
-                              border: "none",
-                              padding: 2,
-                              cursor: "pointer",
-                              color: periodsLocked ? theme.textMuted : theme.teacherGreen,
-                              display: "inline-flex",
-                              transition: "color 0.15s",
-                            }}
-                          >
-                            <Icon icon={periodsLocked ? lockOutline : lockOpenVariantOutline} width={12} />
-                          </button>
                         </div>
 
                         {editingDefaults && (
@@ -665,7 +738,7 @@ export default function App() {
                             marginBottom: 6,
                             letterSpacing: "0.03em",
                           }}>
-                            Edits apply to all sections &amp; new sections
+                            Edits apply to all sections &amp; future sections
                           </div>
                         )}
 
@@ -678,7 +751,7 @@ export default function App() {
                               fontStyle: "italic",
                               padding: "4px 6px",
                             }}>
-                              No periods configured
+                              No time periods configured
                             </div>
                           )}
                           {periods.map((p) => {
@@ -724,7 +797,7 @@ export default function App() {
                                     <>
                                       <button
                                         onClick={() => isEditing ? setEditingPeriodId(null) : openPeriodEdit(p)}
-                                        title="Edit period"
+                                        title="Edit time period"
                                         style={{
                                           background: "none",
                                           border: "none",
@@ -739,14 +812,14 @@ export default function App() {
                                       </button>
                                       <button
                                         onClick={() => {
-                                          if (!window.confirm(`Delete "${p.label}"? Events assigned to this period will lose their period.`)) return;
+                                          if (!window.confirm(`Delete "${p.label}"? Events assigned to this time period will lose their time period.`)) return;
                                           const newPeriods = periods.filter((x) => x.id !== p.id);
                                           setPeriods(newPeriods);
                                           persistPeriods(newPeriods);
                                           if (selectedPeriod === p.id) setSelectedPeriod("all");
                                           if (editingPeriodId === p.id) setEditingPeriodId(null);
                                         }}
-                                        title="Delete period"
+                                        title="Delete time period"
                                         onMouseEnter={(e) => e.currentTarget.style.color = theme.errorRed}
                                         onMouseLeave={(e) => e.currentTarget.style.color = theme.textMuted}
                                         style={{
@@ -785,12 +858,12 @@ export default function App() {
                                         }
                                       }}
                                       onBlur={(e) => {
-                                        const finalLabel = e.target.value.trim() || "Untitled Period";
+                                        const finalLabel = e.target.value.trim() || "Untitled Time Period";
                                         const newPeriods = periods.map((x) => x.id === p.id ? { ...x, label: finalLabel } : x);
                                         setPeriods(newPeriods);
                                         persistPeriods(newPeriods);
                                       }}
-                                      placeholder="Period label"
+                                      placeholder="Time period label"
                                       style={{
                                         padding: "5px 8px",
                                         border: `1.5px solid ${theme.inputBorder}`,
@@ -885,7 +958,7 @@ export default function App() {
                               const c = PERIOD_COLORS[colorIdx];
                               const newPeriod = {
                                 id: newId,
-                                label: "New Period",
+                                label: "New Time Period",
                                 color: c.color,
                                 bg: c.bg,
                                 accent: c.accent,
@@ -916,7 +989,183 @@ export default function App() {
                             }}
                           >
                             <Icon icon={plusIcon} width={12} />
-                            Add Period
+                            Add Time Period
+                          </button>
+                        )}
+
+                        {/* Divider */}
+                        <div style={{
+                          height: 1,
+                          background: theme.inputBorder,
+                          margin: "10px 0",
+                        }} />
+
+                        {/* Compelling Question section */}
+                        <div style={{
+                          fontSize: 10,
+                          fontWeight: 700,
+                          color: theme.mutedText,
+                          textTransform: "uppercase",
+                          letterSpacing: "0.1em",
+                          marginBottom: 8,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                        }}>
+                          <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                            <Icon icon={formatQuoteOpenOutline} width={12} />
+                            Question{cqEditingDefaults ? " · Default" : section !== "all" ? ` · ${getSectionName(section)}` : ""}
+                          </span>
+                          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                            <button
+                              onClick={() => {
+                                setCqEditingDefaults((v) => !v);
+                                setCqLocked(true);
+                                isEditingCQRef.current = false;
+                              }}
+                              title={cqEditingDefaults ? "Switch to section question" : "Edit default question (applies to all sections)"}
+                              style={{
+                                fontSize: 8,
+                                fontWeight: 600,
+                                fontFamily: "'Overpass Mono', monospace",
+                                padding: "1px 5px",
+                                borderRadius: 3,
+                                border: `1px solid ${cqEditingDefaults ? theme.teacherGreen : theme.inputBorder}`,
+                                background: cqEditingDefaults ? theme.teacherGreen + "20" : "transparent",
+                                color: cqEditingDefaults ? theme.teacherGreen : theme.textMuted,
+                                cursor: "pointer",
+                                textTransform: "uppercase",
+                                letterSpacing: "0.05em",
+                                transition: "all 0.15s",
+                              }}
+                            >
+                              Default
+                            </button>
+                            <button
+                              onClick={() => {
+                                setCqLocked((v) => {
+                                  isEditingCQRef.current = v;
+                                  return !v;
+                                });
+                              }}
+                              title={cqLocked ? "Unlock to edit" : "Lock question"}
+                              style={{
+                                background: "none",
+                                border: "none",
+                                padding: 2,
+                                cursor: "pointer",
+                                color: cqLocked ? theme.textMuted : theme.teacherGreen,
+                                display: "inline-flex",
+                                transition: "color 0.15s",
+                              }}
+                            >
+                              <Icon icon={cqLocked ? lockOutline : lockOpenVariantOutline} width={12} />
+                            </button>
+                          </div>
+                        </div>
+
+                        {cqEditingDefaults && (
+                          <div style={{
+                            fontSize: 9,
+                            color: theme.textMuted,
+                            fontStyle: "italic",
+                            marginBottom: 6,
+                            letterSpacing: "0.03em",
+                          }}>
+                            Edits apply to all sections &amp; future sections
+                          </div>
+                        )}
+
+                        {/* Enable/disable toggle */}
+                        <button
+                          onClick={() => {
+                            if (cqLocked) return;
+                            setDraftCQEnabled((v) => !v);
+                            isEditingCQRef.current = true;
+                          }}
+                          disabled={cqLocked}
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 6,
+                            padding: "4px 6px",
+                            borderRadius: 4,
+                            border: "none",
+                            background: "transparent",
+                            cursor: cqLocked ? "not-allowed" : "pointer",
+                            opacity: cqLocked ? 0.5 : 1,
+                            fontSize: 10,
+                            fontFamily: "'Overpass Mono', monospace",
+                            color: draftCQEnabled ? theme.teacherGreen : theme.textMuted,
+                            fontWeight: 600,
+                            transition: "all 0.15s",
+                            marginBottom: 6,
+                          }}
+                        >
+                          <Icon icon={draftCQEnabled ? eyeOutline : eyeOffOutline} width={13} />
+                          {draftCQEnabled ? "Visible to students" : "Hidden from students"}
+                        </button>
+
+                        {/* Question text field */}
+                        <textarea
+                          value={draftCQText}
+                          disabled={cqLocked}
+                          onChange={(e) => {
+                            setDraftCQText(e.target.value);
+                            isEditingCQRef.current = true;
+                          }}
+                          placeholder="e.g., How did global conflicts reshape the American identity?"
+                          style={{
+                            width: "100%",
+                            padding: "8px 10px",
+                            border: `1.5px solid ${theme.inputBorder}`,
+                            borderRadius: 6,
+                            fontSize: 12,
+                            fontFamily: "'Newsreader', 'Georgia', serif",
+                            background: theme.inputBg,
+                            color: theme.textPrimary,
+                            outline: "none",
+                            boxSizing: "border-box",
+                            resize: "vertical",
+                            minHeight: 60,
+                            opacity: cqLocked ? 0.5 : 1,
+                            cursor: cqLocked ? "not-allowed" : "text",
+                            transition: "opacity 0.15s",
+                          }}
+                        />
+
+                        {/* Update button — appears when draft differs from saved */}
+                        {!cqLocked && (draftCQText !== compellingQuestion.text || draftCQEnabled !== compellingQuestion.enabled) && (
+                          <button
+                            onClick={() => {
+                              const updated = { text: draftCQText, enabled: draftCQEnabled };
+                              setCompellingQuestion(updated);
+                              persistCompellingQuestion(updated);
+                              isEditingCQRef.current = false;
+                            }}
+                            style={{
+                              width: "100%",
+                              marginTop: 6,
+                              padding: "6px 0",
+                              border: "none",
+                              borderRadius: 4,
+                              background: theme.teacherGreen,
+                              color: "#fff",
+                              fontSize: 10,
+                              fontFamily: "'Overpass Mono', monospace",
+                              fontWeight: 700,
+                              cursor: "pointer",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              gap: 4,
+                              textTransform: "uppercase",
+                              letterSpacing: "0.05em",
+                              transition: "all 0.15s",
+                            }}
+                          >
+                            <Icon icon={checkIcon} width={13} />
+                            Update
                           </button>
                         )}
 
@@ -968,7 +1217,7 @@ export default function App() {
               >
                 {approvedEvents.length} events &middot; {studentCount} student
                 historians &middot;{" "}
-                {[...new Set(approvedEvents.map((e) => e.period))].length} periods
+                {[...new Set(approvedEvents.map((e) => e.period))].length} time periods
               </p>
               {/* View switcher (teacher only) */}
               {isTeacher && (
@@ -1098,6 +1347,44 @@ export default function App() {
         </div>
       </div>
 
+      {/* Compelling Question Hero */}
+      {displayCQ && displayCQ.enabled && displayCQ.text.trim() && (
+        <div style={{ background: theme.cardBg, borderBottom: `1px solid ${theme.cardBorder}` }}>
+          <div style={{
+            maxWidth: 960,
+            margin: "0 auto",
+            padding: "24px 28px 20px",
+            textAlign: "center",
+          }}>
+            <div style={{
+              fontSize: 9,
+              fontWeight: 700,
+              color: theme.textMuted,
+              fontFamily: "'Overpass Mono', monospace",
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+              marginBottom: 8,
+            }}>
+              Compelling Question
+            </div>
+            <p style={{
+              fontSize: 20,
+              fontWeight: 600,
+              fontFamily: "'Newsreader', 'Georgia', serif",
+              color: theme.textPrimary,
+              lineHeight: 1.4,
+              margin: 0,
+              fontStyle: "italic",
+              maxWidth: 680,
+              marginLeft: "auto",
+              marginRight: "auto",
+            }}>
+              {displayCQ.text}
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Visual Timeline */}
       <div style={{ background: theme.cardBg, borderBottom: `1px solid ${theme.cardBorder}` }}>
         <div style={{ maxWidth: 960, margin: "0 auto" }}>
@@ -1175,7 +1462,7 @@ export default function App() {
               fontWeight: selectedPeriod === "all" ? 500 : 700,
             }}
           >
-            <option value="all">All Periods</option>
+            <option value="all">All Time Periods</option>
             {displayPeriods.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.label}

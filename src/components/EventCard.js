@@ -165,7 +165,7 @@ export default function EventCard({ event, isExpanded, onToggle, isTeacher, onDe
             <div>
               <span style={{ color: theme.textSecondary, fontWeight: 500, display: "inline-flex", alignItems: "center", gap: 3 }}>
                 <Icon icon={bookOpenPageVariantOutline} width={11} />
-                Period
+                Time Period
               </span>
               <div style={{ color: periodColor, fontWeight: 700, marginTop: 2 }}>
                 {periodLabel}

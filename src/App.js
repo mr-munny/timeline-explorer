@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { useAuth } from "./contexts/AuthContext";
 import { useTheme } from "./contexts/ThemeContext";
 import { UNITS, TAGS, getUnit } from "./data/constants";
@@ -23,6 +23,10 @@ import sortDescending from "@iconify-icons/mdi/sort-descending";
 import accountGroup from "@iconify-icons/mdi/account-group";
 import filterRemoveOutline from "@iconify-icons/mdi/filter-remove-outline";
 import shieldAccountOutline from "@iconify-icons/mdi/shield-account-outline";
+import cogOutline from "@iconify-icons/mdi/cog-outline";
+import chevronDown from "@iconify-icons/mdi/chevron-down";
+import lockOutline from "@iconify-icons/mdi/lock-outline";
+import lockOpenVariantOutline from "@iconify-icons/mdi/lock-open-variant-outline";
 
 function getInitialSection() {
   const params = new URLSearchParams(window.location.search);
@@ -45,6 +49,17 @@ export default function App() {
   const [sectionFilter, setSectionFilter] = useState("all");
   const [seeding, setSeeding] = useState(false);
   const [seeded, setSeeded] = useState(false);
+  const [showAdminPanel, setShowAdminPanel] = useState(false);
+  const adminPanelRef = useRef(null);
+  const [timelineStart, setTimelineStart] = useState(1910);
+  const [timelineEnd, setTimelineEnd] = useState(2000);
+  const [draftStart, setDraftStart] = useState("1910");
+  const [draftEnd, setDraftEnd] = useState("2000");
+  const [timelineRangeLocked, setTimelineRangeLocked] = useState(true);
+
+  const currentYear = new Date().getFullYear();
+  const floorToDecade = (value) => Math.floor(value / 10) * 10;
+  const ceilToDecade = (value) => Math.ceil(value / 10) * 10;
 
   const switchSection = (newSection) => {
     setSection(newSection);
@@ -68,6 +83,18 @@ export default function App() {
 
     return () => unsubscribe();
   }, [user, section, isTeacher]);
+
+  // Close admin panel on outside click
+  useEffect(() => {
+    if (!showAdminPanel) return;
+    const handleClick = (e) => {
+      if (adminPanelRef.current && !adminPanelRef.current.contains(e.target)) {
+        setShowAdminPanel(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [showAdminPanel]);
 
   // Approved events for the main timeline
   const approvedEvents = useMemo(
@@ -242,6 +269,182 @@ export default function App() {
                     Teacher View
                   </span>
                 )}
+                {isTeacher && (
+                  <div ref={adminPanelRef} style={{ position: "relative" }}>
+                    <button
+                      onClick={() => setShowAdminPanel((prev) => !prev)}
+                      style={{
+                        fontSize: 10,
+                        fontWeight: 700,
+                        color: showAdminPanel ? theme.bg : theme.teacherGreen,
+                        fontFamily: "'Overpass Mono', monospace",
+                        letterSpacing: "0.1em",
+                        textTransform: "uppercase",
+                        background: showAdminPanel ? theme.teacherGreen : theme.teacherGreenSubtle,
+                        padding: "3px 8px",
+                        borderRadius: 4,
+                        border: "none",
+                        cursor: "pointer",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 4,
+                        transition: "all 0.15s",
+                      }}
+                    >
+                      <Icon icon={cogOutline} width={12} />
+                      Admin
+                      <Icon icon={chevronDown} width={12} style={{
+                        transform: showAdminPanel ? "rotate(180deg)" : "rotate(0deg)",
+                        transition: "transform 0.15s",
+                      }} />
+                    </button>
+                    {showAdminPanel && (
+                      <div
+                        style={{
+                          position: "absolute",
+                          top: "calc(100% + 6px)",
+                          left: 0,
+                          background: theme.cardBg,
+                          border: `1px solid ${theme.borderColor}`,
+                          borderRadius: 8,
+                          padding: 12,
+                          minWidth: 220,
+                          zIndex: 999,
+                          boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
+                          fontFamily: "'Overpass Mono', monospace",
+                        }}
+                      >
+                        <div style={{
+                          fontSize: 10,
+                          fontWeight: 700,
+                          color: theme.mutedText,
+                          textTransform: "uppercase",
+                          letterSpacing: "0.1em",
+                          marginBottom: 10,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                        }}>
+                          Timeline Range
+                          <button
+                            onClick={() => setTimelineRangeLocked((v) => !v)}
+                            title={timelineRangeLocked ? "Unlock to edit" : "Lock value"}
+                            style={{
+                              background: "none",
+                              border: "none",
+                              padding: 2,
+                              cursor: "pointer",
+                              color: timelineRangeLocked ? theme.textMuted : theme.teacherGreen,
+                              display: "inline-flex",
+                              transition: "color 0.15s",
+                            }}
+                          >
+                            <Icon icon={timelineRangeLocked ? lockOutline : lockOpenVariantOutline} width={12} />
+                          </button>
+                        </div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <div style={{ flex: 1 }}>
+                            <label style={{
+                              fontSize: 9,
+                              color: theme.textSecondary,
+                              textTransform: "uppercase",
+                              letterSpacing: "0.05em",
+                              fontWeight: 600,
+                              marginBottom: 3,
+                              display: "block",
+                            }}>Start</label>
+                            <input
+                              type="number"
+                              value={draftStart}
+                              step={10}
+                              disabled={timelineRangeLocked}
+                              onChange={(e) => setDraftStart(e.target.value)}
+                              onKeyDown={(e) => { if (e.key === "Enter") e.target.blur(); }}
+                              onBlur={() => {
+                                const v = floorToDecade(Math.max(0, Math.min(Number(draftStart), timelineEnd - 10)));
+                                setTimelineStart(v);
+                                setDraftStart(String(v));
+                              }}
+                              style={{
+                                width: "100%",
+                                padding: "6px 8px",
+                                border: `1.5px solid ${theme.inputBorder}`,
+                                borderRadius: 6,
+                                fontSize: 12,
+                                fontFamily: "'Overpass Mono', monospace",
+                                fontWeight: 700,
+                                background: theme.inputBg,
+                                color: theme.textPrimary,
+                                outline: "none",
+                                boxSizing: "border-box",
+                                textAlign: "center",
+                                opacity: timelineRangeLocked ? 0.5 : 1,
+                                cursor: timelineRangeLocked ? "not-allowed" : "text",
+                                transition: "opacity 0.15s",
+                              }}
+                            />
+                          </div>
+                          <span style={{
+                            fontSize: 12,
+                            color: theme.textMuted,
+                            marginTop: 14,
+                          }}>–</span>
+                          <div style={{ flex: 1 }}>
+                            <label style={{
+                              fontSize: 9,
+                              color: theme.textSecondary,
+                              textTransform: "uppercase",
+                              letterSpacing: "0.05em",
+                              fontWeight: 600,
+                              marginBottom: 3,
+                              display: "block",
+                            }}>End</label>
+                            <input
+                              type="number"
+                              value={draftEnd}
+                              step={10}
+                              disabled={timelineRangeLocked}
+                              onChange={(e) => setDraftEnd(e.target.value)}
+                              onKeyDown={(e) => { if (e.key === "Enter") e.target.blur(); }}
+                              onBlur={() => {
+                                const maxEnd = ceilToDecade(currentYear);
+                                const v = ceilToDecade(Math.max(timelineStart + 10, Math.min(Number(draftEnd), maxEnd)));
+                                setTimelineEnd(v);
+                                setDraftEnd(String(v));
+                              }}
+                              style={{
+                                width: "100%",
+                                padding: "6px 8px",
+                                border: `1.5px solid ${theme.inputBorder}`,
+                                borderRadius: 6,
+                                fontSize: 12,
+                                fontFamily: "'Overpass Mono', monospace",
+                                fontWeight: 700,
+                                background: theme.inputBg,
+                                color: theme.textPrimary,
+                                outline: "none",
+                                boxSizing: "border-box",
+                                textAlign: "center",
+                                opacity: timelineRangeLocked ? 0.5 : 1,
+                                cursor: timelineRangeLocked ? "not-allowed" : "text",
+                                transition: "opacity 0.15s",
+                              }}
+                            />
+                          </div>
+                        </div>
+                        <div style={{
+                          fontSize: 9,
+                          color: theme.textMuted,
+                          marginTop: 6,
+                          textAlign: "center",
+                          letterSpacing: "0.05em",
+                        }}>
+                          {timelineEnd - timelineStart} year span · snaps to decade
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
               <h1
                 style={{
@@ -407,6 +610,9 @@ export default function App() {
             filteredEvents={filteredEvents}
             onEraClick={setSelectedUnit}
             selectedUnit={selectedUnit}
+            timelineStart={timelineStart}
+            timelineEnd={timelineEnd}
+            currentYear={currentYear}
           />
         </div>
       </div>
@@ -756,6 +962,8 @@ export default function App() {
           onAdd={handleAddEvent}
           onClose={() => setShowAddPanel(false)}
           userName={user.displayName || user.email.split("@")[0]}
+          timelineStart={timelineStart}
+          timelineEnd={timelineEnd}
         />
       )}
 

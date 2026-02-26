@@ -10,6 +10,18 @@ import AddEventPanel from "./components/AddEventPanel";
 import ContributorSidebar from "./components/ContributorSidebar";
 import ModerationPanel from "./components/ModerationPanel";
 import LoginScreen from "./components/LoginScreen";
+import { Icon } from "@iconify/react";
+import chartTimelineVariantShimmer from "@iconify-icons/mdi/chart-timeline-variant-shimmer";
+import plusIcon from "@iconify-icons/mdi/plus";
+import logoutIcon from "@iconify-icons/mdi/logout";
+import inboxArrowDown from "@iconify-icons/mdi/inbox-arrow-down";
+import databasePlusOutline from "@iconify-icons/mdi/database-plus-outline";
+import magnifyIcon from "@iconify-icons/mdi/magnify";
+import sortAscending from "@iconify-icons/mdi/sort-ascending";
+import sortDescending from "@iconify-icons/mdi/sort-descending";
+import accountGroup from "@iconify-icons/mdi/account-group";
+import filterRemoveOutline from "@iconify-icons/mdi/filter-remove-outline";
+import shieldAccountOutline from "@iconify-icons/mdi/shield-account-outline";
 
 function getInitialSection() {
   const params = new URLSearchParams(window.location.search);
@@ -217,8 +229,12 @@ export default function App() {
                       background: "#34D39918",
                       padding: "3px 8px",
                       borderRadius: 4,
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 4,
                     }}
                   >
+                    <Icon icon={shieldAccountOutline} width={12} />
                     Teacher View
                   </span>
                 )}
@@ -231,8 +247,12 @@ export default function App() {
                   fontFamily: "'Newsreader', 'Georgia', serif",
                   letterSpacing: "-0.01em",
                   lineHeight: 1.2,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
                 }}
               >
+                <Icon icon={chartTimelineVariantShimmer} width={26} style={{ color: "#F59E0B" }} />
                 Timeline Explorer
               </h1>
               <p
@@ -295,6 +315,7 @@ export default function App() {
                     cursor: seeding ? "default" : "pointer",
                   }}
                 >
+                  <Icon icon={databasePlusOutline} width={14} style={{ verticalAlign: "middle", marginRight: 4 }} />
                   {seeding ? "Seeding..." : "Seed Database"}
                 </button>
               )}
@@ -314,6 +335,7 @@ export default function App() {
                     position: "relative",
                   }}
                 >
+                  <Icon icon={inboxArrowDown} width={14} style={{ verticalAlign: "middle", marginRight: 4 }} />
                   Review ({pendingEvents.length})
                 </button>
               )}
@@ -332,7 +354,8 @@ export default function App() {
                   letterSpacing: "0.02em",
                 }}
               >
-                + Add Event
+                <Icon icon={plusIcon} width={14} style={{ verticalAlign: "middle", marginRight: 2 }} />
+                Add Event
               </button>
               <button
                 onClick={logout}
@@ -348,6 +371,7 @@ export default function App() {
                   cursor: "pointer",
                 }}
               >
+                <Icon icon={logoutIcon} width={13} style={{ verticalAlign: "middle", marginRight: 4 }} />
                 Sign Out
               </button>
             </div>
@@ -378,23 +402,37 @@ export default function App() {
             alignItems: "center",
           }}
         >
-          <input
-            type="text"
-            placeholder="Search events, people, regions..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            style={{
-              flex: "1 1 200px",
-              padding: "9px 14px",
-              border: "1.5px solid #E5E7EB",
-              borderRadius: 8,
-              fontSize: 12,
-              fontFamily: "'Overpass Mono', monospace",
-              background: "#fff",
-              outline: "none",
-              minWidth: 160,
-            }}
-          />
+          <div style={{ flex: "1 1 200px", position: "relative", minWidth: 160 }}>
+            <Icon
+              icon={magnifyIcon}
+              width={14}
+              style={{
+                position: "absolute",
+                left: 10,
+                top: "50%",
+                transform: "translateY(-50%)",
+                color: "#9CA3AF",
+                pointerEvents: "none",
+              }}
+            />
+            <input
+              type="text"
+              placeholder="Search events, people, regions..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              style={{
+                width: "100%",
+                padding: "9px 14px 9px 30px",
+                border: "1.5px solid #E5E7EB",
+                borderRadius: 8,
+                fontSize: 12,
+                fontFamily: "'Overpass Mono', monospace",
+                background: "#fff",
+                outline: "none",
+                boxSizing: "border-box",
+              }}
+            />
+          </div>
           <select
             value={selectedUnit}
             onChange={(e) => setSelectedUnit(e.target.value)}
@@ -477,7 +515,8 @@ export default function App() {
               color: "#6B7280",
             }}
           >
-            {sortOrder === "chrono" ? "\u2191 Oldest" : "\u2193 Newest"}
+            <Icon icon={sortOrder === "chrono" ? sortAscending : sortDescending} width={14} style={{ verticalAlign: "middle", marginRight: 3 }} />
+            {sortOrder === "chrono" ? "Oldest" : "Newest"}
           </button>
           <button
             onClick={() => setShowContributors((s) => !s)}
@@ -494,6 +533,7 @@ export default function App() {
               transition: "all 0.15s",
             }}
           >
+            <Icon icon={accountGroup} width={14} style={{ verticalAlign: "middle", marginRight: 4 }} />
             Contributors
           </button>
         </div>
@@ -597,6 +637,7 @@ export default function App() {
                 fontWeight: 700,
               }}
             >
+              <Icon icon={filterRemoveOutline} width={12} style={{ verticalAlign: "middle", marginRight: 2 }} />
               Clear
             </button>
             <span

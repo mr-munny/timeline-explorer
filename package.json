@@ -4,6 +4,8 @@
   "private": true,
   "homepage": "https://mr-munny.github.io/timeline-explorer",
   "dependencies": {
+    "@iconify-icons/mdi": "^1.2.48",
+    "@iconify/react": "^6.0.2",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",

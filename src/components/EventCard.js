@@ -1,4 +1,13 @@
 import { getUnit } from "../data/constants";
+import { Icon } from "@iconify/react";
+import chevronDown from "@iconify-icons/mdi/chevron-down";
+import deleteOutline from "@iconify-icons/mdi/delete-outline";
+import bookOpenPageVariantOutline from "@iconify-icons/mdi/book-open-page-variant-outline";
+import fileDocumentOutline from "@iconify-icons/mdi/file-document-outline";
+import linkVariant from "@iconify-icons/mdi/link-variant";
+import accountOutline from "@iconify-icons/mdi/account-outline";
+import mapMarkerOutline from "@iconify-icons/mdi/map-marker-outline";
+import schoolOutline from "@iconify-icons/mdi/school-outline";
 
 export default function EventCard({ event, isExpanded, onToggle, isTeacher, onDelete }) {
   const unit = getUnit(event.unit);
@@ -91,18 +100,17 @@ export default function EventCard({ event, isExpanded, onToggle, isTeacher, onDe
         </div>
 
         {/* Expand indicator */}
-        <span
+        <Icon
+          icon={chevronDown}
+          width={18}
           style={{
-            fontSize: 14,
             color: "#D1D5DB",
             transition: "transform 0.2s",
             transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)",
             flexShrink: 0,
             marginTop: 2,
           }}
-        >
-          &#x25BE;
-        </span>
+        />
       </div>
 
       {isExpanded && (
@@ -153,13 +161,19 @@ export default function EventCard({ event, isExpanded, onToggle, isTeacher, onDe
             }}
           >
             <div>
-              <span style={{ color: "#9CA3AF", fontWeight: 500 }}>Unit</span>
+              <span style={{ color: "#9CA3AF", fontWeight: 500, display: "inline-flex", alignItems: "center", gap: 3 }}>
+                <Icon icon={bookOpenPageVariantOutline} width={11} />
+                Unit
+              </span>
               <div style={{ color: unitColor, fontWeight: 700, marginTop: 2 }}>
                 {unitLabel}
               </div>
             </div>
             <div>
-              <span style={{ color: "#9CA3AF", fontWeight: 500 }}>Source Type</span>
+              <span style={{ color: "#9CA3AF", fontWeight: 500, display: "inline-flex", alignItems: "center", gap: 3 }}>
+                <Icon icon={fileDocumentOutline} width={11} />
+                Source Type
+              </span>
               <div
                 style={{
                   marginTop: 2,
@@ -172,24 +186,36 @@ export default function EventCard({ event, isExpanded, onToggle, isTeacher, onDe
               </div>
             </div>
             <div>
-              <span style={{ color: "#9CA3AF", fontWeight: 500 }}>Source</span>
+              <span style={{ color: "#9CA3AF", fontWeight: 500, display: "inline-flex", alignItems: "center", gap: 3 }}>
+                <Icon icon={linkVariant} width={11} />
+                Source
+              </span>
               <div style={{ color: "#374151", marginTop: 2 }}>{event.sourceNote}</div>
             </div>
             <div>
-              <span style={{ color: "#9CA3AF", fontWeight: 500 }}>Added By</span>
+              <span style={{ color: "#9CA3AF", fontWeight: 500, display: "inline-flex", alignItems: "center", gap: 3 }}>
+                <Icon icon={accountOutline} width={11} />
+                Added By
+              </span>
               <div style={{ color: "#374151", fontWeight: 600, marginTop: 2 }}>
                 {event.addedBy}
               </div>
             </div>
             {event.region && (
               <div>
-                <span style={{ color: "#9CA3AF", fontWeight: 500 }}>Region</span>
+                <span style={{ color: "#9CA3AF", fontWeight: 500, display: "inline-flex", alignItems: "center", gap: 3 }}>
+                  <Icon icon={mapMarkerOutline} width={11} />
+                  Region
+                </span>
                 <div style={{ color: "#374151", marginTop: 2 }}>{event.region}</div>
               </div>
             )}
             {event.section && (
               <div>
-                <span style={{ color: "#9CA3AF", fontWeight: 500 }}>Section</span>
+                <span style={{ color: "#9CA3AF", fontWeight: 500, display: "inline-flex", alignItems: "center", gap: 3 }}>
+                  <Icon icon={schoolOutline} width={11} />
+                  Section
+                </span>
                 <div style={{ color: "#374151", marginTop: 2 }}>{event.section}</div>
               </div>
             )}
@@ -217,6 +243,7 @@ export default function EventCard({ event, isExpanded, onToggle, isTeacher, onDe
                   cursor: "pointer",
                 }}
               >
+                <Icon icon={deleteOutline} width={13} style={{ verticalAlign: "middle", marginRight: 3 }} />
                 Delete Event
               </button>
             </div>

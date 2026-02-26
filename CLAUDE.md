@@ -1,8 +1,8 @@
-# CLAUDE.md — Timeline Explorer (Historian's Workshop)
+# CLAUDE.md — Timeline Explorer
 
 ## Project Overview
 
-An interactive educational web app where students explore a filterable chronological timeline of 20th-century history events (WWI through the Cold War). Students submit events for teacher review; approved events appear on the shared timeline and are archived to Google Sheets.
+An interactive educational web app where students explore a filterable chronological timeline of history events. Students submit events for teacher review; approved events appear on the shared timeline and are archived to Google Sheets.
 
 **Live site:** https://mr-munny.github.io/timeline-explorer
 

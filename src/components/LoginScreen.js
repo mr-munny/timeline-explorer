@@ -1,4 +1,8 @@
 import { SCHOOL_DOMAIN } from "../firebase";
+import { Icon } from "@iconify/react";
+import chartTimelineVariantShimmer from "@iconify-icons/mdi/chart-timeline-variant-shimmer";
+import googleIcon from "@iconify-icons/mdi/google";
+import alertCircleOutline from "@iconify-icons/mdi/alert-circle-outline";
 
 export default function LoginScreen({ onLogin, error }) {
   return (
@@ -56,8 +60,13 @@ export default function LoginScreen({ onLogin, error }) {
             margin: "0 0 6px 0",
             fontFamily: "'Newsreader', 'Georgia', serif",
             letterSpacing: "-0.01em",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 8,
           }}
         >
+          <Icon icon={chartTimelineVariantShimmer} width={28} style={{ color: "#F59E0B" }} />
           Timeline Explorer
         </h1>
 
@@ -83,8 +92,12 @@ export default function LoginScreen({ onLogin, error }) {
               fontSize: 12,
               color: "#991B1B",
               fontFamily: "'Overpass Mono', monospace",
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
             }}
           >
+            <Icon icon={alertCircleOutline} width={16} style={{ flexShrink: 0 }} />
             {error}
           </div>
         )}
@@ -106,6 +119,7 @@ export default function LoginScreen({ onLogin, error }) {
             transition: "all 0.15s",
           }}
         >
+          <Icon icon={googleIcon} width={16} style={{ verticalAlign: "middle", marginRight: 6 }} />
           Sign in with Google
         </button>
 

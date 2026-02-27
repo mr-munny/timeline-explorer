@@ -1,10 +1,10 @@
 {
   "files": {
-    "main.js": "/timeline-explorer/static/js/main.94705ffe.js",
+    "main.js": "/timeline-explorer/static/js/main.5d3abf55.js",
     "index.html": "/timeline-explorer/index.html",
-    "main.94705ffe.js.map": "/timeline-explorer/static/js/main.94705ffe.js.map"
+    "main.5d3abf55.js.map": "/timeline-explorer/static/js/main.5d3abf55.js.map"
   },
   "entrypoints": [
-    "static/js/main.94705ffe.js"
+    "static/js/main.5d3abf55.js"
   ]
 }

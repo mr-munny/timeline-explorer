@@ -10,7 +10,7 @@ import mapMarkerOutline from "@iconify-icons/mdi/map-marker-outline";
 import schoolOutline from "@iconify-icons/mdi/school-outline";
 import { useTheme } from "../contexts/ThemeContext";
 
-export default function EventCard({ event, isExpanded, onToggle, isTeacher, onDelete, periods = [] }) {
+export default function EventCard({ event, isExpanded, onToggle, isTeacher, onDelete, periods = [], onReturnToTimeline }) {
   const { theme } = useTheme();
   const period = getPeriod(periods, event.period);
   const periodColor = period?.color || "#6B7280";
@@ -117,6 +117,38 @@ export default function EventCard({ event, isExpanded, onToggle, isTeacher, onDe
 
       {isExpanded && (
         <div style={{ marginTop: 14, marginLeft: 54 }}>
+          {onReturnToTimeline && (
+            <div
+              onClick={(e) => {
+                e.stopPropagation();
+                onReturnToTimeline();
+              }}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => { if (e.key === "Enter") { e.stopPropagation(); onReturnToTimeline(); } }}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 4,
+                padding: "3px 8px",
+                borderRadius: 4,
+                background: theme.subtleBg,
+                color: theme.textMuted,
+                fontSize: 9,
+                fontFamily: "'Overpass Mono', monospace",
+                fontWeight: 600,
+                cursor: "pointer",
+                marginBottom: 10,
+                textTransform: "uppercase",
+                letterSpacing: "0.05em",
+                transition: "all 0.15s",
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.color = theme.textPrimary; }}
+              onMouseLeave={(e) => { e.currentTarget.style.color = theme.textMuted; }}
+            >
+              {"\u2191"} Return to timeline
+            </div>
+          )}
           <p
             style={{
               fontSize: 14,

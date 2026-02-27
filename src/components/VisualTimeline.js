@@ -49,6 +49,7 @@ export default function VisualTimeline({
   const panStartRef = useRef({ x: 0, scrollLeft: 0 });
   const zoomRef = useRef(zoomLevel);
   zoomRef.current = zoomLevel;
+  const animationRef = useRef(null);
 
   const canvasWidth = viewportWidth * zoomLevel;
 
@@ -73,25 +74,58 @@ export default function VisualTimeline({
     setOpenClusterId(null);
   }, [zoomLevel]);
 
-  // Zoom handler — preserves focal point
-  const handleZoom = useCallback((newZoom, focalFraction) => {
+  // Animated zoom — lerps from current to target with ease-out curve
+  const animateToZoom = useCallback((targetZoom, getScrollLeft) => {
+    if (animationRef.current) cancelAnimationFrame(animationRef.current);
+    const vp = viewportRef.current;
+    if (!vp) { setZoomLevel(targetZoom); return; }
+
+    const startZoom = zoomRef.current;
+    const startTime = performance.now();
+    const duration = 250;
+
+    const step = (now) => {
+      const elapsed = now - startTime;
+      const t = Math.min(1, elapsed / duration);
+      const ease = 1 - Math.pow(1 - t, 3);
+      const z = startZoom + (targetZoom - startZoom) * ease;
+      setZoomLevel(Math.round(z * 100) / 100);
+      vp.scrollLeft = getScrollLeft(z);
+      if (t < 1) {
+        animationRef.current = requestAnimationFrame(step);
+      } else {
+        setZoomLevel(targetZoom);
+        vp.scrollLeft = getScrollLeft(targetZoom);
+        animationRef.current = null;
+      }
+    };
+    animationRef.current = requestAnimationFrame(step);
+  }, []);
+
+  // Zoom handler — preserves focal point, optionally animated
+  const handleZoom = useCallback((newZoom, focalFraction, animated) => {
     const clamped = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, Math.round(newZoom * 100) / 100));
     if (clamped === zoomRef.current) return;
 
-    const vp = viewportRef.current;
-    const oldZoom = zoomRef.current;
-    setZoomLevel(clamped);
+    if (animationRef.current) { cancelAnimationFrame(animationRef.current); animationRef.current = null; }
 
-    if (!vp) return;
+    const vp = viewportRef.current;
+    if (!vp) { setZoomLevel(clamped); return; }
+
     if (focalFraction === undefined) {
-      focalFraction = (vp.scrollLeft + vp.clientWidth / 2) / (viewportWidth * oldZoom);
+      focalFraction = (vp.scrollLeft + vp.clientWidth / 2) / (viewportWidth * zoomRef.current);
     }
-    requestAnimationFrame(() => {
-      const newCanvas = viewportWidth * clamped;
-      const cursorViewportX = focalFraction * viewportWidth * oldZoom - vp.scrollLeft;
-      vp.scrollLeft = Math.max(0, focalFraction * newCanvas - cursorViewportX);
-    });
-  }, [viewportWidth]);
+    const viewportOffsetX = focalFraction * viewportWidth * zoomRef.current - vp.scrollLeft;
+
+    if (animated) {
+      animateToZoom(clamped, (z) => Math.max(0, focalFraction * viewportWidth * z - viewportOffsetX));
+    } else {
+      setZoomLevel(clamped);
+      requestAnimationFrame(() => {
+        vp.scrollLeft = Math.max(0, focalFraction * viewportWidth * clamped - viewportOffsetX);
+      });
+    }
+  }, [viewportWidth, animateToZoom]);
 
   // Auto-zoom to fit a specific era in the viewport
   const zoomToEra = useCallback((period) => {
@@ -99,15 +133,12 @@ export default function VisualTimeline({
     const eraFrac = eraSpan / totalSpan;
     const targetZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, 0.8 / eraFrac));
     const eraCenterFrac = ((period.era[0] + period.era[1]) / 2 - minYear) / totalSpan;
+    const vpWidth = viewportRef.current?.clientWidth || 0;
 
-    setZoomLevel(targetZoom);
-    requestAnimationFrame(() => {
-      const vp = viewportRef.current;
-      if (!vp) return;
-      const newCanvas = viewportWidth * targetZoom;
-      vp.scrollLeft = Math.max(0, eraCenterFrac * newCanvas - vp.clientWidth / 2);
-    });
-  }, [viewportWidth, totalSpan, minYear]);
+    animateToZoom(targetZoom, (z) =>
+      Math.max(0, eraCenterFrac * viewportWidth * z - vpWidth / 2)
+    );
+  }, [viewportWidth, totalSpan, minYear, animateToZoom]);
 
   // Wheel handler: Ctrl+wheel = zoom, plain wheel = horizontal scroll
   useEffect(() => {
@@ -271,7 +302,7 @@ export default function VisualTimeline({
         }}
       >
         <button
-          onClick={() => handleZoom(zoomLevel - ZOOM_STEP)}
+          onClick={() => handleZoom(zoomLevel - ZOOM_STEP, undefined, true)}
           disabled={zoomLevel <= MIN_ZOOM}
           title="Zoom out"
           style={{
@@ -307,7 +338,7 @@ export default function VisualTimeline({
           {Math.round(zoomLevel * 100)}%
         </span>
         <button
-          onClick={() => handleZoom(zoomLevel + ZOOM_STEP)}
+          onClick={() => handleZoom(zoomLevel + ZOOM_STEP, undefined, true)}
           disabled={zoomLevel >= MAX_ZOOM}
           title="Zoom in"
           style={{
@@ -331,7 +362,7 @@ export default function VisualTimeline({
           +
         </button>
         <button
-          onClick={() => handleZoom(1)}
+          onClick={() => handleZoom(1, undefined, true)}
           disabled={zoomLevel === 1}
           title="Fit entire range"
           style={{
@@ -402,7 +433,7 @@ export default function VisualTimeline({
                     const isDeselecting = u.id === selectedPeriod;
                     onEraClick(isDeselecting ? "all" : u.id);
                     if (isDeselecting) {
-                      handleZoom(1);
+                      handleZoom(1, undefined, true);
                     } else {
                       zoomToEra(u);
                     }

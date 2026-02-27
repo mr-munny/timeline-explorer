@@ -3,7 +3,7 @@ import { useAuth } from "./contexts/AuthContext";
 import { useTheme } from "./contexts/ThemeContext";
 import { PERIOD_COLORS, TAGS, getPeriod } from "./data/constants";
 import { TEACHER_EMAIL } from "./firebase";
-import { subscribeToEvents, submitEvent, deleteEvent, seedDatabase, subscribeToPeriods, subscribeToAllSectionPeriods, savePeriods, subscribeToSections, saveSections, subscribeToDefaultPeriods, saveDefaultPeriods, subscribeToCompellingQuestion, subscribeToAllSectionCompellingQuestions, saveCompellingQuestion, subscribeToDefaultCompellingQuestion, saveDefaultCompellingQuestion, subscribeToTimelineRange, subscribeToAllSectionTimelineRanges, saveTimelineRange, subscribeToDefaultTimelineRange, saveDefaultTimelineRange, subscribeToFieldConfig, subscribeToAllSectionFieldConfigs, saveFieldConfig, subscribeToDefaultFieldConfig, saveDefaultFieldConfig } from "./services/database";
+import { subscribeToEvents, submitEvent, deleteEvent, seedDatabase, subscribeToPeriods, subscribeToAllSectionPeriods, savePeriods, subscribeToSections, saveSections, subscribeToDefaultPeriods, saveDefaultPeriods, subscribeToCompellingQuestion, subscribeToAllSectionCompellingQuestions, saveCompellingQuestion, subscribeToDefaultCompellingQuestion, saveDefaultCompellingQuestion, subscribeToTimelineRange, subscribeToAllSectionTimelineRanges, saveTimelineRange, subscribeToDefaultTimelineRange, saveDefaultTimelineRange, subscribeToFieldConfig, subscribeToAllSectionFieldConfigs, saveFieldConfig, subscribeToDefaultFieldConfig, saveDefaultFieldConfig, assignStudentSection, subscribeToAllStudentSections, reassignStudentSection, removeStudentSection } from "./services/database";
 import SEED_EVENTS from "./data/seedEvents";
 import VisualTimeline from "./components/VisualTimeline";
 import EventCard from "./components/EventCard";
@@ -11,6 +11,8 @@ import AddEventPanel from "./components/AddEventPanel";
 import ContributorSidebar from "./components/ContributorSidebar";
 import ModerationPanel from "./components/ModerationPanel";
 import LoginScreen from "./components/LoginScreen";
+import SectionPicker from "./components/SectionPicker";
+import StudentRoster from "./components/StudentRoster";
 import SectionConfiguration from "./components/SectionConfiguration";
 import { Icon } from "@iconify/react";
 import chartTimelineVariantShimmer from "@iconify-icons/mdi/chart-timeline-variant-shimmer";
@@ -42,7 +44,7 @@ function getInitialSection() {
 }
 
 export default function App() {
-  const { user, loading, authError, login, logout, isTeacher } = useAuth();
+  const { user, loading, authError, login, logout, isTeacher, userSection, sectionLoading } = useAuth();
   const { theme, mode, toggleTheme, getThemedPeriodBg } = useTheme();
   const [allEvents, setAllEvents] = useState([]);
   const [section, setSection] = useState(getInitialSection);
@@ -92,6 +94,7 @@ export default function App() {
   const [defaultFieldConfig, setDefaultFieldConfig] = useState(null);
   const isEditingFieldConfigRef = useRef(false);
   const [allSectionFieldConfigs, setAllSectionFieldConfigs] = useState({});
+  const [allStudentAssignments, setAllStudentAssignments] = useState([]);
 
   const activeSections = useMemo(() => sections || [], [sections]);
 
@@ -156,6 +159,29 @@ export default function App() {
     });
     return () => unsub();
   }, [user]);
+
+  // Lock student to their assigned section (overrides URL param)
+  useEffect(() => {
+    if (!isTeacher && userSection) {
+      // If the assigned section still exists, lock to it
+      if (activeSections.length === 0 || activeSections.some((s) => s.id === userSection)) {
+        setSection(userSection);
+        const url = new URL(window.location);
+        url.searchParams.set("section", userSection);
+        window.history.replaceState({}, "", url);
+      }
+      // If the section was deleted, userSection won't match — treated as unassigned in render gate
+    }
+  }, [isTeacher, userSection, activeSections]);
+
+  // Subscribe to all student assignments (teacher roster)
+  useEffect(() => {
+    if (!user || !isTeacher) return;
+    const unsub = subscribeToAllStudentSections((assignments) => {
+      setAllStudentAssignments(assignments);
+    });
+    return () => unsub();
+  }, [user, isTeacher]);
 
   // Section mutation handlers
   const handleAddSection = useCallback((name) => {
@@ -590,6 +616,40 @@ export default function App() {
   // Not logged in
   if (!user) {
     return <LoginScreen onLogin={login} error={authError} />;
+  }
+
+  // Student section loading
+  if (!isTeacher && sectionLoading) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          minHeight: "100vh",
+          fontFamily: "'Overpass Mono', monospace",
+          color: theme.textSecondary,
+          fontSize: 13,
+          background: theme.pageBg,
+        }}
+      >
+        Loading...
+      </div>
+    );
+  }
+
+  // Student needs to pick a section
+  const sectionStillExists = activeSections.some((s) => s.id === userSection);
+  if (!isTeacher && (!userSection || (activeSections.length > 0 && !sectionStillExists))) {
+    return (
+      <SectionPicker
+        sections={activeSections}
+        onSelect={async (sectionId) => {
+          await assignStudentSection(user.uid, sectionId, user.email, user.displayName || user.email.split("@")[0]);
+        }}
+        userName={user.displayName || user.email.split("@")[0]}
+      />
+    );
   }
 
   const studentCount = [
@@ -1580,6 +1640,14 @@ export default function App() {
                           onAdd={handleAddSection}
                           onDelete={handleDeleteSection}
                           onRename={handleRenameSection}
+                          theme={theme}
+                        />
+
+                        <StudentRoster
+                          students={allStudentAssignments}
+                          sections={activeSections}
+                          onReassign={reassignStudentSection}
+                          onRemove={removeStudentSection}
                           theme={theme}
                         />
                       </div>

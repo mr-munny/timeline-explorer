@@ -10,7 +10,7 @@ import cancelIcon from "@iconify-icons/mdi/cancel";
 import contentSave from "@iconify-icons/mdi/content-save";
 import { useTheme } from "../contexts/ThemeContext";
 
-export default function ModerationPanel({ pendingEvents, onClose, periods = [], getSectionName = (id) => id }) {
+export default function ModerationPanel({ pendingEvents, onClose, periods = [], getSectionName = (id) => id, onEventApproved }) {
   const { theme } = useTheme();
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({});
@@ -22,6 +22,8 @@ export default function ModerationPanel({ pendingEvents, onClose, periods = [], 
       await approveEvent(event.id);
       // Write to Google Sheet bridge
       writeToSheet(event);
+      // Notify parent to potentially expand timeline range
+      if (onEventApproved) onEventApproved(event);
     } catch (err) {
       console.error("Approve failed:", err);
     }

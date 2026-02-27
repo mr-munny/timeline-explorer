@@ -169,6 +169,92 @@ export async function saveSections(sections) {
   await set(sectionsRef, sections);
 }
 
+// Listen to a section's timeline range in real-time
+export function subscribeToTimelineRange(section, callback) {
+  const rangeRef = ref(db, `sectionSettings/${section}/timelineRange`);
+  return onValue(rangeRef, (snapshot) => {
+    callback(snapshot.val() || null);
+  });
+}
+
+// Listen to ALL sections' timeline ranges (teacher "all" view)
+export function subscribeToAllSectionTimelineRanges(sections, callback) {
+  const rangeMap = {};
+  const unsubscribes = [];
+  for (const sec of sections) {
+    const rangeRef = ref(db, `sectionSettings/${sec}/timelineRange`);
+    const unsub = onValue(rangeRef, (snapshot) => {
+      rangeMap[sec] = snapshot.val() || null;
+      callback({ ...rangeMap });
+    });
+    unsubscribes.push(unsub);
+  }
+  return () => unsubscribes.forEach((fn) => fn());
+}
+
+// Write timeline range for a section
+export async function saveTimelineRange(section, range) {
+  const rangeRef = ref(db, `sectionSettings/${section}/timelineRange`);
+  await set(rangeRef, range);
+}
+
+// Listen to default timeline range template in real-time
+export function subscribeToDefaultTimelineRange(callback) {
+  const defaultRangeRef = ref(db, "defaultTimelineRange");
+  return onValue(defaultRangeRef, (snapshot) => {
+    callback(snapshot.val() || null);
+  });
+}
+
+// Write default timeline range template
+export async function saveDefaultTimelineRange(range) {
+  const defaultRangeRef = ref(db, "defaultTimelineRange");
+  await set(defaultRangeRef, range);
+}
+
+// Listen to a section's field config in real-time
+export function subscribeToFieldConfig(section, callback) {
+  const configRef = ref(db, `sectionSettings/${section}/fieldConfig`);
+  return onValue(configRef, (snapshot) => {
+    callback(snapshot.val() || null);
+  });
+}
+
+// Listen to ALL sections' field configs (teacher "all" view)
+export function subscribeToAllSectionFieldConfigs(sections, callback) {
+  const configMap = {};
+  const unsubscribes = [];
+  for (const sec of sections) {
+    const configRef = ref(db, `sectionSettings/${sec}/fieldConfig`);
+    const unsub = onValue(configRef, (snapshot) => {
+      configMap[sec] = snapshot.val() || null;
+      callback({ ...configMap });
+    });
+    unsubscribes.push(unsub);
+  }
+  return () => unsubscribes.forEach((fn) => fn());
+}
+
+// Write field config for a section
+export async function saveFieldConfig(section, config) {
+  const configRef = ref(db, `sectionSettings/${section}/fieldConfig`);
+  await set(configRef, config);
+}
+
+// Listen to default field config template in real-time
+export function subscribeToDefaultFieldConfig(callback) {
+  const defaultConfigRef = ref(db, "defaultFieldConfig");
+  return onValue(defaultConfigRef, (snapshot) => {
+    callback(snapshot.val() || null);
+  });
+}
+
+// Write default field config template
+export async function saveDefaultFieldConfig(config) {
+  const defaultConfigRef = ref(db, "defaultFieldConfig");
+  await set(defaultConfigRef, config);
+}
+
 // One-time seed: push seed events into Firebase
 export async function seedDatabase(seedEvents) {
   for (const event of seedEvents) {

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { getPeriod, TAGS } from "../data/constants";
-import { approveEvent, rejectEvent, updateEvent } from "../services/database";
+import { approveEvent, rejectEvent, updateEvent, approveConnection, rejectConnection, updateConnection } from "../services/database";
 import { writeToSheet } from "../services/sheets";
 import { Icon } from "@iconify/react";
 import closeIcon from "@iconify-icons/mdi/close";
@@ -8,13 +8,17 @@ import checkIcon from "@iconify-icons/mdi/check";
 import pencilIcon from "@iconify-icons/mdi/pencil";
 import cancelIcon from "@iconify-icons/mdi/cancel";
 import contentSave from "@iconify-icons/mdi/content-save";
+import arrowRightBold from "@iconify-icons/mdi/arrow-right-bold";
 import { useTheme } from "../contexts/ThemeContext";
 
-export default function ModerationPanel({ pendingEvents, onClose, periods = [], getSectionName = (id) => id, onEventApproved }) {
+export default function ModerationPanel({ pendingEvents, pendingConnections = [], allEvents = [], onClose, periods = [], getSectionName = (id) => id, onEventApproved }) {
   const { theme } = useTheme();
+  const [activeTab, setActiveTab] = useState("events");
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({});
   const [processing, setProcessing] = useState(null);
+  const [editingConnId, setEditingConnId] = useState(null);
+  const [editConnDesc, setEditConnDesc] = useState("");
 
   const handleApprove = async (event) => {
     setProcessing(event.id);
@@ -72,6 +76,40 @@ export default function ModerationPanel({ pendingEvents, onClose, periods = [], 
       tags: f.tags.includes(tag) ? f.tags.filter((t) => t !== tag) : [...f.tags, tag],
     }));
   };
+
+  const handleApproveConnection = async (conn) => {
+    setProcessing(conn.id);
+    try {
+      await approveConnection(conn.id);
+    } catch (err) {
+      console.error("Approve connection failed:", err);
+    }
+    setProcessing(null);
+  };
+
+  const handleRejectConnection = async (connId) => {
+    if (!window.confirm("Reject this connection? It will be removed.")) return;
+    setProcessing(connId);
+    try {
+      await rejectConnection(connId);
+    } catch (err) {
+      console.error("Reject connection failed:", err);
+    }
+    setProcessing(null);
+  };
+
+  const saveConnEdit = async (connId) => {
+    setProcessing(connId);
+    try {
+      await updateConnection(connId, { description: editConnDesc });
+      setEditingConnId(null);
+    } catch (err) {
+      console.error("Edit connection failed:", err);
+    }
+    setProcessing(null);
+  };
+
+  const findEvent = (id) => allEvents.find((e) => e.id === id);
 
   const inputStyle = {
     width: "100%",
@@ -140,8 +178,8 @@ export default function ModerationPanel({ pendingEvents, onClose, periods = [], 
                 fontFamily: "'Overpass Mono', monospace",
               }}
             >
-              {pendingEvents.length} pending submission
-              {pendingEvents.length !== 1 ? "s" : ""}
+              {pendingEvents.length + pendingConnections.length} pending submission
+              {(pendingEvents.length + pendingConnections.length) !== 1 ? "s" : ""}
             </p>
           </div>
           <button
@@ -161,7 +199,34 @@ export default function ModerationPanel({ pendingEvents, onClose, periods = [], 
           </button>
         </div>
 
-        {pendingEvents.length === 0 ? (
+        {/* Tabs */}
+        <div style={{ display: "flex", gap: 0, marginBottom: 16, borderBottom: `1.5px solid ${theme.inputBorder}` }}>
+          {[
+            { id: "events", label: `Events (${pendingEvents.length})` },
+            { id: "connections", label: `Connections (${pendingConnections.length})` },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              style={{
+                padding: "8px 16px",
+                background: "none",
+                border: "none",
+                borderBottom: activeTab === tab.id ? `2px solid ${theme.textPrimary}` : "2px solid transparent",
+                color: activeTab === tab.id ? theme.textPrimary : theme.textSecondary,
+                fontSize: 12,
+                fontFamily: "'Overpass Mono', monospace",
+                fontWeight: 700,
+                cursor: "pointer",
+                transition: "all 0.15s",
+              }}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {activeTab === "events" && (pendingEvents.length === 0 ? (
           <div
             style={{
               textAlign: "center",
@@ -454,7 +519,177 @@ export default function ModerationPanel({ pendingEvents, onClose, periods = [], 
               );
             })}
           </div>
-        )}
+        ))}
+
+        {activeTab === "connections" && (pendingConnections.length === 0 ? (
+          <div
+            style={{
+              textAlign: "center",
+              padding: "32px 20px",
+              color: theme.textSecondary,
+              fontFamily: "'Overpass Mono', monospace",
+              fontSize: 12,
+            }}
+          >
+            No pending connections. All caught up!
+          </div>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {pendingConnections.map((conn) => {
+              const causeEvent = findEvent(conn.causeEventId);
+              const effectEvent = findEvent(conn.effectEventId);
+              const causeUnit = causeEvent ? getPeriod(periods, causeEvent.period) : null;
+              const effectUnit = effectEvent ? getPeriod(periods, effectEvent.period) : null;
+              const isProcessing = processing === conn.id;
+              const isEditing = editingConnId === conn.id;
+
+              return (
+                <div
+                  key={conn.id}
+                  style={{
+                    border: `1.5px solid ${theme.inputBorder}`,
+                    borderRadius: 10,
+                    padding: "16px 18px",
+                    borderLeft: `4px solid ${theme.accentGold || "#F59E0B"}`,
+                  }}
+                >
+                  {/* Cause → Effect display */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
+                    <div style={{
+                      display: "flex", alignItems: "center", gap: 6,
+                      padding: "4px 10px", background: theme.warmSubtleBg, borderRadius: 6,
+                      borderLeft: `3px solid ${causeUnit?.color || theme.textSecondary}`,
+                    }}>
+                      <span style={{
+                        fontSize: 10, fontWeight: 700, fontFamily: "'Overpass Mono', monospace",
+                        color: causeUnit?.color || theme.textSecondary,
+                      }}>
+                        {causeEvent?.year || "?"}
+                      </span>
+                      <span style={{
+                        fontSize: 12, fontFamily: "'Newsreader', serif", fontWeight: 600,
+                        color: theme.textPrimary,
+                      }}>
+                        {causeEvent?.title || "Unknown event"}
+                      </span>
+                    </div>
+                    <Icon icon={arrowRightBold} width={18} style={{ color: theme.accentGold || "#F59E0B", flexShrink: 0 }} />
+                    <div style={{
+                      display: "flex", alignItems: "center", gap: 6,
+                      padding: "4px 10px", background: theme.warmSubtleBg, borderRadius: 6,
+                      borderLeft: `3px solid ${effectUnit?.color || theme.textSecondary}`,
+                    }}>
+                      <span style={{
+                        fontSize: 10, fontWeight: 700, fontFamily: "'Overpass Mono', monospace",
+                        color: effectUnit?.color || theme.textSecondary,
+                      }}>
+                        {effectEvent?.year || "?"}
+                      </span>
+                      <span style={{
+                        fontSize: 12, fontFamily: "'Newsreader', serif", fontWeight: 600,
+                        color: theme.textPrimary,
+                      }}>
+                        {effectEvent?.title || "Unknown event"}
+                      </span>
+                    </div>
+                  </div>
+
+                  {isEditing ? (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                      <textarea
+                        value={editConnDesc}
+                        onChange={(e) => setEditConnDesc(e.target.value)}
+                        style={{ ...inputStyle, resize: "vertical" }}
+                        rows={3}
+                      />
+                      <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
+                        <button
+                          onClick={() => setEditingConnId(null)}
+                          style={{
+                            padding: "6px 14px", background: "none",
+                            border: `1.5px solid ${theme.inputBorder}`, borderRadius: 6,
+                            fontSize: 11, fontFamily: "'Overpass Mono', monospace",
+                            cursor: "pointer", color: theme.textTertiary,
+                          }}
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={() => saveConnEdit(conn.id)}
+                          disabled={isProcessing}
+                          style={{
+                            padding: "6px 14px", background: theme.activeToggleBg,
+                            color: theme.activeToggleText, border: "none", borderRadius: 6,
+                            fontSize: 11, fontFamily: "'Overpass Mono', monospace",
+                            fontWeight: 700, cursor: "pointer",
+                          }}
+                        >
+                          <Icon icon={contentSave} width={13} style={{ verticalAlign: "middle", marginRight: 3 }} />
+                          Save
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <p style={{
+                        fontSize: 12, lineHeight: 1.6, color: theme.textDescription,
+                        margin: "0 0 8px 0", fontFamily: "'Newsreader', serif",
+                      }}>
+                        {conn.description}
+                      </p>
+                      <div style={{
+                        fontSize: 10, color: theme.textTertiary,
+                        fontFamily: "'Overpass Mono', monospace", marginBottom: 10,
+                      }}>
+                        by {conn.addedBy} &middot; {getSectionName(conn.section)}
+                      </div>
+                      <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
+                        <button
+                          onClick={() => handleRejectConnection(conn.id)}
+                          disabled={isProcessing}
+                          style={{
+                            padding: "6px 14px", background: "none",
+                            border: `1.5px solid ${theme.errorRed}`, borderRadius: 6,
+                            color: theme.errorRed, fontSize: 11,
+                            fontFamily: "'Overpass Mono', monospace", fontWeight: 600, cursor: "pointer",
+                          }}
+                        >
+                          <Icon icon={cancelIcon} width={13} style={{ verticalAlign: "middle", marginRight: 3 }} />
+                          Reject
+                        </button>
+                        <button
+                          onClick={() => { setEditingConnId(conn.id); setEditConnDesc(conn.description); }}
+                          disabled={isProcessing}
+                          style={{
+                            padding: "6px 14px", background: "none",
+                            border: `1.5px solid ${theme.inputBorder}`, borderRadius: 6,
+                            color: theme.textDescription, fontSize: 11,
+                            fontFamily: "'Overpass Mono', monospace", fontWeight: 600, cursor: "pointer",
+                          }}
+                        >
+                          <Icon icon={pencilIcon} width={13} style={{ verticalAlign: "middle", marginRight: 3 }} />
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleApproveConnection(conn)}
+                          disabled={isProcessing}
+                          style={{
+                            padding: "6px 14px", background: theme.successGreen,
+                            color: "#fff", border: "none", borderRadius: 6,
+                            fontSize: 11, fontFamily: "'Overpass Mono', monospace",
+                            fontWeight: 700, cursor: "pointer",
+                          }}
+                        >
+                          {isProcessing ? "..." : <><Icon icon={checkIcon} width={14} style={{ verticalAlign: "middle", marginRight: 3 }} />Approve</>}
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        ))}
       </div>
     </div>
   );

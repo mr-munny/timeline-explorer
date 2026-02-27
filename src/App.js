@@ -3,11 +3,13 @@ import { useAuth } from "./contexts/AuthContext";
 import { useTheme } from "./contexts/ThemeContext";
 import { PERIOD_COLORS, TAGS, getPeriod } from "./data/constants";
 import { TEACHER_EMAIL } from "./firebase";
-import { subscribeToEvents, submitEvent, deleteEvent, seedDatabase, subscribeToPeriods, subscribeToAllSectionPeriods, savePeriods, subscribeToSections, saveSections, subscribeToDefaultPeriods, saveDefaultPeriods, subscribeToCompellingQuestion, subscribeToAllSectionCompellingQuestions, saveCompellingQuestion, subscribeToDefaultCompellingQuestion, saveDefaultCompellingQuestion, subscribeToTimelineRange, subscribeToAllSectionTimelineRanges, saveTimelineRange, subscribeToDefaultTimelineRange, saveDefaultTimelineRange, subscribeToFieldConfig, subscribeToAllSectionFieldConfigs, saveFieldConfig, subscribeToDefaultFieldConfig, saveDefaultFieldConfig, assignStudentSection, subscribeToAllStudentSections, reassignStudentSection, removeStudentSection } from "./services/database";
+import { subscribeToEvents, submitEvent, deleteEvent, seedDatabase, subscribeToPeriods, subscribeToAllSectionPeriods, savePeriods, subscribeToSections, saveSections, subscribeToDefaultPeriods, saveDefaultPeriods, subscribeToCompellingQuestion, subscribeToAllSectionCompellingQuestions, saveCompellingQuestion, subscribeToDefaultCompellingQuestion, saveDefaultCompellingQuestion, subscribeToTimelineRange, subscribeToAllSectionTimelineRanges, saveTimelineRange, subscribeToDefaultTimelineRange, saveDefaultTimelineRange, subscribeToFieldConfig, subscribeToAllSectionFieldConfigs, saveFieldConfig, subscribeToDefaultFieldConfig, saveDefaultFieldConfig, assignStudentSection, subscribeToAllStudentSections, reassignStudentSection, removeStudentSection, subscribeToConnections, submitConnection, deleteConnection } from "./services/database";
 import SEED_EVENTS from "./data/seedEvents";
 import VisualTimeline from "./components/VisualTimeline";
 import EventCard from "./components/EventCard";
 import AddEventPanel from "./components/AddEventPanel";
+import AddConnectionPanel from "./components/AddConnectionPanel";
+import ConnectionLines from "./components/ConnectionLines";
 import ContributorSidebar from "./components/ContributorSidebar";
 import ModerationPanel from "./components/ModerationPanel";
 import LoginScreen from "./components/LoginScreen";
@@ -28,6 +30,7 @@ import filterRemoveOutline from "@iconify-icons/mdi/filter-remove-outline";
 import shieldAccountOutline from "@iconify-icons/mdi/shield-account-outline";
 import cogOutline from "@iconify-icons/mdi/cog-outline";
 import chevronDown from "@iconify-icons/mdi/chevron-down";
+import vectorLink from "@iconify-icons/mdi/vector-link";
 import lockOutline from "@iconify-icons/mdi/lock-outline";
 import lockOpenVariantOutline from "@iconify-icons/mdi/lock-open-variant-outline";
 import closeCircleOutline from "@iconify-icons/mdi/close-circle-outline";
@@ -95,6 +98,11 @@ export default function App() {
   const isEditingFieldConfigRef = useRef(false);
   const [allSectionFieldConfigs, setAllSectionFieldConfigs] = useState({});
   const [allStudentAssignments, setAllStudentAssignments] = useState([]);
+  const [allConnections, setAllConnections] = useState([]);
+  const [showAddConnectionPanel, setShowAddConnectionPanel] = useState(false);
+  const [connectionMode, setConnectionMode] = useState(null);
+  const [hoveredEvent, setHoveredEvent] = useState(null);
+  const eventListRef = useRef(null);
 
   const activeSections = useMemo(() => sections || [], [sections]);
 
@@ -148,6 +156,16 @@ export default function App() {
       setAllEvents(events);
     });
 
+    return () => unsubscribe();
+  }, [user, section, isTeacher]);
+
+  // Subscribe to Firebase connections in real-time
+  useEffect(() => {
+    if (!user) return;
+    const listenSection = isTeacher && section === "all" ? "all" : section;
+    const unsubscribe = subscribeToConnections(listenSection, (connections) => {
+      setAllConnections(connections);
+    });
     return () => unsubscribe();
   }, [user, section, isTeacher]);
 
@@ -487,6 +505,28 @@ export default function App() {
     [allEvents]
   );
 
+  const approvedConnections = useMemo(
+    () => allConnections.filter((c) => c.status === "approved"),
+    [allConnections]
+  );
+
+  const pendingConnections = useMemo(
+    () => allConnections.filter((c) => c.status === "pending"),
+    [allConnections]
+  );
+
+  // Lookup: eventId -> { causes: [connections where event is cause], effects: [connections where event is effect] }
+  const connectionsByEvent = useMemo(() => {
+    const map = {};
+    for (const conn of approvedConnections) {
+      if (!map[conn.causeEventId]) map[conn.causeEventId] = { causes: [], effects: [] };
+      map[conn.causeEventId].causes.push(conn);
+      if (!map[conn.effectEventId]) map[conn.effectEventId] = { causes: [], effects: [] };
+      map[conn.effectEventId].effects.push(conn);
+    }
+    return map;
+  }, [approvedConnections]);
+
   // Filtered + sorted events for display
   const filteredEvents = useMemo(() => {
     let evts = [...approvedEvents];
@@ -510,6 +550,11 @@ export default function App() {
     );
     return evts;
   }, [approvedEvents, selectedPeriod, selectedTag, searchTerm, sortOrder, isTeacher, sectionFilter]);
+
+  const filteredEventIds = useMemo(
+    () => new Set(filteredEvents.map((e) => e.id)),
+    [filteredEvents]
+  );
 
   // Merge periods from all sections for "all" view
   const mergedPeriods = useMemo(() => {
@@ -551,6 +596,55 @@ export default function App() {
       console.error("Delete failed:", err);
     }
   }, []);
+
+  const handleAddConnection = useCallback(
+    async (formData) => {
+      await submitConnection({
+        ...formData,
+        addedBy: user.displayName || user.email.split("@")[0],
+        addedByEmail: user.email,
+        addedByUid: user.uid,
+        section: section === "all" ? (activeSections[0]?.id || "Period1") : section,
+      });
+    },
+    [user, section, activeSections]
+  );
+
+  const handleDeleteConnection = useCallback(async (connectionId) => {
+    try {
+      await deleteConnection(connectionId);
+    } catch (err) {
+      console.error("Delete connection failed:", err);
+    }
+  }, []);
+
+  const handleConnectionModeClick = useCallback((eventId) => {
+    if (!connectionMode) return;
+    if (connectionMode.step === "selectCause") {
+      setConnectionMode({ step: "selectEffect", causeEventId: eventId });
+    } else if (connectionMode.step === "selectEffect") {
+      if (eventId === connectionMode.causeEventId) return;
+      setConnectionMode({ ...connectionMode, step: "describe", effectEventId: eventId });
+    }
+  }, [connectionMode]);
+
+  const handleScrollToEvent = useCallback((eventId) => {
+    setExpandedEvent(eventId);
+    setTimeout(() => {
+      const el = document.querySelector(`[data-event-id="${eventId}"]`);
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 100);
+  }, []);
+
+  // Escape key exits connection mode
+  useEffect(() => {
+    if (!connectionMode) return;
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") setConnectionMode(null);
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [connectionMode]);
 
   // Auto-expand timeline range when event outside range is approved
   const handleEventApproved = useCallback((event) => {
@@ -1734,7 +1828,7 @@ export default function App() {
                   {seeding ? "Seeding..." : "Seed Database"}
                 </button>
               )}
-              {isTeacher && pendingEvents.length > 0 && (
+              {isTeacher && (pendingEvents.length + pendingConnections.length) > 0 && (
                 <button
                   onClick={() => setShowModeration(true)}
                   style={{
@@ -1751,7 +1845,7 @@ export default function App() {
                   }}
                 >
                   <Icon icon={inboxArrowDown} width={14} style={{ verticalAlign: "middle", marginRight: 4 }} />
-                  Review ({pendingEvents.length})
+                  Review ({pendingEvents.length + pendingConnections.length})
                 </button>
               )}
               <button
@@ -1771,6 +1865,43 @@ export default function App() {
               >
                 <Icon icon={plusIcon} width={14} style={{ verticalAlign: "middle", marginRight: 2 }} />
                 Add Event
+              </button>
+              <button
+                onClick={() => setShowAddConnectionPanel(true)}
+                style={{
+                  padding: "10px 18px",
+                  background: "transparent",
+                  color: theme.accentGold,
+                  border: `1.5px solid ${theme.accentGold}`,
+                  borderRadius: 8,
+                  fontSize: 12,
+                  fontFamily: "'Overpass Mono', monospace",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  letterSpacing: "0.02em",
+                }}
+              >
+                <Icon icon={vectorLink} width={14} style={{ verticalAlign: "middle", marginRight: 4 }} />
+                Add Connection
+              </button>
+              <button
+                onClick={() => setConnectionMode(connectionMode ? null : { step: "selectCause" })}
+                style={{
+                  padding: "10px 14px",
+                  background: connectionMode ? theme.accentGold : "transparent",
+                  color: connectionMode ? theme.headerBg : theme.headerSubtext,
+                  border: `1px solid ${connectionMode ? theme.accentGold : theme.headerBorder}`,
+                  borderRadius: 8,
+                  fontSize: 11,
+                  fontFamily: "'Overpass Mono', monospace",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  transition: "all 0.15s",
+                }}
+                title="Click two events to connect them"
+              >
+                <Icon icon={vectorLink} width={13} style={{ verticalAlign: "middle", marginRight: 4 }} />
+                {connectionMode ? "Exit Connect Mode" : "Connect Events"}
               </button>
               <button
                 onClick={toggleTheme}
@@ -2135,16 +2266,61 @@ export default function App() {
           </div>
         )}
 
+        {/* Connection mode banner */}
+        {connectionMode && (
+          <div
+            style={{
+              background: theme.accentGold + "18",
+              border: `1.5px solid ${theme.accentGold}`,
+              borderRadius: 8,
+              padding: "10px 16px",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <span
+              style={{
+                fontSize: 12,
+                fontFamily: "'Overpass Mono', monospace",
+                fontWeight: 600,
+                color: theme.textDescription,
+              }}
+            >
+              {connectionMode.step === "selectCause" && "Step 1: Click the CAUSE event below"}
+              {connectionMode.step === "selectEffect" && "Step 2: Now click the EFFECT event"}
+            </span>
+            <button
+              onClick={() => setConnectionMode(null)}
+              style={{
+                padding: "4px 12px",
+                background: "transparent",
+                border: `1px solid ${theme.textSecondary}`,
+                borderRadius: 5,
+                fontSize: 11,
+                fontFamily: "'Overpass Mono', monospace",
+                fontWeight: 600,
+                color: theme.textSecondary,
+                cursor: "pointer",
+              }}
+            >
+              Cancel
+            </button>
+          </div>
+        )}
+
         {/* Content area */}
         <div style={{ display: "flex", gap: 20, alignItems: "flex-start" }}>
           {/* Event list */}
           <div
+            ref={eventListRef}
             style={{
               flex: 1,
               display: "flex",
               flexDirection: "column",
               gap: 8,
               minWidth: 0,
+              position: "relative",
             }}
           >
             {filteredEvents.length === 0 ? (
@@ -2161,11 +2337,28 @@ export default function App() {
               </div>
             ) : (
               filteredEvents.map((event) => (
-                <div key={event.id} data-event-id={event.id}>
+                <div
+                  key={event.id}
+                  data-event-id={event.id}
+                  onClick={connectionMode ? (e) => {
+                    e.stopPropagation();
+                    handleConnectionModeClick(event.id);
+                  } : undefined}
+                  onMouseEnter={() => setHoveredEvent(event.id)}
+                  onMouseLeave={() => setHoveredEvent(null)}
+                  style={connectionMode ? {
+                    cursor: "crosshair",
+                    borderRadius: 10,
+                    outline: connectionMode.causeEventId === event.id
+                      ? `2px solid ${theme.successGreen || "#22C55E"}`
+                      : `2px solid transparent`,
+                    transition: "outline 0.15s",
+                  } : undefined}
+                >
                   <EventCard
                     event={event}
-                    isExpanded={expandedEvent === event.id}
-                    onToggle={() =>
+                    isExpanded={connectionMode ? false : expandedEvent === event.id}
+                    onToggle={connectionMode ? () => {} : () =>
                       setExpandedEvent(
                         expandedEvent === event.id ? null : event.id
                       )
@@ -2177,10 +2370,22 @@ export default function App() {
                       const el = document.querySelector("[data-timeline-section]");
                       if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
                     }}
+                    connections={connectionsByEvent[event.id]}
+                    allEvents={approvedEvents}
+                    onScrollToEvent={handleScrollToEvent}
+                    onDeleteConnection={handleDeleteConnection}
+                    connectionMode={connectionMode}
                   />
                 </div>
               ))
             )}
+            <ConnectionLines
+              connections={approvedConnections}
+              containerRef={eventListRef}
+              expandedEvent={expandedEvent}
+              hoveredEvent={hoveredEvent}
+              filteredEventIds={filteredEventIds}
+            />
           </div>
 
           {/* Contributors sidebar */}
@@ -2229,10 +2434,36 @@ export default function App() {
         />
       )}
 
+      {/* Add Connection Modal */}
+      {showAddConnectionPanel && (
+        <AddConnectionPanel
+          onAdd={handleAddConnection}
+          onClose={() => setShowAddConnectionPanel(false)}
+          userName={user.displayName || user.email.split("@")[0]}
+          approvedEvents={approvedEvents}
+          periods={displayPeriods}
+        />
+      )}
+
+      {/* Connection mode description modal */}
+      {connectionMode && connectionMode.step === "describe" && (
+        <AddConnectionPanel
+          onAdd={handleAddConnection}
+          onClose={() => setConnectionMode(null)}
+          userName={user.displayName || user.email.split("@")[0]}
+          approvedEvents={approvedEvents}
+          periods={displayPeriods}
+          prefilledCause={connectionMode.causeEventId}
+          prefilledEffect={connectionMode.effectEventId}
+        />
+      )}
+
       {/* Moderation Modal (teacher only) */}
       {showModeration && isTeacher && (
         <ModerationPanel
           pendingEvents={pendingEvents}
+          pendingConnections={pendingConnections}
+          allEvents={approvedEvents}
           onClose={() => setShowModeration(false)}
           periods={displayPeriods}
           getSectionName={getSectionName}

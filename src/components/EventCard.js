@@ -2,6 +2,9 @@ import { getPeriod } from "../data/constants";
 import { Icon } from "@iconify/react";
 import chevronDown from "@iconify-icons/mdi/chevron-down";
 import deleteOutline from "@iconify-icons/mdi/delete-outline";
+import arrowRightThick from "@iconify-icons/mdi/arrow-right-thick";
+import arrowLeftThick from "@iconify-icons/mdi/arrow-left-thick";
+import closeCircleOutline from "@iconify-icons/mdi/close-circle-outline";
 import bookOpenPageVariantOutline from "@iconify-icons/mdi/book-open-page-variant-outline";
 import fileDocumentOutline from "@iconify-icons/mdi/file-document-outline";
 import linkVariant from "@iconify-icons/mdi/link-variant";
@@ -10,7 +13,7 @@ import mapMarkerOutline from "@iconify-icons/mdi/map-marker-outline";
 import schoolOutline from "@iconify-icons/mdi/school-outline";
 import { useTheme } from "../contexts/ThemeContext";
 
-export default function EventCard({ event, isExpanded, onToggle, isTeacher, onDelete, periods = [], onReturnToTimeline }) {
+export default function EventCard({ event, isExpanded, onToggle, isTeacher, onDelete, periods = [], onReturnToTimeline, connections, allEvents = [], onScrollToEvent, onDeleteConnection, connectionMode }) {
   const { theme } = useTheme();
   const period = getPeriod(periods, event.period);
   const periodColor = period?.color || "#6B7280";
@@ -254,6 +257,135 @@ export default function EventCard({ event, isExpanded, onToggle, isTeacher, onDe
               </div>
             )}
           </div>
+
+          {/* Connections section */}
+          {connections && (connections.causes.length > 0 || connections.effects.length > 0) && (
+            <div
+              style={{
+                marginTop: 12,
+                padding: "12px 14px",
+                background: theme.warmSubtleBg,
+                borderRadius: 8,
+                borderLeft: `3px solid ${theme.accentGold || "#F59E0B"}`,
+              }}
+            >
+              <div
+                style={{
+                  fontSize: 10,
+                  fontWeight: 700,
+                  color: theme.textTertiary,
+                  fontFamily: "'Overpass Mono', monospace",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.05em",
+                  marginBottom: 8,
+                }}
+              >
+                Connections
+              </div>
+
+              {connections.causes.map((conn) => {
+                const target = allEvents.find((e) => e.id === conn.effectEventId);
+                if (!target) return null;
+                const targetPeriod = getPeriod(periods, target.period);
+                return (
+                  <div
+                    key={conn.id}
+                    onClick={(e) => { e.stopPropagation(); if (onScrollToEvent) onScrollToEvent(conn.effectEventId); }}
+                    style={{
+                      display: "flex",
+                      alignItems: "flex-start",
+                      gap: 8,
+                      padding: "6px 8px",
+                      marginBottom: 4,
+                      borderRadius: 5,
+                      cursor: "pointer",
+                      transition: "background 0.1s",
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = theme.subtleBg; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+                  >
+                    <Icon icon={arrowRightThick} width={14} style={{ color: theme.accentGold || "#F59E0B", marginTop: 2, flexShrink: 0 }} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 12, fontFamily: "'Newsreader', serif", fontWeight: 600, color: theme.textPrimary }}>
+                        Leads to:{" "}
+                        <span style={{ color: targetPeriod?.color || theme.textSecondary }}>{target.year}</span>
+                        {" "}{target.title}
+                      </div>
+                      <div style={{ fontSize: 11, color: theme.textSecondary, fontFamily: "'Newsreader', serif", marginTop: 2, lineHeight: 1.4 }}>
+                        {conn.description}
+                      </div>
+                    </div>
+                    {isTeacher && onDeleteConnection && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (window.confirm("Delete this connection?")) onDeleteConnection(conn.id);
+                        }}
+                        style={{
+                          background: "none", border: "none", cursor: "pointer",
+                          color: theme.textMuted, padding: 2, flexShrink: 0,
+                          display: "flex", alignItems: "center",
+                        }}
+                      >
+                        <Icon icon={closeCircleOutline} width={14} />
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+
+              {connections.effects.map((conn) => {
+                const source = allEvents.find((e) => e.id === conn.causeEventId);
+                if (!source) return null;
+                const sourcePeriod = getPeriod(periods, source.period);
+                return (
+                  <div
+                    key={conn.id}
+                    onClick={(e) => { e.stopPropagation(); if (onScrollToEvent) onScrollToEvent(conn.causeEventId); }}
+                    style={{
+                      display: "flex",
+                      alignItems: "flex-start",
+                      gap: 8,
+                      padding: "6px 8px",
+                      marginBottom: 4,
+                      borderRadius: 5,
+                      cursor: "pointer",
+                      transition: "background 0.1s",
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = theme.subtleBg; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+                  >
+                    <Icon icon={arrowLeftThick} width={14} style={{ color: theme.accentGold || "#F59E0B", marginTop: 2, flexShrink: 0 }} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 12, fontFamily: "'Newsreader', serif", fontWeight: 600, color: theme.textPrimary }}>
+                        Caused by:{" "}
+                        <span style={{ color: sourcePeriod?.color || theme.textSecondary }}>{source.year}</span>
+                        {" "}{source.title}
+                      </div>
+                      <div style={{ fontSize: 11, color: theme.textSecondary, fontFamily: "'Newsreader', serif", marginTop: 2, lineHeight: 1.4 }}>
+                        {conn.description}
+                      </div>
+                    </div>
+                    {isTeacher && onDeleteConnection && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (window.confirm("Delete this connection?")) onDeleteConnection(conn.id);
+                        }}
+                        style={{
+                          background: "none", border: "none", cursor: "pointer",
+                          color: theme.textMuted, padding: 2, flexShrink: 0,
+                          display: "flex", alignItems: "center",
+                        }}
+                      >
+                        <Icon icon={closeCircleOutline} width={14} />
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
 
           {/* Teacher delete button */}
           {isTeacher && (

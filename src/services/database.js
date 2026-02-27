@@ -12,6 +12,7 @@ import {
 import { db } from "../firebase";
 
 const eventsRef = ref(db, "events");
+const connectionsRef = ref(db, "connections");
 
 // Listen to events in real-time, filtered by section
 export function subscribeToEvents(section, callback) {
@@ -64,6 +65,61 @@ export async function updateEvent(eventId, updates) {
   const eventRef = ref(db, `events/${eventId}`);
   await update(eventRef, updates);
 }
+
+// ── Connections ─────────────────────────────────────────────
+
+// Listen to connections in real-time, filtered by section
+export function subscribeToConnections(section, callback) {
+  const q =
+    section === "all"
+      ? connectionsRef
+      : query(connectionsRef, orderByChild("section"), equalTo(section));
+
+  return onValue(q, (snapshot) => {
+    const connections = [];
+    snapshot.forEach((child) => {
+      connections.push({ id: child.key, ...child.val() });
+    });
+    callback(connections);
+  });
+}
+
+// Submit a new connection (always pending)
+export async function submitConnection(connectionData) {
+  const newRef = push(connectionsRef);
+  await set(newRef, {
+    ...connectionData,
+    status: "pending",
+    dateAdded: new Date().toISOString(),
+  });
+  return newRef.key;
+}
+
+// Teacher: approve a connection
+export async function approveConnection(connectionId) {
+  const connRef = ref(db, `connections/${connectionId}`);
+  await update(connRef, { status: "approved" });
+}
+
+// Teacher: reject a connection (remove it)
+export async function rejectConnection(connectionId) {
+  const connRef = ref(db, `connections/${connectionId}`);
+  await remove(connRef);
+}
+
+// Teacher: delete any connection
+export async function deleteConnection(connectionId) {
+  const connRef = ref(db, `connections/${connectionId}`);
+  await remove(connRef);
+}
+
+// Teacher: edit connection fields
+export async function updateConnection(connectionId, updates) {
+  const connRef = ref(db, `connections/${connectionId}`);
+  await update(connRef, updates);
+}
+
+// ── Periods ─────────────────────────────────────────────────
 
 // Listen to a section's custom periods in real-time
 export function subscribeToPeriods(section, callback) {

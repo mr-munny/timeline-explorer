@@ -3,7 +3,7 @@ import { useAuth } from "./contexts/AuthContext";
 import { useTheme } from "./contexts/ThemeContext";
 import { PERIOD_COLORS, TAGS, getPeriod } from "./data/constants";
 import { TEACHER_EMAIL } from "./firebase";
-import { subscribeToEvents, submitEvent, deleteEvent, seedDatabase, subscribeToPeriods, subscribeToAllSectionPeriods, savePeriods, subscribeToSections, saveSections, subscribeToDefaultPeriods, saveDefaultPeriods, subscribeToCompellingQuestion, subscribeToAllSectionCompellingQuestions, saveCompellingQuestion, subscribeToDefaultCompellingQuestion, saveDefaultCompellingQuestion } from "./services/database";
+import { subscribeToEvents, submitEvent, deleteEvent, seedDatabase, subscribeToPeriods, subscribeToAllSectionPeriods, savePeriods, subscribeToSections, saveSections, subscribeToDefaultPeriods, saveDefaultPeriods, subscribeToCompellingQuestion, subscribeToAllSectionCompellingQuestions, saveCompellingQuestion, subscribeToDefaultCompellingQuestion, saveDefaultCompellingQuestion, subscribeToTimelineRange, subscribeToAllSectionTimelineRanges, saveTimelineRange, subscribeToDefaultTimelineRange, saveDefaultTimelineRange, subscribeToFieldConfig, subscribeToAllSectionFieldConfigs, saveFieldConfig, subscribeToDefaultFieldConfig, saveDefaultFieldConfig } from "./services/database";
 import SEED_EVENTS from "./data/seedEvents";
 import VisualTimeline from "./components/VisualTimeline";
 import EventCard from "./components/EventCard";
@@ -34,6 +34,7 @@ import eyeOutline from "@iconify-icons/mdi/eye-outline";
 import eyeOffOutline from "@iconify-icons/mdi/eye-off-outline";
 import formatQuoteOpenOutline from "@iconify-icons/mdi/format-quote-open-outline";
 import checkIcon from "@iconify-icons/mdi/check";
+import formTextboxIcon from "@iconify-icons/mdi/form-textbox";
 
 function getInitialSection() {
   const params = new URLSearchParams(window.location.search);
@@ -82,6 +83,15 @@ export default function App() {
   const [defaultCompellingQuestion, setDefaultCompellingQuestion] = useState({ text: "", enabled: false });
   const [allSectionCQs, setAllSectionCQs] = useState({});
   const isEditingCQRef = useRef(false);
+  const [timelineRangeEditingDefaults, setTimelineRangeEditingDefaults] = useState(false);
+  const [defaultTimelineRange, setDefaultTimelineRange] = useState(null);
+  const isEditingTimelineRangeRef = useRef(false);
+  const [fieldConfig, setFieldConfig] = useState(null);
+  const [fieldConfigLocked, setFieldConfigLocked] = useState(true);
+  const [fieldConfigEditingDefaults, setFieldConfigEditingDefaults] = useState(false);
+  const [defaultFieldConfig, setDefaultFieldConfig] = useState(null);
+  const isEditingFieldConfigRef = useRef(false);
+  const [allSectionFieldConfigs, setAllSectionFieldConfigs] = useState({});
 
   const activeSections = useMemo(() => sections || [], [sections]);
 
@@ -160,7 +170,13 @@ export default function App() {
     if (defaultCompellingQuestion.text) {
       saveCompellingQuestion(id, defaultCompellingQuestion);
     }
-  }, [activeSections, defaultPeriods, defaultCompellingQuestion]);
+    if (defaultTimelineRange) {
+      saveTimelineRange(id, defaultTimelineRange);
+    }
+    if (defaultFieldConfig) {
+      saveFieldConfig(id, defaultFieldConfig);
+    }
+  }, [activeSections, defaultPeriods, defaultCompellingQuestion, defaultTimelineRange, defaultFieldConfig]);
 
   const handleDeleteSection = useCallback((id) => {
     const updated = activeSections.filter((s) => s.id !== id);
@@ -281,6 +297,146 @@ export default function App() {
     }
   }, [cqEditingDefaults, section, activeSections]);
 
+  // Default field config — defines which fields are mandatory/optional/hidden
+  const DEFAULT_FIELD_CONFIG = useMemo(() => ({
+    title: "mandatory",
+    year: "mandatory",
+    period: "mandatory",
+    tags: "mandatory",
+    sourceType: "mandatory",
+    description: "mandatory",
+    sourceNote: "mandatory",
+    region: "optional",
+  }), []);
+
+  // Active field config (merged with defaults)
+  const activeFieldConfig = useMemo(() => ({
+    ...DEFAULT_FIELD_CONFIG,
+    ...(fieldConfig || {}),
+  }), [fieldConfig, DEFAULT_FIELD_CONFIG]);
+
+  // Subscribe to default timeline range
+  useEffect(() => {
+    if (!user) return;
+    const unsub = subscribeToDefaultTimelineRange((data) => {
+      setDefaultTimelineRange(data);
+    });
+    return () => unsub();
+  }, [user]);
+
+  // Sync default timeline range into state when editing defaults
+  useEffect(() => {
+    if (timelineRangeEditingDefaults && !isEditingTimelineRangeRef.current && defaultTimelineRange) {
+      setTimelineStart(defaultTimelineRange.start);
+      setTimelineEnd(defaultTimelineRange.end);
+      setDraftStart(String(defaultTimelineRange.start));
+      setDraftEnd(String(defaultTimelineRange.end));
+    }
+  }, [timelineRangeEditingDefaults, defaultTimelineRange]);
+
+  // Subscribe to section-specific timeline range (when not editing defaults)
+  useEffect(() => {
+    if (!user || timelineRangeEditingDefaults) return;
+
+    const effectiveSection = isTeacher && section === "all" ? "all" : section;
+
+    if (effectiveSection === "all") {
+      // For teacher "all" view, use widest range across all sections
+      const unsub = subscribeToAllSectionTimelineRanges(activeSections.map((s) => s.id), (rangeMap) => {
+        if (isEditingTimelineRangeRef.current) return;
+        let minStart = 1910, maxEnd = 2000;
+        let hasAny = false;
+        for (const sec of Object.keys(rangeMap)) {
+          if (rangeMap[sec]) {
+            hasAny = true;
+            minStart = Math.min(minStart, rangeMap[sec].start);
+            maxEnd = Math.max(maxEnd, rangeMap[sec].end);
+          }
+        }
+        if (hasAny) {
+          setTimelineStart(minStart);
+          setTimelineEnd(maxEnd);
+          setDraftStart(String(minStart));
+          setDraftEnd(String(maxEnd));
+        }
+      });
+      return () => unsub();
+    } else {
+      const unsub = subscribeToTimelineRange(effectiveSection, (data) => {
+        if (isEditingTimelineRangeRef.current) return;
+        if (data) {
+          setTimelineStart(data.start);
+          setTimelineEnd(data.end);
+          setDraftStart(String(data.start));
+          setDraftEnd(String(data.end));
+        }
+      });
+      return () => unsub();
+    }
+  }, [user, section, isTeacher, activeSections, timelineRangeEditingDefaults]);
+
+  // Save timeline range to the right target
+  const persistTimelineRange = useCallback((start, end) => {
+    const range = { start, end };
+    if (timelineRangeEditingDefaults) {
+      saveDefaultTimelineRange(range);
+      for (const s of activeSections) {
+        saveTimelineRange(s.id, range);
+      }
+    } else if (section !== "all") {
+      saveTimelineRange(section, range);
+    }
+  }, [timelineRangeEditingDefaults, section, activeSections]);
+
+  // Subscribe to default field config
+  useEffect(() => {
+    if (!user) return;
+    const unsub = subscribeToDefaultFieldConfig((data) => {
+      setDefaultFieldConfig(data);
+    });
+    return () => unsub();
+  }, [user]);
+
+  // Sync default field config into state when editing defaults
+  useEffect(() => {
+    if (fieldConfigEditingDefaults && !isEditingFieldConfigRef.current) {
+      setFieldConfig(defaultFieldConfig);
+    }
+  }, [fieldConfigEditingDefaults, defaultFieldConfig]);
+
+  // Subscribe to section-specific field config (when not editing defaults)
+  useEffect(() => {
+    if (!user || fieldConfigEditingDefaults) return;
+
+    const effectiveSection = isTeacher && section === "all" ? "all" : section;
+
+    if (effectiveSection === "all") {
+      const unsub = subscribeToAllSectionFieldConfigs(activeSections.map((s) => s.id), (configMap) => {
+        if (isEditingFieldConfigRef.current) return;
+        setAllSectionFieldConfigs(configMap);
+      });
+      return () => unsub();
+    } else {
+      const unsub = subscribeToFieldConfig(effectiveSection, (data) => {
+        if (isEditingFieldConfigRef.current) return;
+        setFieldConfig(data);
+      });
+      return () => unsub();
+    }
+  }, [user, section, isTeacher, activeSections, fieldConfigEditingDefaults]);
+
+  // Save field config to the right target
+  const persistFieldConfig = useCallback((newConfig) => {
+    if (fieldConfigEditingDefaults) {
+      saveDefaultFieldConfig(newConfig);
+      for (const s of activeSections) {
+        saveFieldConfig(s.id, newConfig);
+      }
+    } else if (section !== "all") {
+      saveFieldConfig(section, newConfig);
+    }
+  }, [fieldConfigEditingDefaults, section, activeSections]);
+
   // Close admin panel on outside click
   useEffect(() => {
     if (!showAdminPanel) return;
@@ -369,6 +525,35 @@ export default function App() {
       console.error("Delete failed:", err);
     }
   }, []);
+
+  // Auto-expand timeline range when event outside range is approved
+  const handleEventApproved = useCallback((event) => {
+    const year = Number(event.year);
+    if (isNaN(year)) return;
+    let newStart = timelineStart;
+    let newEnd = timelineEnd;
+    let changed = false;
+    if (year < timelineStart) {
+      newStart = floorToDecade(year);
+      changed = true;
+    }
+    if (year > timelineEnd) {
+      newEnd = ceilToDecade(year);
+      changed = true;
+    }
+    if (changed) {
+      setTimelineStart(newStart);
+      setTimelineEnd(newEnd);
+      setDraftStart(String(newStart));
+      setDraftEnd(String(newEnd));
+      // Persist to the event's section (or current section)
+      const targetSection = event.section || section;
+      if (targetSection && targetSection !== "all") {
+        saveTimelineRange(targetSection, { start: newStart, end: newEnd });
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timelineStart, timelineEnd, section]);
 
   const handleSeed = async () => {
     if (!window.confirm("Seed the database with 25 sample events? Only do this once.")) return;
@@ -542,9 +727,39 @@ export default function App() {
                           alignItems: "center",
                           justifyContent: "space-between",
                         }}>
-                          Timeline Range
+                          Timeline Range{timelineRangeEditingDefaults ? " · Default" : section !== "all" ? ` · ${getSectionName(section)}` : ""}
+                          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
                           <button
-                            onClick={() => setTimelineRangeLocked((v) => !v)}
+                            onClick={() => {
+                              setTimelineRangeEditingDefaults((v) => !v);
+                              setTimelineRangeLocked(true);
+                              isEditingTimelineRangeRef.current = false;
+                            }}
+                            title={timelineRangeEditingDefaults ? "Switch to section range" : "Edit default range (applies to all sections)"}
+                            style={{
+                              fontSize: 8,
+                              fontWeight: 600,
+                              fontFamily: "'Overpass Mono', monospace",
+                              padding: "1px 5px",
+                              borderRadius: 3,
+                              border: `1px solid ${timelineRangeEditingDefaults ? theme.teacherGreen : theme.inputBorder}`,
+                              background: timelineRangeEditingDefaults ? theme.teacherGreen + "20" : "transparent",
+                              color: timelineRangeEditingDefaults ? theme.teacherGreen : theme.textMuted,
+                              cursor: "pointer",
+                              textTransform: "uppercase",
+                              letterSpacing: "0.05em",
+                              transition: "all 0.15s",
+                            }}
+                          >
+                            Default
+                          </button>
+                          <button
+                            onClick={() => {
+                              setTimelineRangeLocked((v) => {
+                                isEditingTimelineRangeRef.current = v;
+                                return !v;
+                              });
+                            }}
                             title={timelineRangeLocked ? "Unlock to edit" : "Lock value"}
                             style={{
                               background: "none",
@@ -558,7 +773,21 @@ export default function App() {
                           >
                             <Icon icon={timelineRangeLocked ? lockOutline : lockOpenVariantOutline} width={12} />
                           </button>
+                          </div>
                         </div>
+
+                        {timelineRangeEditingDefaults && (
+                          <div style={{
+                            fontSize: 9,
+                            color: theme.textMuted,
+                            fontStyle: "italic",
+                            marginBottom: 6,
+                            letterSpacing: "0.03em",
+                          }}>
+                            Edits apply to all sections &amp; future sections
+                          </div>
+                        )}
+
                         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                           <div style={{ flex: 1 }}>
                             <label style={{
@@ -581,6 +810,8 @@ export default function App() {
                                 const v = floorToDecade(Math.max(0, Math.min(Number(draftStart), timelineEnd - 10)));
                                 setTimelineStart(v);
                                 setDraftStart(String(v));
+                                isEditingTimelineRangeRef.current = true;
+                                persistTimelineRange(v, timelineEnd);
                               }}
                               style={{
                                 width: "100%",
@@ -628,6 +859,8 @@ export default function App() {
                                 const v = ceilToDecade(Math.max(timelineStart + 10, Math.min(Number(draftEnd), maxEnd)));
                                 setTimelineEnd(v);
                                 setDraftEnd(String(v));
+                                isEditingTimelineRangeRef.current = true;
+                                persistTimelineRange(timelineStart, v);
                               }}
                               style={{
                                 width: "100%",
@@ -1168,6 +1401,169 @@ export default function App() {
                             Update
                           </button>
                         )}
+
+                        {/* Divider */}
+                        <div style={{
+                          height: 1,
+                          background: theme.inputBorder,
+                          margin: "10px 0",
+                        }} />
+
+                        {/* Entry Fields Config section */}
+                        <div style={{
+                          fontSize: 10,
+                          fontWeight: 700,
+                          color: theme.mutedText,
+                          textTransform: "uppercase",
+                          letterSpacing: "0.1em",
+                          marginBottom: 8,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                        }}>
+                          <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                            <Icon icon={formTextboxIcon} width={12} />
+                            Entry Fields{fieldConfigEditingDefaults ? " · Default" : section !== "all" ? ` · ${getSectionName(section)}` : ""}
+                          </span>
+                          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                            <button
+                              onClick={() => {
+                                setFieldConfigEditingDefaults((v) => !v);
+                                setFieldConfigLocked(true);
+                                isEditingFieldConfigRef.current = false;
+                              }}
+                              title={fieldConfigEditingDefaults ? "Switch to section fields" : "Edit default fields (applies to all sections)"}
+                              style={{
+                                fontSize: 8,
+                                fontWeight: 600,
+                                fontFamily: "'Overpass Mono', monospace",
+                                padding: "1px 5px",
+                                borderRadius: 3,
+                                border: `1px solid ${fieldConfigEditingDefaults ? theme.teacherGreen : theme.inputBorder}`,
+                                background: fieldConfigEditingDefaults ? theme.teacherGreen + "20" : "transparent",
+                                color: fieldConfigEditingDefaults ? theme.teacherGreen : theme.textMuted,
+                                cursor: "pointer",
+                                textTransform: "uppercase",
+                                letterSpacing: "0.05em",
+                                transition: "all 0.15s",
+                              }}
+                            >
+                              Default
+                            </button>
+                            <button
+                              onClick={() => {
+                                setFieldConfigLocked((v) => {
+                                  isEditingFieldConfigRef.current = v;
+                                  return !v;
+                                });
+                              }}
+                              title={fieldConfigLocked ? "Unlock to edit" : "Lock fields"}
+                              style={{
+                                background: "none",
+                                border: "none",
+                                padding: 2,
+                                cursor: "pointer",
+                                color: fieldConfigLocked ? theme.textMuted : theme.teacherGreen,
+                                display: "inline-flex",
+                                transition: "color 0.15s",
+                              }}
+                            >
+                              <Icon icon={fieldConfigLocked ? lockOutline : lockOpenVariantOutline} width={12} />
+                            </button>
+                          </div>
+                        </div>
+
+                        {fieldConfigEditingDefaults && (
+                          <div style={{
+                            fontSize: 9,
+                            color: theme.textMuted,
+                            fontStyle: "italic",
+                            marginBottom: 6,
+                            letterSpacing: "0.03em",
+                          }}>
+                            Edits apply to all sections &amp; future sections
+                          </div>
+                        )}
+
+                        {/* Field list */}
+                        <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                          {[
+                            { key: "title", label: "Event Title" },
+                            { key: "year", label: "Year" },
+                            { key: "period", label: "Time Period" },
+                            { key: "tags", label: "Tags" },
+                            { key: "sourceType", label: "Source Type" },
+                            { key: "description", label: "Description" },
+                            { key: "sourceNote", label: "Source Citation" },
+                            { key: "region", label: "Region" },
+                          ].map(({ key, label }) => {
+                            const mode = activeFieldConfig[key] || "mandatory";
+                            return (
+                              <div
+                                key={key}
+                                style={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: 6,
+                                  padding: "3px 6px",
+                                  borderRadius: 4,
+                                }}
+                              >
+                                <span style={{
+                                  fontSize: 10,
+                                  color: mode === "hidden" ? theme.textMuted : theme.textPrimary,
+                                  flex: 1,
+                                  textDecoration: mode === "hidden" ? "line-through" : "none",
+                                  opacity: mode === "hidden" ? 0.5 : 1,
+                                }}>
+                                  {label}
+                                </span>
+                                {!fieldConfigLocked ? (
+                                  <div style={{ display: "flex", gap: 2 }}>
+                                    {["mandatory", "optional", "hidden"].map((m) => (
+                                      <button
+                                        key={m}
+                                        onClick={() => {
+                                          const updated = { ...activeFieldConfig, [key]: m };
+                                          setFieldConfig(updated);
+                                          persistFieldConfig(updated);
+                                          isEditingFieldConfigRef.current = true;
+                                        }}
+                                        style={{
+                                          fontSize: 8,
+                                          fontWeight: mode === m ? 700 : 500,
+                                          fontFamily: "'Overpass Mono', monospace",
+                                          padding: "2px 5px",
+                                          borderRadius: 3,
+                                          border: `1px solid ${mode === m ? (m === "mandatory" ? theme.teacherGreen : m === "optional" ? "#D97706" : theme.errorRed) : theme.inputBorder}`,
+                                          background: mode === m ? (m === "mandatory" ? theme.teacherGreen + "20" : m === "optional" ? "#D9770620" : theme.errorRed + "20") : "transparent",
+                                          color: mode === m ? (m === "mandatory" ? theme.teacherGreen : m === "optional" ? "#D97706" : theme.errorRed) : theme.textMuted,
+                                          cursor: "pointer",
+                                          textTransform: "uppercase",
+                                          letterSpacing: "0.03em",
+                                          transition: "all 0.15s",
+                                        }}
+                                      >
+                                        {m === "mandatory" ? "Req" : m === "optional" ? "Opt" : "Hide"}
+                                      </button>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <span style={{
+                                    fontSize: 8,
+                                    fontWeight: 600,
+                                    fontFamily: "'Overpass Mono', monospace",
+                                    color: mode === "mandatory" ? theme.teacherGreen : mode === "optional" ? "#D97706" : theme.textMuted,
+                                    textTransform: "uppercase",
+                                    letterSpacing: "0.03em",
+                                  }}>
+                                    {mode === "mandatory" ? "Required" : mode === "optional" ? "Optional" : "Hidden"}
+                                  </span>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
 
                         {/* Divider */}
                         <div style={{
@@ -1749,6 +2145,7 @@ export default function App() {
           timelineStart={timelineStart}
           timelineEnd={timelineEnd}
           periods={displayPeriods}
+          fieldConfig={activeFieldConfig}
         />
       )}
 
@@ -1759,6 +2156,7 @@ export default function App() {
           onClose={() => setShowModeration(false)}
           periods={displayPeriods}
           getSectionName={getSectionName}
+          onEventApproved={handleEventApproved}
         />
       )}
     </div>

@@ -1850,11 +1850,18 @@ export default function App() {
       )}
 
       {/* Visual Timeline */}
-      <div style={{ background: theme.cardBg, borderBottom: `1px solid ${theme.cardBorder}` }}>
+      <div data-timeline-section style={{ background: theme.cardBg, borderBottom: `1px solid ${theme.cardBorder}` }}>
         <div style={{ maxWidth: 960, margin: "0 auto" }}>
           <VisualTimeline
             filteredEvents={filteredEvents}
             onEraClick={setSelectedPeriod}
+            onEventSelect={(id) => {
+              setExpandedEvent(id);
+              setTimeout(() => {
+                const el = document.querySelector(`[data-event-id="${id}"]`);
+                if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+              }, 100);
+            }}
             selectedPeriod={selectedPeriod}
             timelineStart={timelineStart}
             timelineEnd={timelineEnd}
@@ -2154,19 +2161,24 @@ export default function App() {
               </div>
             ) : (
               filteredEvents.map((event) => (
-                <EventCard
-                  key={event.id}
-                  event={event}
-                  isExpanded={expandedEvent === event.id}
-                  onToggle={() =>
-                    setExpandedEvent(
-                      expandedEvent === event.id ? null : event.id
-                    )
-                  }
-                  isTeacher={isTeacher}
-                  onDelete={handleDeleteEvent}
-                  periods={displayPeriods}
-                />
+                <div key={event.id} data-event-id={event.id}>
+                  <EventCard
+                    event={event}
+                    isExpanded={expandedEvent === event.id}
+                    onToggle={() =>
+                      setExpandedEvent(
+                        expandedEvent === event.id ? null : event.id
+                      )
+                    }
+                    isTeacher={isTeacher}
+                    onDelete={handleDeleteEvent}
+                    periods={displayPeriods}
+                    onReturnToTimeline={() => {
+                      const el = document.querySelector("[data-timeline-section]");
+                      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+                    }}
+                  />
+                </div>
               ))
             )}
           </div>

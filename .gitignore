@@ -23,6 +23,10 @@
 HANDOFF.md
 firebase-rules.json
 
+# Firebase CLI config
+.firebaserc
+firebase.json
+
 # Local tool config
 .claude/
 CLAUDE.md

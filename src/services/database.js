@@ -159,7 +159,10 @@ export function subscribeToSections(callback) {
   const sectionsRef = ref(db, "sections");
   return onValue(sectionsRef, (snapshot) => {
     const data = snapshot.val();
-    callback(Array.isArray(data) ? data.filter(Boolean) : null);
+    callback(Array.isArray(data) ? data.filter(Boolean) : []);
+  }, (error) => {
+    console.error("Error reading sections:", error);
+    callback([]);
   });
 }
 
@@ -261,4 +264,58 @@ export async function seedDatabase(seedEvents) {
     const newRef = push(eventsRef);
     await set(newRef, event);
   }
+}
+
+// Listen to a student's section assignment in real-time
+export function subscribeToStudentSection(uid, callback) {
+  const studentRef = ref(db, `studentSections/${uid}`);
+  return onValue(studentRef, (snapshot) => {
+    callback(snapshot.val() || null);
+  }, (error) => {
+    console.error("Error reading student section:", error);
+    callback(null);
+  });
+}
+
+// Student self-selects their section on first login
+export async function assignStudentSection(uid, sectionId, email, displayName) {
+  const studentRef = ref(db, `studentSections/${uid}`);
+  await set(studentRef, {
+    section: sectionId,
+    email,
+    displayName,
+    assignedAt: new Date().toISOString(),
+    assignedBy: "self",
+  });
+}
+
+// Teacher reassigns a student to a different section
+export async function reassignStudentSection(uid, newSectionId) {
+  const studentRef = ref(db, `studentSections/${uid}`);
+  await update(studentRef, {
+    section: newSectionId,
+    assignedAt: new Date().toISOString(),
+    assignedBy: "teacher",
+  });
+}
+
+// Teacher removes a student's section assignment
+export async function removeStudentSection(uid) {
+  const studentRef = ref(db, `studentSections/${uid}`);
+  await remove(studentRef);
+}
+
+// Listen to all student section assignments (teacher roster view)
+export function subscribeToAllStudentSections(callback) {
+  const allRef = ref(db, "studentSections");
+  return onValue(allRef, (snapshot) => {
+    const result = [];
+    snapshot.forEach((child) => {
+      result.push({ uid: child.key, ...child.val() });
+    });
+    callback(result);
+  }, (error) => {
+    console.error("Error reading student sections:", error);
+    callback([]);
+  });
 }

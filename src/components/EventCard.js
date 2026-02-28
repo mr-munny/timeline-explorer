@@ -16,7 +16,7 @@ import mapMarkerOutline from "@iconify-icons/mdi/map-marker-outline";
 import schoolOutline from "@iconify-icons/mdi/school-outline";
 import { useTheme } from "../contexts/ThemeContext";
 
-export default function EventCard({ event, isExpanded, onToggle, isTeacher, onEdit, onDelete, periods = [], onReturnToTimeline, connections, allEvents = [], onScrollToEvent, onDeleteConnection, connectionMode }) {
+export default function EventCard({ event, isExpanded, isRead, onToggle, isTeacher, onEdit, onDelete, periods = [], onReturnToTimeline, connections, allEvents = [], onScrollToEvent, onDeleteConnection, connectionMode }) {
   const { theme } = useTheme();
   const [showEditHistory, setShowEditHistory] = useState(false);
   const period = getPeriod(periods, event.period);
@@ -70,7 +70,7 @@ export default function EventCard({ event, isExpanded, onToggle, isTeacher, onEd
         cursor: "pointer",
         transition: "all 0.2s ease",
         boxShadow: isExpanded ? `0 8px 24px ${periodColor}12` : "none",
-        borderLeft: `4px solid ${periodColor}`,
+        borderLeft: isRead ? `1.5px solid ${isExpanded ? periodColor + "60" : theme.cardBorder}` : `4px solid ${periodColor}`,
       }}
     >
       <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
@@ -272,29 +272,33 @@ export default function EventCard({ event, isExpanded, onToggle, isTeacher, onEd
                 </div>
               </div>
             )}
-            <div>
-              <span style={{ color: theme.textSecondary, fontWeight: 500, display: "inline-flex", alignItems: "center", gap: 3 }}>
-                <Icon icon={fileDocumentOutline} width={11} />
-                Source Type
-              </span>
-              <div
-                style={{
-                  marginTop: 2,
-                  display: "inline-block",
-                  color: event.sourceType === "Primary" ? "#059669" : "#6366F1",
-                  fontWeight: 700,
-                }}
-              >
-                {event.sourceType || "Primary"} Source
+            {event.sourceType && (
+              <div>
+                <span style={{ color: theme.textSecondary, fontWeight: 500, display: "inline-flex", alignItems: "center", gap: 3 }}>
+                  <Icon icon={fileDocumentOutline} width={11} />
+                  Source Type
+                </span>
+                <div
+                  style={{
+                    marginTop: 2,
+                    display: "inline-block",
+                    color: event.sourceType === "Primary" ? "#059669" : "#6366F1",
+                    fontWeight: 700,
+                  }}
+                >
+                  {event.sourceType} Source
+                </div>
               </div>
-            </div>
-            <div>
-              <span style={{ color: theme.textSecondary, fontWeight: 500, display: "inline-flex", alignItems: "center", gap: 3 }}>
-                <Icon icon={linkVariant} width={11} />
-                Source
-              </span>
-              <div style={{ color: theme.textDescription, marginTop: 2 }}>{event.sourceNote}</div>
-            </div>
+            )}
+            {event.sourceNote && (
+              <div>
+                <span style={{ color: theme.textSecondary, fontWeight: 500, display: "inline-flex", alignItems: "center", gap: 3 }}>
+                  <Icon icon={linkVariant} width={11} />
+                  Source
+                </span>
+                <div style={{ color: theme.textDescription, marginTop: 2 }}>{event.sourceNote}</div>
+              </div>
+            )}
             <div>
               <span style={{ color: theme.textSecondary, fontWeight: 500, display: "inline-flex", alignItems: "center", gap: 3 }}>
                 <Icon icon={accountOutline} width={11} />

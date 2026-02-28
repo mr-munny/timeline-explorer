@@ -663,7 +663,7 @@ export default function App() {
         const oldVal = editingEvent[key];
         const newVal = updates[key] !== undefined ? updates[key] : oldVal;
         const isEqual = key === "tags" ? JSON.stringify(oldVal) === JSON.stringify(newVal) : String(oldVal ?? "") === String(newVal ?? "");
-        if (!isEqual) changes[key] = { from: oldVal, to: newVal };
+        if (!isEqual) changes[key] = { from: oldVal ?? null, to: newVal ?? null };
       }
       if (isTeacher) {
         // Teacher: apply edit directly, append to edit history

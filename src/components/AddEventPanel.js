@@ -608,7 +608,10 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
                 lineHeight: 1.4,
               }}
             >
-              Please fix the following fields: {Object.keys(errors).map((k) => FIELD_NAMES[k] || k).join(", ")}
+              {errors._submit
+                ? "Save failed — check the browser console (F12) for details."
+                : <>Please fix the following fields: {Object.keys(errors).map((k) => FIELD_NAMES[k] || k).join(", ")}</>
+              }
             </div>
           )}
 

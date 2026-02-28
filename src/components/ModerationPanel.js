@@ -37,7 +37,7 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
             const oldVal = original[key];
             const newVal = event[key];
             const isEqual = key === "tags" ? JSON.stringify(oldVal) === JSON.stringify(newVal) : String(oldVal ?? "") === String(newVal ?? "");
-            if (!isEqual) changes[key] = { from: oldVal, to: newVal };
+            if (!isEqual) changes[key] = { from: oldVal ?? null, to: newVal ?? null };
           }
         }
         await approveEdit(event.id, event.editOf, {

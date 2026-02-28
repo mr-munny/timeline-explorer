@@ -28,12 +28,24 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
         const original = findEvent(event.editOf);
         const { editOf, addedBy, addedByEmail, addedByUid, status, dateAdded, id, section, ...edits } = event;
         const existingHistory = original?.editHistory || [];
+        // Compute which fields changed for edit history
+        const changes = {};
+        if (original) {
+          const changeFields = ["title", "year", "period", "tags", "sourceType", "description", "sourceNote", "region"];
+          for (const key of changeFields) {
+            const oldVal = original[key];
+            const newVal = event[key];
+            const isEqual = key === "tags" ? JSON.stringify(oldVal) === JSON.stringify(newVal) : String(oldVal ?? "") === String(newVal ?? "");
+            if (!isEqual) changes[key] = { from: oldVal, to: newVal };
+          }
+        }
         await approveEdit(event.id, event.editOf, {
           ...edits,
           editHistory: [...existingHistory, {
             name: event.addedBy,
             email: event.addedByEmail,
             date: event.dateAdded,
+            changes,
           }],
         });
       } else {

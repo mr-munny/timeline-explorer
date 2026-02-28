@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { getPeriod } from "../data/constants";
 import { Icon } from "@iconify/react";
 import chevronDown from "@iconify-icons/mdi/chevron-down";
@@ -16,8 +17,10 @@ import { useTheme } from "../contexts/ThemeContext";
 
 export default function EventCard({ event, isExpanded, onToggle, isTeacher, onEdit, onDelete, periods = [], onReturnToTimeline, connections, allEvents = [], onScrollToEvent, onDeleteConnection, connectionMode }) {
   const { theme } = useTheme();
+  const [showEditHistory, setShowEditHistory] = useState(false);
   const period = getPeriod(periods, event.period);
   const periodColor = period?.color || "#6B7280";
+  const editHistory = event.editHistory || [];
   const periodLabel = period?.label || event.period;
 
   return (
@@ -101,7 +104,7 @@ export default function EventCard({ event, isExpanded, onToggle, isTeacher, onEd
               >
                 {event.addedBy}
               </span>
-              {event.lastEditedBy && (
+              {editHistory.length > 0 && (
                 <>
                   <span style={{ fontSize: 10, color: theme.textDivider }}>&middot;</span>
                   <span
@@ -248,22 +251,52 @@ export default function EventCard({ event, isExpanded, onToggle, isTeacher, onEd
             <div>
               <span style={{ color: theme.textSecondary, fontWeight: 500, display: "inline-flex", alignItems: "center", gap: 3 }}>
                 <Icon icon={accountOutline} width={11} />
-                {event.lastEditedBy ? "Authors" : "Added By"}
+                {editHistory.length > 0 ? "Authors" : "Added By"}
               </span>
               <div style={{ color: theme.textDescription, fontWeight: 600, marginTop: 2 }}>
                 {event.addedBy}
               </div>
-              {event.lastEditedBy && (
+              {editHistory.length > 0 && (
+                <div
+                  onClick={(e) => { e.stopPropagation(); setShowEditHistory((v) => !v); }}
+                  style={{
+                    color: theme.textTertiary,
+                    fontSize: 10,
+                    marginTop: 3,
+                    fontStyle: "italic",
+                    borderBottom: `1px dotted ${theme.textTertiary}`,
+                    display: "inline-block",
+                    paddingBottom: 1,
+                    cursor: "pointer",
+                  }}
+                >
+                  edited by {[...new Set(editHistory.map((e) => e.name))].join(", ")}
+                  <span style={{ marginLeft: 3, fontSize: 8 }}>{showEditHistory ? "\u25B2" : "\u25BC"}</span>
+                </div>
+              )}
+              {showEditHistory && editHistory.length > 0 && (
                 <div style={{
-                  color: theme.textTertiary,
+                  marginTop: 6,
+                  padding: "6px 8px",
+                  background: theme.subtleBg,
+                  borderRadius: 5,
                   fontSize: 10,
-                  marginTop: 3,
-                  fontStyle: "italic",
-                  borderBottom: `1px dotted ${theme.textTertiary}`,
-                  display: "inline-block",
-                  paddingBottom: 1,
+                  fontFamily: "'Overpass Mono', monospace",
                 }}>
-                  edited by {event.lastEditedBy}
+                  {editHistory.map((entry, i) => (
+                    <div key={i} style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      gap: 8,
+                      padding: "2px 0",
+                      color: theme.textDescription,
+                    }}>
+                      <span style={{ fontWeight: 600 }}>{entry.name}</span>
+                      <span style={{ color: theme.textTertiary }}>
+                        {new Date(entry.date).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+                      </span>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>

@@ -2,6 +2,7 @@ import { getPeriod } from "../data/constants";
 import { Icon } from "@iconify/react";
 import chevronDown from "@iconify-icons/mdi/chevron-down";
 import deleteOutline from "@iconify-icons/mdi/delete-outline";
+import pencilOutline from "@iconify-icons/mdi/pencil-outline";
 import arrowRightThick from "@iconify-icons/mdi/arrow-right-thick";
 import arrowLeftThick from "@iconify-icons/mdi/arrow-left-thick";
 import closeCircleOutline from "@iconify-icons/mdi/close-circle-outline";
@@ -13,7 +14,7 @@ import mapMarkerOutline from "@iconify-icons/mdi/map-marker-outline";
 import schoolOutline from "@iconify-icons/mdi/school-outline";
 import { useTheme } from "../contexts/ThemeContext";
 
-export default function EventCard({ event, isExpanded, onToggle, isTeacher, onDelete, periods = [], onReturnToTimeline, connections, allEvents = [], onScrollToEvent, onDeleteConnection, connectionMode }) {
+export default function EventCard({ event, isExpanded, onToggle, isTeacher, onEdit, onDelete, periods = [], onReturnToTimeline, connections, allEvents = [], onScrollToEvent, onDeleteConnection, connectionMode }) {
   const { theme } = useTheme();
   const period = getPeriod(periods, event.period);
   const periodColor = period?.color || "#6B7280";
@@ -100,6 +101,21 @@ export default function EventCard({ event, isExpanded, onToggle, isTeacher, onDe
               >
                 {event.addedBy}
               </span>
+              {event.lastEditedBy && (
+                <>
+                  <span style={{ fontSize: 10, color: theme.textDivider }}>&middot;</span>
+                  <span
+                    style={{
+                      fontSize: 10,
+                      color: theme.textTertiary,
+                      fontFamily: "'Overpass Mono', monospace",
+                      fontStyle: "italic",
+                    }}
+                  >
+                    edited
+                  </span>
+                </>
+              )}
             </div>
           )}
         </div>
@@ -232,11 +248,24 @@ export default function EventCard({ event, isExpanded, onToggle, isTeacher, onDe
             <div>
               <span style={{ color: theme.textSecondary, fontWeight: 500, display: "inline-flex", alignItems: "center", gap: 3 }}>
                 <Icon icon={accountOutline} width={11} />
-                Added By
+                {event.lastEditedBy ? "Authors" : "Added By"}
               </span>
               <div style={{ color: theme.textDescription, fontWeight: 600, marginTop: 2 }}>
                 {event.addedBy}
               </div>
+              {event.lastEditedBy && (
+                <div style={{
+                  color: theme.textTertiary,
+                  fontSize: 10,
+                  marginTop: 3,
+                  fontStyle: "italic",
+                  borderBottom: `1px dotted ${theme.textTertiary}`,
+                  display: "inline-block",
+                  paddingBottom: 1,
+                }}>
+                  edited by {event.lastEditedBy}
+                </div>
+              )}
             </div>
             {event.region && (
               <div>
@@ -387,9 +416,31 @@ export default function EventCard({ event, isExpanded, onToggle, isTeacher, onDe
             </div>
           )}
 
-          {/* Teacher delete button */}
-          {isTeacher && (
-            <div style={{ marginTop: 10, display: "flex", justifyContent: "flex-end" }}>
+          {/* Action buttons */}
+          <div style={{ marginTop: 10, display: "flex", justifyContent: "flex-end", gap: 6 }}>
+            {onEdit && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEdit(event);
+                }}
+                style={{
+                  padding: "5px 12px",
+                  background: "none",
+                  border: `1.5px solid ${theme.inputBorder}`,
+                  borderRadius: 6,
+                  color: theme.textDescription,
+                  fontSize: 11,
+                  fontFamily: "'Overpass Mono', monospace",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                <Icon icon={pencilOutline} width={13} style={{ verticalAlign: "middle", marginRight: 3 }} />
+                {isTeacher ? "Edit" : "Suggest Edit"}
+              </button>
+            )}
+            {isTeacher && (
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -412,8 +463,8 @@ export default function EventCard({ event, isExpanded, onToggle, isTeacher, onDe
                 <Icon icon={deleteOutline} width={13} style={{ verticalAlign: "middle", marginRight: 3 }} />
                 Delete Event
               </button>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       )}
     </div>

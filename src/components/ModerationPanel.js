@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { getPeriod, TAGS } from "../data/constants";
-import { approveEvent, rejectEvent, updateEvent, approveConnection, rejectConnection, updateConnection } from "../services/database";
+import { approveEvent, rejectEvent, updateEvent, approveEdit, approveConnection, rejectConnection, updateConnection } from "../services/database";
 import { writeToSheet } from "../services/sheets";
 import { Icon } from "@iconify/react";
 import closeIcon from "@iconify-icons/mdi/close";
@@ -23,11 +23,21 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
   const handleApprove = async (event) => {
     setProcessing(event.id);
     try {
-      await approveEvent(event.id);
-      // Write to Google Sheet bridge
-      writeToSheet(event);
-      // Notify parent to potentially expand timeline range
-      if (onEventApproved) onEventApproved(event);
+      if (event.editOf) {
+        // Edit proposal: apply changes to original event, remove proposal
+        const { editOf, addedBy, addedByEmail, addedByUid, status, dateAdded, id, section, ...edits } = event;
+        await approveEdit(event.id, event.editOf, {
+          ...edits,
+          lastEditedBy: event.addedBy,
+          lastEditedByEmail: event.addedByEmail,
+        });
+      } else {
+        await approveEvent(event.id);
+        // Write to Google Sheet bridge
+        writeToSheet(event);
+        // Notify parent to potentially expand timeline range
+        if (onEventApproved) onEventApproved(event);
+      }
     } catch (err) {
       console.error("Approve failed:", err);
     }
@@ -110,6 +120,45 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
   };
 
   const findEvent = (id) => allEvents.find((e) => e.id === id);
+
+  // Simple word-level diff using longest common subsequence
+  const computeWordDiff = (oldStr, newStr) => {
+    const oldWords = String(oldStr ?? "").split(/(\s+)/);
+    const newWords = String(newStr ?? "").split(/(\s+)/);
+    const m = oldWords.length, n = newWords.length;
+    // Build LCS table
+    const dp = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0));
+    for (let i = 1; i <= m; i++)
+      for (let j = 1; j <= n; j++)
+        dp[i][j] = oldWords[i - 1] === newWords[j - 1] ? dp[i - 1][j - 1] + 1 : Math.max(dp[i - 1][j], dp[i][j - 1]);
+    // Backtrack to produce diff
+    const result = [];
+    let i = m, j = n;
+    while (i > 0 || j > 0) {
+      if (i > 0 && j > 0 && oldWords[i - 1] === newWords[j - 1]) {
+        result.push({ type: "same", text: oldWords[i - 1] });
+        i--; j--;
+      } else if (j > 0 && (i === 0 || dp[i][j - 1] >= dp[i - 1][j])) {
+        result.push({ type: "add", text: newWords[j - 1] });
+        j--;
+      } else {
+        result.push({ type: "del", text: oldWords[i - 1] });
+        i--;
+      }
+    }
+    return result.reverse();
+  };
+
+  const DIFF_FIELDS = [
+    { key: "title", label: "Title", inline: true },
+    { key: "year", label: "Year" },
+    { key: "period", label: "Period", format: (v) => { const p = getPeriod(periods, v); return p?.label || v; } },
+    { key: "tags", label: "Tags", format: (v) => (v || []).join(", "), compare: (a, b) => JSON.stringify(a) === JSON.stringify(b) },
+    { key: "sourceType", label: "Source Type" },
+    { key: "description", label: "Description", inline: true },
+    { key: "sourceNote", label: "Source", inline: true },
+    { key: "region", label: "Region" },
+  ];
 
   const inputStyle = {
     width: "100%",
@@ -385,6 +434,117 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                   ) : (
                     /* View mode */
                     <>
+                      {event.editOf ? (() => {
+                        const original = findEvent(event.editOf);
+                        return (
+                          <>
+                            <div
+                              style={{
+                                fontSize: 10,
+                                fontWeight: 700,
+                                fontFamily: "'Overpass Mono', monospace",
+                                color: "#D97706",
+                                background: "#FEF3C7",
+                                padding: "3px 8px",
+                                borderRadius: 4,
+                                display: "inline-block",
+                                marginBottom: 6,
+                                textTransform: "uppercase",
+                                letterSpacing: "0.05em",
+                              }}
+                            >
+                              Suggested Edit
+                            </div>
+                            <div
+                              style={{
+                                fontSize: 10,
+                                color: theme.textSecondary,
+                                fontFamily: "'Overpass Mono', monospace",
+                                marginBottom: 10,
+                              }}
+                            >
+                              by {event.addedBy} &middot; {getSectionName(event.section)}
+                              {!original && <> &middot; <span style={{ color: theme.errorRed }}>Original event not found</span></>}
+                            </div>
+                            {original && (
+                              <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 10 }}>
+                                {DIFF_FIELDS.map(({ key, label, format, compare, inline }) => {
+                                  const oldVal = original[key];
+                                  const newVal = event[key];
+                                  const isEqual = compare ? compare(oldVal, newVal) : String(oldVal ?? "") === String(newVal ?? "");
+                                  if (isEqual) return null;
+                                  const fmt = format || ((v) => String(v ?? ""));
+                                  const isTextField = inline && !format;
+                                  return (
+                                    <div key={key} style={{
+                                      padding: "6px 10px",
+                                      background: theme.warmSubtleBg,
+                                      borderRadius: 6,
+                                      borderLeft: `3px solid #D97706`,
+                                    }}>
+                                      <div style={{
+                                        fontSize: 9,
+                                        fontWeight: 700,
+                                        fontFamily: "'Overpass Mono', monospace",
+                                        color: theme.textTertiary,
+                                        textTransform: "uppercase",
+                                        letterSpacing: "0.05em",
+                                        marginBottom: 3,
+                                      }}>
+                                        {label}
+                                      </div>
+                                      <div style={{
+                                        fontSize: key === "description" ? 11 : 12,
+                                        fontFamily: (key === "description" || key === "title") ? "'Newsreader', serif" : "'Overpass Mono', monospace",
+                                        lineHeight: 1.5,
+                                      }}>
+                                        {isTextField ? (
+                                          computeWordDiff(oldVal, newVal).map((part, i) =>
+                                            part.type === "same" ? (
+                                              <span key={i} style={{ color: theme.textDescription }}>{part.text}</span>
+                                            ) : part.type === "del" ? (
+                                              <span key={i} style={{
+                                                color: theme.errorRed,
+                                                textDecoration: "line-through",
+                                                opacity: 0.7,
+                                              }}>{part.text}</span>
+                                            ) : (
+                                              <span key={i} style={{
+                                                color: theme.successGreen || "#16A34A",
+                                                fontWeight: 600,
+                                                background: (theme.successGreen || "#16A34A") + "15",
+                                                borderRadius: 2,
+                                              }}>{part.text}</span>
+                                            )
+                                          )
+                                        ) : (
+                                          <>
+                                            <span style={{
+                                              color: theme.errorRed,
+                                              textDecoration: "line-through",
+                                              opacity: 0.7,
+                                            }}>
+                                              {fmt(oldVal)}
+                                            </span>
+                                            <span style={{ color: theme.textTertiary, margin: "0 6px" }}>{"\u2192"}</span>
+                                            <span style={{
+                                              color: theme.successGreen || "#16A34A",
+                                              fontWeight: 600,
+                                            }}>
+                                              {fmt(newVal)}
+                                            </span>
+                                          </>
+                                        )}
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </>
+                        );
+                      })() : (
+                      <>
                       <div
                         style={{
                           display: "flex",
@@ -456,6 +616,8 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                         <strong>Type:</strong> {event.sourceType} &middot;{" "}
                         <strong>Tags:</strong> {(event.tags || []).join(", ")}
                       </div>
+                      </>
+                      )}
 
                       {/* Action buttons */}
                       <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>

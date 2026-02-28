@@ -66,6 +66,14 @@ export async function updateEvent(eventId, updates) {
   await update(eventRef, updates);
 }
 
+// Approve an edit proposal: apply changes to original event, remove proposal
+export async function approveEdit(editProposalId, originalEventId, updates) {
+  const originalRef = ref(db, `events/${originalEventId}`);
+  await update(originalRef, updates);
+  const proposalRef = ref(db, `events/${editProposalId}`);
+  await remove(proposalRef);
+}
+
 // ── Connections ─────────────────────────────────────────────
 
 // Listen to connections in real-time, filtered by section

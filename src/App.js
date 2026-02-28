@@ -3,7 +3,7 @@ import { useAuth } from "./contexts/AuthContext";
 import { useTheme } from "./contexts/ThemeContext";
 import { PERIOD_COLORS, TAGS, getPeriod } from "./data/constants";
 import { TEACHER_EMAIL } from "./firebase";
-import { subscribeToEvents, submitEvent, deleteEvent, seedDatabase, subscribeToPeriods, subscribeToAllSectionPeriods, savePeriods, subscribeToSections, saveSections, subscribeToDefaultPeriods, saveDefaultPeriods, subscribeToCompellingQuestion, subscribeToAllSectionCompellingQuestions, saveCompellingQuestion, subscribeToDefaultCompellingQuestion, saveDefaultCompellingQuestion, subscribeToTimelineRange, subscribeToAllSectionTimelineRanges, saveTimelineRange, subscribeToDefaultTimelineRange, saveDefaultTimelineRange, subscribeToFieldConfig, subscribeToAllSectionFieldConfigs, saveFieldConfig, subscribeToDefaultFieldConfig, saveDefaultFieldConfig, assignStudentSection, subscribeToAllStudentSections, reassignStudentSection, removeStudentSection, subscribeToConnections, submitConnection, deleteConnection } from "./services/database";
+import { subscribeToEvents, submitEvent, deleteEvent, updateEvent, seedDatabase, subscribeToPeriods, subscribeToAllSectionPeriods, savePeriods, subscribeToSections, saveSections, subscribeToDefaultPeriods, saveDefaultPeriods, subscribeToCompellingQuestion, subscribeToAllSectionCompellingQuestions, saveCompellingQuestion, subscribeToDefaultCompellingQuestion, saveDefaultCompellingQuestion, subscribeToTimelineRange, subscribeToAllSectionTimelineRanges, saveTimelineRange, subscribeToDefaultTimelineRange, saveDefaultTimelineRange, subscribeToFieldConfig, subscribeToAllSectionFieldConfigs, saveFieldConfig, subscribeToDefaultFieldConfig, saveDefaultFieldConfig, assignStudentSection, subscribeToAllStudentSections, reassignStudentSection, removeStudentSection, subscribeToConnections, submitConnection, deleteConnection } from "./services/database";
 import SEED_EVENTS from "./data/seedEvents";
 import VisualTimeline from "./components/VisualTimeline";
 import EventCard from "./components/EventCard";
@@ -57,6 +57,7 @@ export default function App() {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortOrder, setSortOrder] = useState("chrono");
   const [showAddPanel, setShowAddPanel] = useState(false);
+  const [editingEvent, setEditingEvent] = useState(null);
   const [showContributors, setShowContributors] = useState(false);
   const [showModeration, setShowModeration] = useState(false);
   const [sectionFilter, setSectionFilter] = useState("all");
@@ -596,6 +597,35 @@ export default function App() {
       console.error("Delete failed:", err);
     }
   }, []);
+
+  const handleEditEvent = useCallback((event) => {
+    setEditingEvent(event);
+  }, []);
+
+  const handleSaveEdit = useCallback(
+    async (formData) => {
+      const updates = { ...formData, year: parseInt(formData.year) };
+      if (isTeacher) {
+        // Teacher: apply edit directly
+        await updateEvent(editingEvent.id, {
+          ...updates,
+          lastEditedBy: user.displayName || user.email.split("@")[0],
+          lastEditedByEmail: user.email,
+        });
+      } else {
+        // Student: submit as pending edit proposal
+        await submitEvent({
+          ...updates,
+          editOf: editingEvent.id,
+          addedBy: user.displayName || user.email.split("@")[0],
+          addedByEmail: user.email,
+          addedByUid: user.uid,
+          section: editingEvent.section || (section === "all" ? (activeSections[0]?.id || "Period1") : section),
+        });
+      }
+    },
+    [editingEvent, isTeacher, user, section, activeSections]
+  );
 
   const handleAddConnection = useCallback(
     async (formData) => {
@@ -2364,6 +2394,7 @@ export default function App() {
                       )
                     }
                     isTeacher={isTeacher}
+                    onEdit={handleEditEvent}
                     onDelete={handleDeleteEvent}
                     periods={displayPeriods}
                     onReturnToTimeline={() => {
@@ -2431,6 +2462,20 @@ export default function App() {
           timelineEnd={timelineEnd}
           periods={displayPeriods}
           fieldConfig={activeFieldConfig}
+        />
+      )}
+
+      {/* Edit Event Modal */}
+      {editingEvent && (
+        <AddEventPanel
+          onAdd={handleSaveEdit}
+          onClose={() => setEditingEvent(null)}
+          userName={user.displayName || user.email.split("@")[0]}
+          timelineStart={timelineStart}
+          timelineEnd={timelineEnd}
+          periods={displayPeriods}
+          fieldConfig={activeFieldConfig}
+          editingEvent={editingEvent}
         />
       )}
 

@@ -17,10 +17,20 @@ const DEFAULT_FIELD_CONFIG = {
   region: "optional",
 };
 
-export default function AddEventPanel({ onAdd, onClose, userName, timelineStart = 1910, timelineEnd = 2000, periods = [], fieldConfig }) {
+export default function AddEventPanel({ onAdd, onClose, userName, timelineStart = 1910, timelineEnd = 2000, periods = [], fieldConfig, editingEvent }) {
   const fc = { ...DEFAULT_FIELD_CONFIG, ...(fieldConfig || {}) };
   const { theme, getThemedSourceTypeBg } = useTheme();
-  const [form, setForm] = useState({
+  const isEditing = !!editingEvent;
+  const [form, setForm] = useState(isEditing ? {
+    title: editingEvent.title || "",
+    year: String(editingEvent.year || ""),
+    period: editingEvent.period || "",
+    tags: [...(editingEvent.tags || [])],
+    sourceType: editingEvent.sourceType || "Primary",
+    description: editingEvent.description || "",
+    sourceNote: editingEvent.sourceNote || "",
+    region: editingEvent.region || "",
+  } : {
     title: "",
     year: "",
     period: "",
@@ -151,7 +161,7 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
                 color: theme.textPrimary,
               }}
             >
-              Add a Historical Event
+              {isEditing ? "Edit Historical Event" : "Add a Historical Event"}
             </h2>
             <p
               style={{
@@ -161,8 +171,10 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
                 fontFamily: "'Overpass Mono', monospace",
               }}
             >
-              Submitting as <strong style={{ color: theme.textDescription }}>{userName}</strong> &middot;
-              Requires teacher approval
+              {isEditing
+                ? <>Editing as <strong style={{ color: theme.textDescription }}>{userName}</strong></>
+                : <>Submitting as <strong style={{ color: theme.textDescription }}>{userName}</strong> &middot; Requires teacher approval</>
+              }
             </p>
           </div>
           <button
@@ -412,7 +424,10 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
               transition: "all 0.15s",
             }}
           >
-            {submitting ? "Submitting..." : <><Icon icon={sendIcon} width={14} style={{ verticalAlign: "middle", marginRight: 5 }} />Submit Event for Approval</>}
+            {submitting
+              ? (isEditing ? "Saving..." : "Submitting...")
+              : <><Icon icon={sendIcon} width={14} style={{ verticalAlign: "middle", marginRight: 5 }} />{isEditing ? "Save Changes" : "Submit Event for Approval"}</>
+            }
           </button>
         </div>
       </div>

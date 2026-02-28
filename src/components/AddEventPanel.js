@@ -144,9 +144,9 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
         data.endMonth = null;
         data.endDay = null;
       }
-      // Strip null/empty values to avoid storing them in Firebase
+      // Strip hidden fields and null/empty values to avoid storing them in Firebase
       Object.keys(data).forEach((k) => {
-        if (data[k] === null || data[k] === undefined || data[k] === "") delete data[k];
+        if (fc[k] === "hidden" || data[k] === null || data[k] === undefined || data[k] === "") delete data[k];
       });
       await onAdd(data);
       onClose();

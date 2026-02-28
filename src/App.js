@@ -106,6 +106,13 @@ export default function App() {
   const [connectionMode, setConnectionMode] = useState(null);
   const [hoveredEvent, setHoveredEvent] = useState(null);
   const eventListRef = useRef(null);
+  const [readEvents, setReadEvents] = useState(() => {
+    if (!user) return new Set();
+    try {
+      const stored = localStorage.getItem(`readEvents_${user.uid}`);
+      return stored ? new Set(JSON.parse(stored)) : new Set();
+    } catch { return new Set(); }
+  });
 
   const activeSections = useMemo(() => sections || [], [sections]);
 
@@ -147,6 +154,27 @@ export default function App() {
     url.searchParams.set("section", newSection);
     window.history.replaceState({}, "", url);
   };
+
+  // Re-initialize readEvents when user changes
+  useEffect(() => {
+    if (!user) { setReadEvents(new Set()); return; }
+    try {
+      const stored = localStorage.getItem(`readEvents_${user.uid}`);
+      setReadEvents(stored ? new Set(JSON.parse(stored)) : new Set());
+    } catch { setReadEvents(new Set()); }
+  }, [user]);
+
+  // Mark event as read when expanded
+  useEffect(() => {
+    if (!expandedEvent || !user) return;
+    setReadEvents((prev) => {
+      if (prev.has(expandedEvent)) return prev;
+      const next = new Set(prev);
+      next.add(expandedEvent);
+      try { localStorage.setItem(`readEvents_${user.uid}`, JSON.stringify([...next])); } catch {}
+      return next;
+    });
+  }, [expandedEvent, user]);
 
   // Subscribe to Firebase events in real-time
   useEffect(() => {
@@ -2433,6 +2461,7 @@ export default function App() {
                   <EventCard
                     event={event}
                     isExpanded={connectionMode ? false : expandedEvent === event.id}
+                    isRead={readEvents.has(event.id)}
                     onToggle={connectionMode ? () => {} : () =>
                       setExpandedEvent(
                         expandedEvent === event.id ? null : event.id

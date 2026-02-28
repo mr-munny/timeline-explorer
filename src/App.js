@@ -2,8 +2,10 @@ import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { useAuth } from "./contexts/AuthContext";
 import { useTheme } from "./contexts/ThemeContext";
 import { PERIOD_COLORS, TAGS, getPeriod } from "./data/constants";
+import { compareEventDates } from "./utils/dateUtils";
 import { TEACHER_EMAIL } from "./firebase";
 import { subscribeToEvents, submitEvent, deleteEvent, updateEvent, seedDatabase, subscribeToPeriods, subscribeToAllSectionPeriods, savePeriods, subscribeToSections, saveSections, subscribeToDefaultPeriods, saveDefaultPeriods, subscribeToCompellingQuestion, subscribeToAllSectionCompellingQuestions, saveCompellingQuestion, subscribeToDefaultCompellingQuestion, saveDefaultCompellingQuestion, subscribeToTimelineRange, subscribeToAllSectionTimelineRanges, saveTimelineRange, subscribeToDefaultTimelineRange, saveDefaultTimelineRange, subscribeToFieldConfig, subscribeToAllSectionFieldConfigs, saveFieldConfig, subscribeToDefaultFieldConfig, saveDefaultFieldConfig, assignStudentSection, subscribeToAllStudentSections, reassignStudentSection, removeStudentSection, subscribeToConnections, submitConnection, deleteConnection } from "./services/database";
+import { writeToSheet } from "./services/sheets";
 import SEED_EVENTS from "./data/seedEvents";
 import VisualTimeline from "./components/VisualTimeline";
 import EventCard from "./components/EventCard";
@@ -346,6 +348,9 @@ export default function App() {
   const DEFAULT_FIELD_CONFIG = useMemo(() => ({
     title: "mandatory",
     year: "mandatory",
+    month: "hidden",
+    day: "hidden",
+    endDate: "hidden",
     period: "mandatory",
     tags: "mandatory",
     sourceType: "mandatory",
@@ -546,9 +551,10 @@ export default function App() {
           (e.region && e.region.toLowerCase().includes(term))
       );
     }
-    evts.sort((a, b) =>
-      sortOrder === "chrono" ? a.year - b.year : b.year - a.year
-    );
+    evts.sort((a, b) => {
+      const cmp = compareEventDates(a, b);
+      return sortOrder === "chrono" ? cmp : -cmp;
+    });
     return evts;
   }, [approvedEvents, selectedPeriod, selectedTag, searchTerm, sortOrder, isTeacher, sectionFilter]);
 
@@ -577,17 +583,54 @@ export default function App() {
   const findPeriod = (id) => getPeriod(displayPeriods, id);
   const displayCQ = section === "all" ? null : compellingQuestion;
 
+  // Auto-expand timeline range when event outside range is approved
+  const handleEventApproved = useCallback((event) => {
+    const year = Number(event.year);
+    if (isNaN(year)) return;
+    const endYear = event.endYear ? Number(event.endYear) : null;
+    let newStart = timelineStart;
+    let newEnd = timelineEnd;
+    let changed = false;
+    if (year < timelineStart) {
+      newStart = floorToDecade(year);
+      changed = true;
+    }
+    const maxYear = endYear && !isNaN(endYear) ? Math.max(year, endYear) : year;
+    if (maxYear > timelineEnd) {
+      newEnd = ceilToDecade(maxYear);
+      changed = true;
+    }
+    if (changed) {
+      setTimelineStart(newStart);
+      setTimelineEnd(newEnd);
+      setDraftStart(String(newStart));
+      setDraftEnd(String(newEnd));
+      // Persist to the event's section (or current section)
+      const targetSection = event.section || section;
+      if (targetSection && targetSection !== "all") {
+        saveTimelineRange(targetSection, { start: newStart, end: newEnd });
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timelineStart, timelineEnd, section]);
+
   const handleAddEvent = useCallback(
     async (formData) => {
-      await submitEvent({
+      const eventData = {
         ...formData,
         addedBy: user.displayName || user.email.split("@")[0],
         addedByEmail: user.email,
         addedByUid: user.uid,
         section: section === "all" ? (activeSections[0]?.id || "Period1") : section,
-      });
+        ...(isTeacher ? { status: "approved" } : {}),
+      };
+      await submitEvent(eventData);
+      if (isTeacher) {
+        writeToSheet(eventData);
+        handleEventApproved(eventData);
+      }
     },
-    [user, section, activeSections]
+    [user, section, activeSections, isTeacher, handleEventApproved]
   );
 
   const handleDeleteEvent = useCallback(async (eventId) => {
@@ -604,9 +647,17 @@ export default function App() {
 
   const handleSaveEdit = useCallback(
     async (formData) => {
-      const updates = { ...formData, year: parseInt(formData.year) };
+      const updates = {
+        ...formData,
+        year: parseInt(formData.year),
+        month: formData.month ? parseInt(formData.month) : null,
+        day: formData.day ? parseInt(formData.day) : null,
+        endYear: formData.endYear ? parseInt(formData.endYear) : null,
+        endMonth: formData.endMonth ? parseInt(formData.endMonth) : null,
+        endDay: formData.endDay ? parseInt(formData.endDay) : null,
+      };
       // Compute which fields changed for edit history
-      const changeFields = ["title", "year", "period", "tags", "sourceType", "description", "sourceNote", "region"];
+      const changeFields = ["title", "year", "month", "day", "endYear", "endMonth", "endDay", "period", "tags", "sourceType", "description", "sourceNote", "region"];
       const changes = {};
       for (const key of changeFields) {
         const oldVal = editingEvent[key];
@@ -690,34 +741,6 @@ export default function App() {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [connectionMode]);
 
-  // Auto-expand timeline range when event outside range is approved
-  const handleEventApproved = useCallback((event) => {
-    const year = Number(event.year);
-    if (isNaN(year)) return;
-    let newStart = timelineStart;
-    let newEnd = timelineEnd;
-    let changed = false;
-    if (year < timelineStart) {
-      newStart = floorToDecade(year);
-      changed = true;
-    }
-    if (year > timelineEnd) {
-      newEnd = ceilToDecade(year);
-      changed = true;
-    }
-    if (changed) {
-      setTimelineStart(newStart);
-      setTimelineEnd(newEnd);
-      setDraftStart(String(newStart));
-      setDraftEnd(String(newEnd));
-      // Persist to the event's section (or current section)
-      const targetSection = event.section || section;
-      if (targetSection && targetSection !== "all") {
-        saveTimelineRange(targetSection, { start: newStart, end: newEnd });
-      }
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [timelineStart, timelineEnd, section]);
 
   const handleSeed = async () => {
     if (!window.confirm("Seed the database with 25 sample events? Only do this once.")) return;
@@ -1688,6 +1711,9 @@ export default function App() {
                           {[
                             { key: "title", label: "Event Title" },
                             { key: "year", label: "Year" },
+                            { key: "month", label: "Month" },
+                            { key: "day", label: "Day" },
+                            { key: "endDate", label: "End Date" },
                             { key: "period", label: "Time Period" },
                             { key: "tags", label: "Tags" },
                             { key: "sourceType", label: "Source Type" },
@@ -1696,6 +1722,11 @@ export default function App() {
                             { key: "region", label: "Region" },
                           ].map(({ key, label }) => {
                             const mode = activeFieldConfig[key] || "mandatory";
+                            const allowedModes = key === "endDate"
+                              ? ["optional", "hidden"]
+                              : key === "year"
+                              ? ["mandatory"]
+                              : ["mandatory", "optional", "hidden"];
                             return (
                               <div
                                 key={key}
@@ -1718,7 +1749,7 @@ export default function App() {
                                 </span>
                                 {!fieldConfigLocked ? (
                                   <div style={{ display: "flex", gap: 2 }}>
-                                    {["mandatory", "optional", "hidden"].map((m) => (
+                                    {allowedModes.map((m) => (
                                       <button
                                         key={m}
                                         onClick={() => {
@@ -2476,6 +2507,7 @@ export default function App() {
           timelineEnd={timelineEnd}
           periods={displayPeriods}
           fieldConfig={activeFieldConfig}
+          isTeacher={isTeacher}
         />
       )}
 
@@ -2490,6 +2522,7 @@ export default function App() {
           periods={displayPeriods}
           fieldConfig={activeFieldConfig}
           editingEvent={editingEvent}
+          isTeacher={isTeacher}
         />
       )}
 

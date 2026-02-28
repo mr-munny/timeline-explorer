@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { getPeriod } from "../data/constants";
 import { useTheme } from "../contexts/ThemeContext";
+import { eventStartFraction, eventEndFraction, formatEventDate } from "../utils/dateUtils";
 
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 20;
@@ -191,29 +192,69 @@ export default function VisualTimeline({
     setOpenClusterId(null);
   }, []);
 
-  // Event clustering
-  const clusteredMarkers = useMemo(() => {
-    if (!viewportWidth || filteredEvents.length === 0) return [];
+  // Event clustering — duration events are kept separate from singular events
+  const { durationMarkers, clusteredMarkers, durationLaneCount } = useMemo(() => {
+    if (!viewportWidth || filteredEvents.length === 0) return { durationMarkers: [], clusteredMarkers: [] };
     const cw = viewportWidth * zoomLevel;
 
     const positioned = filteredEvents
       .map((event) => {
         const period = getPeriod(periods, event.period);
         if (!period) return null;
-        const pct = ((event.year - minYear) / totalSpan) * 100;
+        const startFrac = eventStartFraction(event);
+        const endFrac = eventEndFraction(event);
+        const pct = ((startFrac - minYear) / totalSpan) * 100;
         const px = (pct / 100) * cw;
-        return { event, period, px };
+        const isDuration = endFrac !== null;
+        let endPct = null, endPx = null;
+        if (isDuration) {
+          endPct = ((endFrac - minYear) / totalSpan) * 100;
+          endPx = (endPct / 100) * cw;
+        }
+        return { event, period, px, isDuration, pct, endPct, endPx };
       })
-      .filter(Boolean)
-      .sort((a, b) => a.px - b.px);
+      .filter(Boolean);
 
-    if (positioned.length === 0) return [];
+    // Separate duration events from singular events
+    const durations = positioned.filter((p) => p.isDuration);
+    const singles = positioned.filter((p) => !p.isDuration).sort((a, b) => a.px - b.px);
+
+    // Assign duration events to Gantt-style lanes (lowest available lane with no time overlap)
+    const lanes = []; // each lane is an array of { minPx, maxPx }
+    const durMarkers = durations
+      .sort((a, b) => Math.min(a.px, a.endPx) - Math.min(b.px, b.endPx))
+      .map((item, idx) => {
+        const barMinPx = Math.min(item.px, item.endPx);
+        const barMaxPx = Math.max(item.px, item.endPx);
+        let assignedLane = 0;
+        for (let l = 0; l < lanes.length; l++) {
+          const fits = lanes[l].every((seg) => barMinPx > seg.maxPx + CLUSTER_PX_THRESHOLD || barMaxPx < seg.minPx - CLUSTER_PX_THRESHOLD);
+          if (fits) { assignedLane = l; break; }
+          assignedLane = l + 1;
+        }
+        if (!lanes[assignedLane]) lanes[assignedLane] = [];
+        lanes[assignedLane].push({ minPx: barMinPx, maxPx: barMaxPx });
+        return {
+          id: `dur-${idx}`,
+          items: [item],
+          isSingle: true,
+          isDurationCluster: true,
+          centerPct: item.pct,
+          count: 1,
+          period: item.period,
+          lane: assignedLane,
+        };
+      });
+    const durationLaneCount = lanes.length;
+
+    // Cluster only singular events
+    if (singles.length === 0) return { durationMarkers: durMarkers, clusteredMarkers: [] };
 
     const clusters = [];
-    let cur = { items: [positioned[0]], minPx: positioned[0].px, maxPx: positioned[0].px };
+    let cur = { items: [singles[0]], minPx: singles[0].px, maxPx: singles[0].px };
 
-    for (let i = 1; i < positioned.length; i++) {
-      const item = positioned[i];
+    for (let i = 1; i < singles.length; i++) {
+      const item = singles[i];
       if (item.px - cur.maxPx <= CLUSTER_PX_THRESHOLD) {
         cur.items.push(item);
         cur.maxPx = item.px;
@@ -224,10 +265,16 @@ export default function VisualTimeline({
     }
     clusters.push(cur);
 
-    return clusters.map((c, idx) => {
+    // Check if a singular cluster overlaps any duration bar — if so, bump it down
+    const singularClusters = clusters.map((c, idx) => {
       const centerPx = (c.minPx + c.maxPx) / 2;
       const centerPct = (centerPx / cw) * 100;
       const isSingle = c.items.length === 1;
+      const bumped = durations.some((d) => {
+        const barMinPx = Math.min(d.px, d.endPx);
+        const barMaxPx = Math.max(d.px, d.endPx);
+        return centerPx >= barMinPx - CLUSTER_PX_THRESHOLD && centerPx <= barMaxPx + CLUSTER_PX_THRESHOLD;
+      });
       return {
         id: `cluster-${idx}`,
         centerPct,
@@ -235,8 +282,11 @@ export default function VisualTimeline({
         isSingle,
         items: c.items,
         period: isSingle ? c.items[0].period : getDominantPeriod(c.items),
+        bumped,
       };
     });
+
+    return { durationMarkers: durMarkers, clusteredMarkers: singularClusters, durationLaneCount };
   }, [filteredEvents, zoomLevel, viewportWidth, periods, minYear, totalSpan]);
 
   // Cluster/node click handler (used for both single and multi-event nodes)
@@ -286,7 +336,9 @@ export default function VisualTimeline({
     return labels;
   }, [minYear, maxYear, labelInterval]);
 
-  const openCluster = openClusterId ? clusteredMarkers.find((c) => c.id === openClusterId) : null;
+  const openCluster = openClusterId
+    ? (clusteredMarkers.find((c) => c.id === openClusterId) || durationMarkers.find((c) => c.id === openClusterId))
+    : null;
 
   return (
     <div ref={wrapperRef} style={{ padding: "12px 24px 8px", position: "relative" }}>
@@ -504,13 +556,47 @@ export default function VisualTimeline({
               })()}
           </div>
 
-          {/* Event markers / clusters — all nodes are clickable */}
-          <div style={{ position: "relative", height: 28, marginTop: 2 }}>
+          {/* Event markers — duration bars in lanes on top, singular dots/clusters below */}
+          <div style={{ position: "relative", height: (durationLaneCount > 0 ? durationLaneCount * 12 + 4 : 0) + 28, marginTop: 2 }}>
+            {/* Duration bars — each in its assigned lane */}
+            {durationMarkers.map((cluster) => {
+              const isOpen = openClusterId === cluster.id;
+              const item = cluster.items[0];
+              const barLeft = Math.min(item.pct, item.endPct);
+              const barRight = Math.max(item.pct, item.endPct);
+              const barWidth = Math.max(barRight - barLeft, 0.3);
+              const laneTop = cluster.lane * 12 + 2;
+              return (
+                <div
+                  key={cluster.id}
+                  data-cluster
+                  onClick={(e) => handleNodeClick(e, cluster)}
+                  style={{
+                    position: "absolute",
+                    left: `${barLeft}%`,
+                    width: `${barWidth}%`,
+                    top: laneTop,
+                    height: 8,
+                    borderRadius: 4,
+                    background: item.period.color + "50",
+                    border: `1.5px solid ${item.period.color}`,
+                    cursor: "pointer",
+                    zIndex: isOpen ? 4 : 2,
+                    transition: "all 0.2s ease",
+                    boxShadow: isOpen
+                      ? `0 0 0 2px ${item.period.color}60`
+                      : "none",
+                  }}
+                />
+              );
+            })}
+
+            {/* Singular event dots/clusters — below duration lanes */}
             {clusteredMarkers.map((cluster) => {
               const isOpen = openClusterId === cluster.id;
+              const durationOffset = durationLaneCount > 0 ? durationLaneCount * 12 + 4 : 0;
 
               if (cluster.isSingle) {
-                // Single-event node: smaller dot, clickable to open dropdown
                 const item = cluster.items[0];
                 return (
                   <div
@@ -520,7 +606,7 @@ export default function VisualTimeline({
                     style={{
                       position: "absolute",
                       left: `${cluster.centerPct}%`,
-                      top: 0,
+                      top: durationOffset,
                       transform: "translateX(-50%)",
                       cursor: "pointer",
                       zIndex: isOpen ? 4 : 2,
@@ -553,7 +639,7 @@ export default function VisualTimeline({
                   style={{
                     position: "absolute",
                     left: `${cluster.centerPct}%`,
-                    top: 1,
+                    top: 1 + durationOffset,
                     transform: "translateX(-50%)",
                     cursor: "pointer",
                     zIndex: isOpen ? 4 : 3,
@@ -691,7 +777,7 @@ export default function VisualTimeline({
                   flexShrink: 0,
                 }}
               >
-                {event.year}
+                {formatEventDate(event)}
               </span>
               <span
                 style={{

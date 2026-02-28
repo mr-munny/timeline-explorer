@@ -31,12 +31,12 @@ export function subscribeToEvents(section, callback) {
   });
 }
 
-// Submit a new event (always pending)
+// Submit a new event (pending by default, can override status)
 export async function submitEvent(eventData) {
   const newRef = push(eventsRef);
   await set(newRef, {
-    ...eventData,
     status: "pending",
+    ...eventData,
     dateAdded: new Date().toISOString(),
   });
   return newRef.key;

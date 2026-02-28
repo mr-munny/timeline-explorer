@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { getPeriod } from "../data/constants";
+import { formatEventDate, formatEventDateRange, MONTHS } from "../utils/dateUtils";
 import { Icon } from "@iconify/react";
 import chevronDown from "@iconify-icons/mdi/chevron-down";
 import deleteOutline from "@iconify-icons/mdi/delete-outline";
@@ -23,7 +24,7 @@ export default function EventCard({ event, isExpanded, onToggle, isTeacher, onEd
   const editHistory = event.editHistory || [];
   const periodLabel = period?.label || event.period;
 
-  const FIELD_LABELS = { title: "Title", year: "Year", period: "Period", tags: "Tags", sourceType: "Source Type", description: "Description", sourceNote: "Source", region: "Region" };
+  const FIELD_LABELS = { title: "Title", year: "Year", month: "Month", day: "Day", endYear: "End Year", endMonth: "End Month", endDay: "End Day", period: "Period", tags: "Tags", sourceType: "Source Type", description: "Description", sourceNote: "Source", region: "Region" };
   const TEXT_FIELDS = new Set(["title", "description", "sourceNote"]);
 
   const computeWordDiff = (oldStr, newStr) => {
@@ -54,6 +55,7 @@ export default function EventCard({ event, isExpanded, onToggle, isTeacher, onEd
   const formatFieldVal = (key, val) => {
     if (key === "tags") return (val || []).join(", ");
     if (key === "period") { const p = getPeriod(periods, val); return p?.label || val; }
+    if ((key === "month" || key === "endMonth") && val) return MONTHS[val - 1] || String(val);
     return String(val ?? "");
   };
 
@@ -87,9 +89,10 @@ export default function EventCard({ event, isExpanded, onToggle, isTeacher, onEd
             lineHeight: 1.2,
             minWidth: 42,
             textAlign: "center",
+            whiteSpace: "nowrap",
           }}
         >
-          {event.year}
+          {formatEventDate(event)}
         </div>
 
         <div style={{ flex: 1, minWidth: 0 }}>
@@ -259,6 +262,16 @@ export default function EventCard({ event, isExpanded, onToggle, isTeacher, onEd
                 {periodLabel}
               </div>
             </div>
+            {event.endYear && (
+              <div>
+                <span style={{ color: theme.textSecondary, fontWeight: 500, display: "inline-flex", alignItems: "center", gap: 3 }}>
+                  Date Range
+                </span>
+                <div style={{ color: theme.textDescription, fontWeight: 600, marginTop: 2 }}>
+                  {formatEventDateRange(event)}
+                </div>
+              </div>
+            )}
             <div>
               <span style={{ color: theme.textSecondary, fontWeight: 500, display: "inline-flex", alignItems: "center", gap: 3 }}>
                 <Icon icon={fileDocumentOutline} width={11} />
@@ -461,7 +474,7 @@ export default function EventCard({ event, isExpanded, onToggle, isTeacher, onEd
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: 12, fontFamily: "'Newsreader', serif", fontWeight: 600, color: theme.textPrimary }}>
                         Leads to:{" "}
-                        <span style={{ color: targetPeriod?.color || theme.textSecondary }}>{target.year}</span>
+                        <span style={{ color: targetPeriod?.color || theme.textSecondary }}>{formatEventDate(target)}</span>
                         {" "}{target.title}
                       </div>
                       <div style={{ fontSize: 11, color: theme.textSecondary, fontFamily: "'Newsreader', serif", marginTop: 2, lineHeight: 1.4 }}>
@@ -512,7 +525,7 @@ export default function EventCard({ event, isExpanded, onToggle, isTeacher, onEd
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: 12, fontFamily: "'Newsreader', serif", fontWeight: 600, color: theme.textPrimary }}>
                         Caused by:{" "}
-                        <span style={{ color: sourcePeriod?.color || theme.textSecondary }}>{source.year}</span>
+                        <span style={{ color: sourcePeriod?.color || theme.textSecondary }}>{formatEventDate(source)}</span>
                         {" "}{source.title}
                       </div>
                       <div style={{ fontSize: 11, color: theme.textSecondary, fontFamily: "'Newsreader', serif", marginTop: 2, lineHeight: 1.4 }}>

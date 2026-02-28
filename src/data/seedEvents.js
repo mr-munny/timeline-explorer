@@ -4,6 +4,8 @@ const SEED_EVENTS = [
   {
     title: "Assassination of Archduke Franz Ferdinand",
     year: 1914,
+    month: 6,
+    day: 28,
     period: "wwi",
     tags: ["Political", "Military"],
     sourceType: "Primary",
@@ -21,6 +23,8 @@ const SEED_EVENTS = [
   {
     title: "Sinking of the Lusitania",
     year: 1915,
+    month: 5,
+    day: 7,
     period: "wwi",
     tags: ["Military", "Political"],
     sourceType: "Primary",
@@ -89,6 +93,8 @@ const SEED_EVENTS = [
   {
     title: "Stock Market Crash (Black Tuesday)",
     year: 1929,
+    month: 10,
+    day: 29,
     period: "depression",
     tags: ["Economic", "Political"],
     sourceType: "Primary",
@@ -106,6 +112,7 @@ const SEED_EVENTS = [
   {
     title: "Dust Bowl Begins",
     year: 1931,
+    endYear: 1939,
     period: "depression",
     tags: ["Economic", "Geographic", "Social"],
     sourceType: "Secondary",
@@ -174,6 +181,8 @@ const SEED_EVENTS = [
   {
     title: "Attack on Pearl Harbor",
     year: 1941,
+    month: 12,
+    day: 7,
     period: "wwii",
     tags: ["Military", "Political"],
     sourceType: "Primary",
@@ -208,6 +217,8 @@ const SEED_EVENTS = [
   {
     title: "D-Day: Allied Invasion of Normandy",
     year: 1944,
+    month: 6,
+    day: 6,
     period: "wwii",
     tags: ["Military"],
     sourceType: "Primary",
@@ -293,6 +304,11 @@ const SEED_EVENTS = [
   {
     title: "Korean War Begins",
     year: 1950,
+    month: 6,
+    day: 25,
+    endYear: 1953,
+    endMonth: 7,
+    endDay: 27,
     period: "coldwar",
     tags: ["Military", "Political"],
     sourceType: "Secondary",
@@ -344,6 +360,11 @@ const SEED_EVENTS = [
   {
     title: "Cuban Missile Crisis",
     year: 1962,
+    month: 10,
+    day: 16,
+    endYear: 1962,
+    endMonth: 10,
+    endDay: 28,
     period: "coldwar",
     tags: ["Military", "Political"],
     sourceType: "Primary",
@@ -378,6 +399,8 @@ const SEED_EVENTS = [
   {
     title: "Moon Landing (Apollo 11)",
     year: 1969,
+    month: 7,
+    day: 20,
     period: "coldwar",
     tags: ["Technological", "Political"],
     sourceType: "Primary",
@@ -395,6 +418,8 @@ const SEED_EVENTS = [
   {
     title: "Fall of the Berlin Wall",
     year: 1989,
+    month: 11,
+    day: 9,
     period: "coldwar",
     tags: ["Political", "Social"],
     sourceType: "Primary",
@@ -412,6 +437,8 @@ const SEED_EVENTS = [
   {
     title: "Dissolution of the Soviet Union",
     year: 1991,
+    month: 12,
+    day: 26,
     period: "coldwar",
     tags: ["Political"],
     sourceType: "Primary",

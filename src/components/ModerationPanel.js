@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { getPeriod, TAGS } from "../data/constants";
+import { formatEventDate, MONTHS } from "../utils/dateUtils";
 import { approveEvent, rejectEvent, updateEvent, approveEdit, approveConnection, rejectConnection, updateConnection } from "../services/database";
 import { writeToSheet } from "../services/sheets";
 import { Icon } from "@iconify/react";
@@ -31,7 +32,7 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
         // Compute which fields changed for edit history
         const changes = {};
         if (original) {
-          const changeFields = ["title", "year", "period", "tags", "sourceType", "description", "sourceNote", "region"];
+          const changeFields = ["title", "year", "month", "day", "endYear", "endMonth", "endDay", "period", "tags", "sourceType", "description", "sourceNote", "region"];
           for (const key of changeFields) {
             const oldVal = original[key];
             const newVal = event[key];
@@ -77,6 +78,11 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
     setEditForm({
       title: event.title,
       year: event.year,
+      month: event.month || "",
+      day: event.day || "",
+      endYear: event.endYear || "",
+      endMonth: event.endMonth || "",
+      endDay: event.endDay || "",
       period: event.period,
       tags: [...(event.tags || [])],
       sourceType: event.sourceType || "Primary",
@@ -169,6 +175,11 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
   const DIFF_FIELDS = [
     { key: "title", label: "Title", inline: true },
     { key: "year", label: "Year" },
+    { key: "month", label: "Month", format: (v) => v ? MONTHS[v - 1] : "None" },
+    { key: "day", label: "Day" },
+    { key: "endYear", label: "End Year" },
+    { key: "endMonth", label: "End Month", format: (v) => v ? MONTHS[v - 1] : "None" },
+    { key: "endDay", label: "End Day" },
     { key: "period", label: "Period", format: (v) => { const p = getPeriod(periods, v); return p?.label || v; } },
     { key: "tags", label: "Tags", format: (v) => (v || []).join(", "), compare: (a, b) => JSON.stringify(a) === JSON.stringify(b) },
     { key: "sourceType", label: "Source Type" },
@@ -351,6 +362,75 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                           type="number"
                           placeholder="Year"
                         />
+                      </div>
+                      <div style={{ display: "flex", gap: 8 }}>
+                        <div style={{ flex: 1 }}>
+                          <select
+                            value={editForm.month}
+                            onChange={(e) =>
+                              setEditForm((f) => ({ ...f, month: e.target.value ? parseInt(e.target.value) : "" }))
+                            }
+                            style={inputStyle}
+                          >
+                            <option value="">Month —</option>
+                            {MONTHS.map((m, i) => (
+                              <option key={i} value={i + 1}>{m}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div style={{ width: 70 }}>
+                          <input
+                            value={editForm.day}
+                            onChange={(e) =>
+                              setEditForm((f) => ({ ...f, day: e.target.value ? parseInt(e.target.value) : "" }))
+                            }
+                            style={inputStyle}
+                            type="number"
+                            placeholder="Day"
+                            min={1}
+                            max={31}
+                          />
+                        </div>
+                      </div>
+                      <div style={{ display: "flex", gap: 8 }}>
+                        <div style={{ width: 80 }}>
+                          <input
+                            value={editForm.endYear}
+                            onChange={(e) =>
+                              setEditForm((f) => ({ ...f, endYear: e.target.value ? parseInt(e.target.value) : "" }))
+                            }
+                            style={inputStyle}
+                            type="number"
+                            placeholder="End yr"
+                          />
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <select
+                            value={editForm.endMonth}
+                            onChange={(e) =>
+                              setEditForm((f) => ({ ...f, endMonth: e.target.value ? parseInt(e.target.value) : "" }))
+                            }
+                            style={inputStyle}
+                          >
+                            <option value="">End mo —</option>
+                            {MONTHS.map((m, i) => (
+                              <option key={i} value={i + 1}>{m}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div style={{ width: 70 }}>
+                          <input
+                            value={editForm.endDay}
+                            onChange={(e) =>
+                              setEditForm((f) => ({ ...f, endDay: e.target.value ? parseInt(e.target.value) : "" }))
+                            }
+                            style={inputStyle}
+                            type="number"
+                            placeholder="End day"
+                            min={1}
+                            max={31}
+                          />
+                        </div>
                       </div>
                       <select
                         value={editForm.period}
@@ -582,7 +662,7 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                             flexShrink: 0,
                           }}
                         >
-                          {event.year}
+                          {formatEventDate(event)}
                         </div>
                         <div style={{ flex: 1 }}>
                           <div

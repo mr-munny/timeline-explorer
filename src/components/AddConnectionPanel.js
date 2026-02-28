@@ -5,6 +5,7 @@ import sendIcon from "@iconify-icons/mdi/send";
 import arrowRightBold from "@iconify-icons/mdi/arrow-right-bold";
 import { useTheme } from "../contexts/ThemeContext";
 import { getPeriod } from "../data/constants";
+import { formatEventDate } from "../utils/dateUtils";
 
 function EventSearchDropdown({ label, events, selectedId, onSelect, excludeId, periods, error, theme }) {
   const [search, setSearch] = useState("");
@@ -87,7 +88,7 @@ function EventSearchDropdown({ label, events, selectedId, onSelect, excludeId, p
               flexShrink: 0,
             }}
           >
-            {selected.year}
+            {formatEventDate(selected)}
           </span>
           <span
             style={{
@@ -181,7 +182,7 @@ function EventSearchDropdown({ label, events, selectedId, onSelect, excludeId, p
                     flexShrink: 0,
                   }}
                 >
-                  {event.year}
+                  {formatEventDate(event)}
                 </span>
                 <span
                   style={{

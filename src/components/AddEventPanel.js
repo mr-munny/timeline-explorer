@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { TAGS, SOURCE_TYPES } from "../data/constants";
+import { MONTHS, maxDaysInMonth, dateToFractionalYear } from "../utils/dateUtils";
 import { Icon } from "@iconify/react";
 import closeIcon from "@iconify-icons/mdi/close";
 import sendIcon from "@iconify-icons/mdi/send";
@@ -9,6 +10,9 @@ import { useTheme } from "../contexts/ThemeContext";
 const DEFAULT_FIELD_CONFIG = {
   title: "mandatory",
   year: "mandatory",
+  month: "hidden",
+  day: "hidden",
+  endDate: "hidden",
   period: "mandatory",
   tags: "mandatory",
   sourceType: "mandatory",
@@ -17,13 +21,18 @@ const DEFAULT_FIELD_CONFIG = {
   region: "optional",
 };
 
-export default function AddEventPanel({ onAdd, onClose, userName, timelineStart = 1910, timelineEnd = 2000, periods = [], fieldConfig, editingEvent }) {
+export default function AddEventPanel({ onAdd, onClose, userName, timelineStart = 1910, timelineEnd = 2000, periods = [], fieldConfig, editingEvent, isTeacher }) {
   const fc = { ...DEFAULT_FIELD_CONFIG, ...(fieldConfig || {}) };
   const { theme, getThemedSourceTypeBg } = useTheme();
   const isEditing = !!editingEvent;
   const [form, setForm] = useState(isEditing ? {
     title: editingEvent.title || "",
     year: String(editingEvent.year || ""),
+    month: editingEvent.month ? String(editingEvent.month) : "",
+    day: editingEvent.day ? String(editingEvent.day) : "",
+    endYear: editingEvent.endYear ? String(editingEvent.endYear) : "",
+    endMonth: editingEvent.endMonth ? String(editingEvent.endMonth) : "",
+    endDay: editingEvent.endDay ? String(editingEvent.endDay) : "",
     period: editingEvent.period || "",
     tags: [...(editingEvent.tags || [])],
     sourceType: editingEvent.sourceType || "Primary",
@@ -33,6 +42,11 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
   } : {
     title: "",
     year: "",
+    month: "",
+    day: "",
+    endYear: "",
+    endMonth: "",
+    endDay: "",
     period: "",
     tags: [],
     sourceType: "Primary",
@@ -43,6 +57,8 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
   const [errors, setErrors] = useState({});
   const [warnings, setWarnings] = useState({});
   const [submitting, setSubmitting] = useState(false);
+  const [showValidationHint, setShowValidationHint] = useState(false);
+  const [showEndDate, setShowEndDate] = useState(isEditing ? !!editingEvent.endYear : false);
 
   const update = (field, value) => {
     setForm((f) => ({ ...f, [field]: value }));
@@ -68,6 +84,31 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
         w.year = `Year ${form.year} is outside the timeline range (${timelineStart}–${timelineEnd}). It will still be submitted.`;
       }
     }
+    if (fc.month !== "hidden") {
+      if (fc.month === "mandatory" && !form.month) e.month = true;
+      else if (form.month && (Number(form.month) < 1 || Number(form.month) > 12)) e.month = true;
+    }
+    if (fc.day !== "hidden") {
+      if (fc.day === "mandatory" && !form.day) e.day = true;
+      else if (form.day) {
+        const max = maxDaysInMonth(Number(form.month), Number(form.year));
+        if (Number(form.day) < 1 || Number(form.day) > max) e.day = true;
+      }
+    }
+    if (fc.endDate === "optional" && showEndDate) {
+      if (!form.endYear || isNaN(form.endYear)) e.endYear = true;
+      if (fc.month === "mandatory" && !form.endMonth) e.endMonth = true;
+      if (fc.day === "mandatory" && !form.endDay) e.endDay = true;
+      // Validate end date is after start date
+      if (form.year && form.endYear && !isNaN(form.year) && !isNaN(form.endYear)) {
+        const startFrac = dateToFractionalYear(Number(form.year), Number(form.month) || undefined, Number(form.day) || undefined);
+        const endFrac = dateToFractionalYear(Number(form.endYear), Number(form.endMonth) || undefined, Number(form.endDay) || undefined);
+        if (endFrac !== null && startFrac !== null && endFrac < startFrac) {
+          e.endYear = true;
+          w.endDate = "End date must be after start date.";
+        }
+      }
+    }
     if (fc.period === "mandatory" && !form.period) e.period = true;
     if (fc.tags === "mandatory" && form.tags.length === 0) e.tags = true;
     if (fc.description === "mandatory" && !form.description.trim()) e.description = true;
@@ -78,17 +119,42 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
     return Object.keys(e).length === 0;
   };
 
+  const FIELD_NAMES = { title: "Title", year: "Year", month: "Month", day: "Day", endYear: "End Year", endMonth: "End Month", endDay: "End Day", period: "Time Period", tags: "Tags", description: "Description", sourceNote: "Source Citation", region: "Region" };
+
   const handleSubmit = async () => {
-    if (!validate()) return;
+    if (!validate()) {
+      setShowValidationHint(true);
+      return;
+    }
+    setShowValidationHint(false);
     setSubmitting(true);
     try {
-      await onAdd({
+      const data = {
         ...form,
         year: parseInt(form.year),
+        month: form.month ? parseInt(form.month) : null,
+        day: form.day ? parseInt(form.day) : null,
+      };
+      if (showEndDate && form.endYear) {
+        data.endYear = parseInt(form.endYear);
+        data.endMonth = form.endMonth ? parseInt(form.endMonth) : null;
+        data.endDay = form.endDay ? parseInt(form.endDay) : null;
+      } else {
+        data.endYear = null;
+        data.endMonth = null;
+        data.endDay = null;
+      }
+      // Strip null/empty values to avoid storing them in Firebase
+      Object.keys(data).forEach((k) => {
+        if (data[k] === null || data[k] === undefined || data[k] === "") delete data[k];
       });
+      await onAdd(data);
       onClose();
-    } catch {
+    } catch (err) {
+      console.error("Save failed:", err);
       setSubmitting(false);
+      setShowValidationHint(true);
+      setErrors({ _submit: true });
     }
   };
 
@@ -173,7 +239,7 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
             >
               {isEditing
                 ? <>Editing as <strong style={{ color: theme.textDescription }}>{userName}</strong></>
-                : <>Submitting as <strong style={{ color: theme.textDescription }}>{userName}</strong> &middot; Requires teacher approval</>
+                : <>Submitting as <strong style={{ color: theme.textDescription }}>{userName}</strong>{!isTeacher && <> &middot; Requires teacher approval</>}</>
               }
             </p>
           </div>
@@ -242,6 +308,128 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
             >
               {warnings.year}
             </div>
+          )}
+
+          {/* Month + Day row */}
+          {(fc.month !== "hidden" || fc.day !== "hidden") && (
+            <div style={{ display: "flex", gap: 10 }}>
+              {fc.month !== "hidden" && (
+                <div style={{ flex: 1 }}>
+                  <label style={labelStyle}>Month{fc.month === "mandatory" ? " *" : ""}</label>
+                  <select
+                    value={form.month}
+                    onChange={(e) => update("month", e.target.value)}
+                    style={fieldStyle("month")}
+                  >
+                    <option value="">—</option>
+                    {MONTHS.map((m, i) => (
+                      <option key={i} value={String(i + 1)}>{m}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              {fc.day !== "hidden" && (
+                <div style={{ width: 80 }}>
+                  <label style={labelStyle}>Day{fc.day === "mandatory" ? " *" : ""}</label>
+                  <input
+                    value={form.day}
+                    onChange={(e) => update("day", e.target.value)}
+                    placeholder="—"
+                    type="number"
+                    min={1}
+                    max={maxDaysInMonth(Number(form.month), Number(form.year))}
+                    style={fieldStyle("day")}
+                  />
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* End date toggle + inputs */}
+          {fc.endDate === "optional" && (
+            <>
+              <label
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  fontSize: 12,
+                  fontFamily: "'Overpass Mono', monospace",
+                  color: theme.textSecondary,
+                  cursor: "pointer",
+                  userSelect: "none",
+                  marginTop: -4,
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={showEndDate}
+                  onChange={(e) => setShowEndDate(e.target.checked)}
+                  style={{ accentColor: theme.activeToggleBg }}
+                />
+                This event spans a date range
+              </label>
+              {showEndDate && (
+                <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                  <div style={{ width: 100 }}>
+                    <label style={labelStyle}>End Year *</label>
+                    <input
+                      value={form.endYear}
+                      onChange={(e) => update("endYear", e.target.value)}
+                      placeholder={form.year || "—"}
+                      type="number"
+                      style={fieldStyle("endYear")}
+                    />
+                  </div>
+                  {fc.month !== "hidden" && (
+                    <div style={{ flex: 1, minWidth: 100 }}>
+                      <label style={labelStyle}>End Month{fc.month === "mandatory" ? " *" : ""}</label>
+                      <select
+                        value={form.endMonth}
+                        onChange={(e) => update("endMonth", e.target.value)}
+                        style={fieldStyle("endMonth")}
+                      >
+                        <option value="">—</option>
+                        {MONTHS.map((m, i) => (
+                          <option key={i} value={String(i + 1)}>{m}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                  {fc.day !== "hidden" && (
+                    <div style={{ width: 80 }}>
+                      <label style={labelStyle}>End Day{fc.day === "mandatory" ? " *" : ""}</label>
+                      <input
+                        value={form.endDay}
+                        onChange={(e) => update("endDay", e.target.value)}
+                        placeholder="—"
+                        type="number"
+                        min={1}
+                        max={maxDaysInMonth(Number(form.endMonth), Number(form.endYear))}
+                        style={fieldStyle("endDay")}
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
+              {warnings.endDate && (
+                <div
+                  style={{
+                    background: "#FEF3C7",
+                    border: "1px solid #D97706",
+                    borderRadius: 6,
+                    padding: "8px 12px",
+                    fontSize: 11,
+                    fontFamily: "'Overpass Mono', monospace",
+                    color: "#92400E",
+                    lineHeight: 1.4,
+                    marginTop: -6,
+                  }}
+                >
+                  {warnings.endDate}
+                </div>
+              )}
+            </>
           )}
 
           {/* Period */}
@@ -406,6 +594,24 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
             <em>why it matters</em>.
           </div>
 
+          {/* Validation hint */}
+          {showValidationHint && Object.keys(errors).length > 0 && (
+            <div
+              style={{
+                background: theme.errorRed + "12",
+                border: `1px solid ${theme.errorRed}40`,
+                borderRadius: 6,
+                padding: "8px 12px",
+                fontSize: 11,
+                fontFamily: "'Overpass Mono', monospace",
+                color: theme.errorRed,
+                lineHeight: 1.4,
+              }}
+            >
+              Please fix the following fields: {Object.keys(errors).map((k) => FIELD_NAMES[k] || k).join(", ")}
+            </div>
+          )}
+
           {/* Submit */}
           <button
             onClick={handleSubmit}
@@ -426,7 +632,7 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
           >
             {submitting
               ? (isEditing ? "Saving..." : "Submitting...")
-              : <><Icon icon={sendIcon} width={14} style={{ verticalAlign: "middle", marginRight: 5 }} />{isEditing ? "Save Changes" : "Submit Event for Approval"}</>
+              : <><Icon icon={sendIcon} width={14} style={{ verticalAlign: "middle", marginRight: 5 }} />{isEditing ? "Save Changes" : isTeacher ? "Add Event" : "Submit Event for Approval"}</>
             }
           </button>
         </div>

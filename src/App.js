@@ -605,6 +605,15 @@ export default function App() {
   const handleSaveEdit = useCallback(
     async (formData) => {
       const updates = { ...formData, year: parseInt(formData.year) };
+      // Compute which fields changed for edit history
+      const changeFields = ["title", "year", "period", "tags", "sourceType", "description", "sourceNote", "region"];
+      const changes = {};
+      for (const key of changeFields) {
+        const oldVal = editingEvent[key];
+        const newVal = updates[key] !== undefined ? updates[key] : oldVal;
+        const isEqual = key === "tags" ? JSON.stringify(oldVal) === JSON.stringify(newVal) : String(oldVal ?? "") === String(newVal ?? "");
+        if (!isEqual) changes[key] = { from: oldVal, to: newVal };
+      }
       if (isTeacher) {
         // Teacher: apply edit directly, append to edit history
         const existingHistory = editingEvent.editHistory || [];
@@ -614,6 +623,7 @@ export default function App() {
             name: user.displayName || user.email.split("@")[0],
             email: user.email,
             date: new Date().toISOString(),
+            changes,
           }],
         });
       } else {

@@ -23,6 +23,40 @@ export default function EventCard({ event, isExpanded, onToggle, isTeacher, onEd
   const editHistory = event.editHistory || [];
   const periodLabel = period?.label || event.period;
 
+  const FIELD_LABELS = { title: "Title", year: "Year", period: "Period", tags: "Tags", sourceType: "Source Type", description: "Description", sourceNote: "Source", region: "Region" };
+  const TEXT_FIELDS = new Set(["title", "description", "sourceNote"]);
+
+  const computeWordDiff = (oldStr, newStr) => {
+    const oldWords = String(oldStr ?? "").split(/(\s+)/);
+    const newWords = String(newStr ?? "").split(/(\s+)/);
+    const m = oldWords.length, n = newWords.length;
+    const dp = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0));
+    for (let i = 1; i <= m; i++)
+      for (let j = 1; j <= n; j++)
+        dp[i][j] = oldWords[i - 1] === newWords[j - 1] ? dp[i - 1][j - 1] + 1 : Math.max(dp[i - 1][j], dp[i][j - 1]);
+    const result = [];
+    let i = m, j = n;
+    while (i > 0 || j > 0) {
+      if (i > 0 && j > 0 && oldWords[i - 1] === newWords[j - 1]) {
+        result.push({ type: "same", text: oldWords[i - 1] });
+        i--; j--;
+      } else if (j > 0 && (i === 0 || dp[i][j - 1] >= dp[i - 1][j])) {
+        result.push({ type: "add", text: newWords[j - 1] });
+        j--;
+      } else {
+        result.push({ type: "del", text: oldWords[i - 1] });
+        i--;
+      }
+    }
+    return result.reverse();
+  };
+
+  const formatFieldVal = (key, val) => {
+    if (key === "tags") return (val || []).join(", ");
+    if (key === "period") { const p = getPeriod(periods, val); return p?.label || val; }
+    return String(val ?? "");
+  };
+
   return (
     <div
       onClick={onToggle}
@@ -264,37 +298,94 @@ export default function EventCard({ event, isExpanded, onToggle, isTeacher, onEd
                     fontSize: 10,
                     marginTop: 3,
                     fontStyle: "italic",
-                    borderBottom: `1px dotted ${theme.textTertiary}`,
-                    display: "inline-block",
-                    paddingBottom: 1,
                     cursor: "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 3,
                   }}
+                  onMouseEnter={(e) => { e.currentTarget.style.color = theme.textDescription; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.color = theme.textTertiary; }}
                 >
+                  <Icon icon={pencilOutline} width={9} />
                   edited by {[...new Set(editHistory.map((e) => e.name))].join(", ")}
-                  <span style={{ marginLeft: 3, fontSize: 8 }}>{showEditHistory ? "\u25B2" : "\u25BC"}</span>
+                  <span style={{ fontSize: 8 }}>{showEditHistory ? "\u25B2" : "\u25BC"}</span>
                 </div>
               )}
               {showEditHistory && editHistory.length > 0 && (
                 <div style={{
                   marginTop: 6,
-                  padding: "6px 8px",
+                  padding: "8px 10px",
                   background: theme.subtleBg,
                   borderRadius: 5,
                   fontSize: 10,
                   fontFamily: "'Overpass Mono', monospace",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 8,
                 }}>
                   {editHistory.map((entry, i) => (
-                    <div key={i} style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      gap: 8,
-                      padding: "2px 0",
-                      color: theme.textDescription,
-                    }}>
-                      <span style={{ fontWeight: 600 }}>{entry.name}</span>
-                      <span style={{ color: theme.textTertiary }}>
-                        {new Date(entry.date).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
-                      </span>
+                    <div key={i}>
+                      <div style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        gap: 8,
+                        color: theme.textDescription,
+                        marginBottom: entry.changes && Object.keys(entry.changes).length > 0 ? 4 : 0,
+                      }}>
+                        <span style={{ fontWeight: 600 }}>{entry.name}</span>
+                        <span style={{ color: theme.textTertiary }}>
+                          {new Date(entry.date).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+                        </span>
+                      </div>
+                      {entry.changes && Object.keys(entry.changes).length > 0 && (
+                        <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                          {Object.entries(entry.changes).map(([key, { from, to }]) => (
+                            <div key={key} style={{
+                              padding: "3px 6px",
+                              background: theme.warmSubtleBg,
+                              borderRadius: 4,
+                              borderLeft: `2px solid #D97706`,
+                            }}>
+                              <div style={{
+                                fontSize: 8,
+                                fontWeight: 700,
+                                color: theme.textTertiary,
+                                textTransform: "uppercase",
+                                letterSpacing: "0.05em",
+                                marginBottom: 2,
+                              }}>
+                                {FIELD_LABELS[key] || key}
+                              </div>
+                              <div style={{
+                                fontSize: key === "description" ? 10 : 10,
+                                fontFamily: TEXT_FIELDS.has(key) ? "'Newsreader', serif" : "'Overpass Mono', monospace",
+                                lineHeight: 1.4,
+                              }}>
+                                {TEXT_FIELDS.has(key) ? (
+                                  computeWordDiff(from, to).map((part, pi) =>
+                                    part.type === "same" ? (
+                                      <span key={pi} style={{ color: theme.textDescription }}>{part.text}</span>
+                                    ) : part.type === "del" ? (
+                                      <span key={pi} style={{ color: theme.errorRed, textDecoration: "line-through", opacity: 0.7 }}>{part.text}</span>
+                                    ) : (
+                                      <span key={pi} style={{ color: theme.successGreen || "#16A34A", fontWeight: 600, background: (theme.successGreen || "#16A34A") + "15", borderRadius: 2 }}>{part.text}</span>
+                                    )
+                                  )
+                                ) : (
+                                  <>
+                                    <span style={{ color: theme.errorRed, textDecoration: "line-through", opacity: 0.7 }}>{formatFieldVal(key, from)}</span>
+                                    <span style={{ color: theme.textTertiary, margin: "0 4px" }}>{"\u2192"}</span>
+                                    <span style={{ color: theme.successGreen || "#16A34A", fontWeight: 600 }}>{formatFieldVal(key, to)}</span>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {i < editHistory.length - 1 && (
+                        <div style={{ borderBottom: `1px solid ${theme.inputBorder}`, marginTop: 6 }} />
+                      )}
                     </div>
                   ))}
                 </div>

@@ -25,11 +25,16 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
     try {
       if (event.editOf) {
         // Edit proposal: apply changes to original event, remove proposal
+        const original = findEvent(event.editOf);
         const { editOf, addedBy, addedByEmail, addedByUid, status, dateAdded, id, section, ...edits } = event;
+        const existingHistory = original?.editHistory || [];
         await approveEdit(event.id, event.editOf, {
           ...edits,
-          lastEditedBy: event.addedBy,
-          lastEditedByEmail: event.addedByEmail,
+          editHistory: [...existingHistory, {
+            name: event.addedBy,
+            email: event.addedByEmail,
+            date: event.dateAdded,
+          }],
         });
       } else {
         await approveEvent(event.id);

@@ -606,11 +606,15 @@ export default function App() {
     async (formData) => {
       const updates = { ...formData, year: parseInt(formData.year) };
       if (isTeacher) {
-        // Teacher: apply edit directly
+        // Teacher: apply edit directly, append to edit history
+        const existingHistory = editingEvent.editHistory || [];
         await updateEvent(editingEvent.id, {
           ...updates,
-          lastEditedBy: user.displayName || user.email.split("@")[0],
-          lastEditedByEmail: user.email,
+          editHistory: [...existingHistory, {
+            name: user.displayName || user.email.split("@")[0],
+            email: user.email,
+            date: new Date().toISOString(),
+          }],
         });
       } else {
         // Student: submit as pending edit proposal

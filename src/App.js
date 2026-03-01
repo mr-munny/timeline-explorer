@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { useAuth } from "./contexts/AuthContext";
 import { useTheme } from "./contexts/ThemeContext";
-import { getPeriod, DEFAULT_PERIODS } from "./data/constants";
+import { getPeriod, DEFAULT_PERIODS, DEFAULT_FIELD_CONFIG } from "./data/constants";
 import { compareEventDates } from "./utils/dateUtils";
 import { TEACHER_EMAIL } from "./firebase";
 import { savePeriods, saveSections, saveCompellingQuestion, saveTimelineRange, saveFieldConfig, assignStudentSection, reassignStudentSection, removeStudentSection } from "./services/database";
@@ -129,28 +129,11 @@ export default function App() {
     saveSections(updated);
   }, [activeSections]);
 
-  // Default field config — defines which fields are mandatory/optional/hidden
-  const DEFAULT_FIELD_CONFIG = useMemo(() => ({
-    title: "mandatory",
-    year: "mandatory",
-    month: "hidden",
-    day: "hidden",
-    endDate: "hidden",
-    period: "mandatory",
-    tags: "mandatory",
-    sourceType: "mandatory",
-    description: "mandatory",
-    sourceNote: "mandatory",
-    sourceUrl: "optional",
-    imageUrl: "optional",
-    region: "optional",
-  }), []);
-
   // Active field config (merged with defaults)
   const activeFieldConfig = useMemo(() => ({
     ...DEFAULT_FIELD_CONFIG,
     ...(fieldConfig || {}),
-  }), [fieldConfig, DEFAULT_FIELD_CONFIG]);
+  }), [fieldConfig]);
 
   // Approved events for the main timeline
   const approvedEvents = useMemo(

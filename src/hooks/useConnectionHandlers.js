@@ -8,8 +8,6 @@ export default function useConnectionHandlers({
   defaultSection,
   editingConnection,
   setEditingConnection,
-  connectionMode,
-  setConnectionMode,
   setExpandedEvent,
 }) {
   const handleAddConnection = useCallback(
@@ -92,16 +90,6 @@ export default function useConnectionHandlers({
     [editingConnection, isTeacher, user, userName, defaultSection]
   );
 
-  const handleConnectionModeClick = useCallback((eventId) => {
-    if (!connectionMode) return;
-    if (connectionMode.step === "selectCause") {
-      setConnectionMode({ step: "selectEffect", causeEventId: eventId });
-    } else if (connectionMode.step === "selectEffect") {
-      if (eventId === connectionMode.causeEventId) return;
-      setConnectionMode({ ...connectionMode, step: "describe", effectEventId: eventId });
-    }
-  }, [connectionMode, setConnectionMode]);
-
   const handleScrollToEvent = useCallback((eventId) => {
     setExpandedEvent(eventId);
     setTimeout(() => {
@@ -116,7 +104,6 @@ export default function useConnectionHandlers({
     handleSuggestDeleteConnection,
     handleEditConnection,
     handleSaveConnectionEdit,
-    handleConnectionModeClick,
     handleScrollToEvent,
   };
 }

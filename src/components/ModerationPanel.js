@@ -12,7 +12,7 @@ import contentSave from "@iconify-icons/mdi/content-save";
 import arrowRightBold from "@iconify-icons/mdi/arrow-right-bold";
 import { useTheme } from "../contexts/ThemeContext";
 
-export default function ModerationPanel({ pendingEvents, pendingConnections = [], allEvents = [], allConnections = [], periods = [], getSectionName = (id) => id, onEventApproved, embedded = true }) {
+export default function ModerationPanel({ pendingEvents, pendingConnections = [], allEvents = [], allConnections = [], periods = [], getSectionName = (id) => id, onEventApproved, embedded = true, readOnly = false }) {
   const { theme } = useTheme();
   const [activeTab, setActiveTab] = useState("events");
   const [editingId, setEditingId] = useState(null);
@@ -232,7 +232,7 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                 color: theme.textPrimary,
               }}
             >
-              Moderation Queue
+              {readOnly ? "Pending Submissions" : "Moderation Queue"}
             </h2>
             <p
               style={{
@@ -287,7 +287,7 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
               fontSize: 12,
             }}
           >
-            No pending submissions. All caught up!
+            {readOnly ? "No pending submissions right now." : "No pending submissions. All caught up!"}
           </div>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -306,7 +306,7 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                     borderLeft: `4px solid ${unit?.color || theme.textSecondary}`,
                   }}
                 >
-                  {isEditing ? (
+                  {!readOnly && isEditing ? (
                     /* Edit mode */
                     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                       <div
@@ -751,6 +751,7 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                       )}
 
                       {/* Action buttons */}
+                      {!readOnly && (
                       <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
                         <button
                           onClick={() => handleReject(event.id)}
@@ -815,6 +816,7 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                           {isProcessing ? "..." : <><Icon icon={checkIcon} width={14} style={{ verticalAlign: "middle", marginRight: 3 }} />Approve</>}
                         </button>
                       </div>
+                      )}
                     </>
                   )}
                 </div>
@@ -833,7 +835,7 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
               fontSize: 12,
             }}
           >
-            No pending connections. All caught up!
+            {readOnly ? "No pending connections right now." : "No pending connections. All caught up!"}
           </div>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -896,7 +898,7 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                     </div>
                   </div>
 
-                  {isEditing ? (
+                  {!readOnly && isEditing ? (
                     <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                       <textarea
                         value={editConnDesc}
@@ -1074,6 +1076,7 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                           </div>
                         </>
                       )}
+                      {!readOnly && (
                       <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
                         <button
                           onClick={() => handleRejectConnection(conn.id)}
@@ -1125,6 +1128,7 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                           {isProcessing ? "..." : <><Icon icon={checkIcon} width={14} style={{ verticalAlign: "middle", marginRight: 3 }} />{conn.deleteOf ? "Delete" : "Approve"}</>}
                         </button>
                       </div>
+                      )}
                     </>
                   )}
                 </div>

@@ -4,9 +4,8 @@ import { useTheme } from "./contexts/ThemeContext";
 import { TAGS, getPeriod, DEFAULT_PERIODS } from "./data/constants";
 import { compareEventDates } from "./utils/dateUtils";
 import { TEACHER_EMAIL } from "./firebase";
-import { subscribeToEvents, submitEvent, deleteEvent, updateEvent, seedDatabase, subscribeToPeriods, subscribeToAllSectionPeriods, savePeriods, subscribeToSections, saveSections, subscribeToCompellingQuestion, saveCompellingQuestion, subscribeToTimelineRange, subscribeToAllSectionTimelineRanges, saveTimelineRange, subscribeToFieldConfig, saveFieldConfig, assignStudentSection, subscribeToAllStudentSections, reassignStudentSection, removeStudentSection, subscribeToConnections, submitConnection, deleteConnection, updateConnection } from "./services/database";
+import { subscribeToEvents, submitEvent, deleteEvent, updateEvent, subscribeToPeriods, subscribeToAllSectionPeriods, savePeriods, subscribeToSections, saveSections, subscribeToCompellingQuestion, saveCompellingQuestion, subscribeToTimelineRange, subscribeToAllSectionTimelineRanges, saveTimelineRange, subscribeToFieldConfig, saveFieldConfig, assignStudentSection, subscribeToAllStudentSections, reassignStudentSection, removeStudentSection, subscribeToConnections, submitConnection, deleteConnection, updateConnection } from "./services/database";
 import { writeToSheet } from "./services/sheets";
-import SEED_EVENTS from "./data/seedEvents";
 import VisualTimeline from "./components/VisualTimeline";
 import EventCard from "./components/EventCard";
 import AddEventPanel from "./components/AddEventPanel";
@@ -22,7 +21,6 @@ import chartTimelineVariantShimmer from "@iconify-icons/mdi/chart-timeline-varia
 import plusIcon from "@iconify-icons/mdi/plus";
 import logoutIcon from "@iconify-icons/mdi/logout";
 import inboxArrowDown from "@iconify-icons/mdi/inbox-arrow-down";
-import databasePlusOutline from "@iconify-icons/mdi/database-plus-outline";
 import magnifyIcon from "@iconify-icons/mdi/magnify";
 import sortAscending from "@iconify-icons/mdi/sort-ascending";
 import sortDescending from "@iconify-icons/mdi/sort-descending";
@@ -55,8 +53,6 @@ export default function App() {
   const [showModeration, setShowModeration] = useState(false);
   const [showAdminView, setShowAdminView] = useState(false);
   const [sectionFilter, setSectionFilter] = useState("all");
-  const [seeding, setSeeding] = useState(false);
-  const [seeded, setSeeded] = useState(false);
   const [timelineStart, setTimelineStart] = useState(1910);
   const [timelineEnd, setTimelineEnd] = useState(2000);
   const [periods, setPeriods] = useState([]);
@@ -612,17 +608,6 @@ export default function App() {
   }, [connectionMode]);
 
 
-  const handleSeed = async () => {
-    if (!window.confirm("Seed the database with 25 sample events? Only do this once.")) return;
-    setSeeding(true);
-    try {
-      await seedDatabase(SEED_EVENTS);
-      setSeeded(true);
-    } catch (err) {
-      console.error("Seed failed:", err);
-    }
-    setSeeding(false);
-  };
 
   // Loading state
   if (loading || (!user ? false : !isTeacher && sectionLoading)) {
@@ -861,30 +846,6 @@ export default function App() {
             <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", position: "absolute", top: 0, right: 0 }}>
               {!showAdminView && (
                 <>
-                  {/* TEMPORARY: Remove after seeding */}
-                  {isTeacher && !seeded && approvedEvents.length === 0 && (
-                    <button
-                      onClick={handleSeed}
-                      disabled={seeding}
-                      style={{
-                        padding: "10px 18px",
-                        background: theme.seedPurple,
-                        color: theme.headerText,
-                        border: "none",
-                        borderRadius: 8,
-                        fontSize: 12,
-                        fontFamily: "'Overpass Mono', monospace",
-                        fontWeight: 700,
-                        cursor: seeding ? "default" : "pointer",
-                        transition: "filter 0.15s",
-                      }}
-                      onMouseEnter={(e) => { if (!seeding) e.currentTarget.style.filter = "brightness(1.15)"; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.filter = "none"; }}
-                    >
-                      <Icon icon={databasePlusOutline} width={14} style={{ verticalAlign: "middle", marginRight: 4 }} />
-                      {seeding ? "Seeding..." : "Seed Database"}
-                    </button>
-                  )}
                   {isTeacher && (pendingEvents.length + pendingConnections.length) > 0 && (
                     <button
                       onClick={() => setShowModeration(true)}

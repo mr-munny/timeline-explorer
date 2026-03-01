@@ -12,7 +12,7 @@ import contentSave from "@iconify-icons/mdi/content-save";
 import arrowRightBold from "@iconify-icons/mdi/arrow-right-bold";
 import { useTheme } from "../contexts/ThemeContext";
 
-export default function ModerationPanel({ pendingEvents, pendingConnections = [], allEvents = [], allConnections = [], onClose, periods = [], getSectionName = (id) => id, onEventApproved }) {
+export default function ModerationPanel({ pendingEvents, pendingConnections = [], allEvents = [], allConnections = [], onClose, periods = [], getSectionName = (id) => id, onEventApproved, embedded = false }) {
   const { theme } = useTheme();
   const [activeTab, setActiveTab] = useState("events");
   const [editingId, setEditingId] = useState(null);
@@ -233,22 +233,13 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
     boxSizing: "border-box",
   };
 
-  return (
-    <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        background: theme.modalOverlay,
-        backdropFilter: "blur(4px)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        zIndex: 1000,
-        padding: 20,
-      }}
-    >
+  const content = (
       <div
-        style={{
+        style={embedded ? {
+          padding: "24px 32px",
+          maxWidth: 640,
+          fontFamily: "'Overpass Mono', monospace",
+        } : {
           background: theme.cardBg,
           borderRadius: 14,
           padding: "28px",
@@ -291,25 +282,27 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
               {(pendingEvents.length + pendingConnections.length) !== 1 ? "s" : ""}
             </p>
           </div>
-          <button
-            onClick={onClose}
-            style={{
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              color: theme.textSecondary,
-              lineHeight: 1,
-              padding: 4,
-              display: "flex",
-              alignItems: "center",
-              borderRadius: 4,
-              transition: "all 0.15s",
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.color = theme.textPrimary; e.currentTarget.style.background = theme.subtleBg; }}
-            onMouseLeave={(e) => { e.currentTarget.style.color = theme.textSecondary; e.currentTarget.style.background = "none"; }}
-          >
-            <Icon icon={closeIcon} width={20} />
-          </button>
+          {!embedded && (
+            <button
+              onClick={onClose}
+              style={{
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                color: theme.textSecondary,
+                lineHeight: 1,
+                padding: 4,
+                display: "flex",
+                alignItems: "center",
+                borderRadius: 4,
+                transition: "all 0.15s",
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.color = theme.textPrimary; e.currentTarget.style.background = theme.subtleBg; }}
+              onMouseLeave={(e) => { e.currentTarget.style.color = theme.textSecondary; e.currentTarget.style.background = "none"; }}
+            >
+              <Icon icon={closeIcon} width={20} />
+            </button>
+          )}
         </div>
 
         {/* Tabs */}
@@ -1197,6 +1190,25 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
           </div>
         ))}
       </div>
+  );
+
+  if (embedded) return content;
+
+  return (
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        background: theme.modalOverlay,
+        backdropFilter: "blur(4px)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 1000,
+        padding: 20,
+      }}
+    >
+      {content}
     </div>
   );
 }

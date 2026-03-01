@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect, useRef } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { useAuth } from "./contexts/AuthContext";
 import { useTheme } from "./contexts/ThemeContext";
 import { getPeriod, DEFAULT_PERIODS, DEFAULT_FIELD_CONFIG } from "./data/constants";
@@ -11,17 +11,16 @@ import useConnectionHandlers from "./hooks/useConnectionHandlers";
 import useConnectionMode from "./hooks/useConnectionMode";
 import useReadEvents from "./hooks/useReadEvents";
 import VisualTimeline from "./components/VisualTimeline";
-import EventCard from "./components/EventCard";
 import AddEventPanel from "./components/AddEventPanel";
 import AddConnectionPanel from "./components/AddConnectionPanel";
-import ConnectionLines from "./components/ConnectionLines";
-import ContributorSidebar from "./components/ContributorSidebar";
 import AdminView from "./components/AdminView";
 import ModerationPanel from "./components/ModerationPanel";
 import LoginScreen from "./components/LoginScreen";
 import SectionPicker from "./components/SectionPicker";
 import TimelineHeader from "./components/TimelineHeader";
 import FilterBar from "./components/FilterBar";
+import CompellingQuestionHero from "./components/CompellingQuestionHero";
+import EventList from "./components/EventList";
 
 function getInitialSection() {
   const params = new URLSearchParams(window.location.search);
@@ -48,7 +47,6 @@ export default function App() {
   const { connectionMode, setConnectionMode, handleConnectionModeClick } = useConnectionMode();
   const [editingConnection, setEditingConnection] = useState(null);
   const [hoveredEvent, setHoveredEvent] = useState(null);
-  const eventListRef = useRef(null);
   const readEvents = useReadEvents(user, expandedEvent);
 
   const {
@@ -364,43 +362,7 @@ export default function App() {
       {/* Timeline Content (hidden when admin view is open) */}
       {!showAdminView && (
         <>
-      {/* Compelling Question Hero */}
-      {displayCQ && displayCQ.enabled && displayCQ.text.trim() && (
-        <div style={{ background: theme.cardBg, borderBottom: `1px solid ${theme.cardBorder}` }}>
-          <div style={{
-            maxWidth: 960,
-            margin: "0 auto",
-            padding: "24px 28px 20px",
-            textAlign: "center",
-          }}>
-            <div style={{
-              fontSize: 9,
-              fontWeight: 700,
-              color: theme.textMuted,
-              fontFamily: "'Overpass Mono', monospace",
-              letterSpacing: "0.1em",
-              textTransform: "uppercase",
-              marginBottom: 8,
-            }}>
-              Compelling Question
-            </div>
-            <p style={{
-              fontSize: 20,
-              fontWeight: 600,
-              fontFamily: "'Newsreader', 'Georgia', serif",
-              color: theme.textPrimary,
-              lineHeight: 1.4,
-              margin: 0,
-              fontStyle: "italic",
-              maxWidth: 680,
-              marginLeft: "auto",
-              marginRight: "auto",
-            }}>
-              {displayCQ.text}
-            </p>
-          </div>
-        </div>
-      )}
+      <CompellingQuestionHero compellingQuestion={displayCQ} />
 
       {/* Visual Timeline */}
       <div data-timeline-section style={{ background: theme.cardBg, borderBottom: `1px solid ${theme.cardBorder}` }}>
@@ -496,96 +458,29 @@ export default function App() {
           </div>
         )}
 
-        {/* Content area */}
-        <div style={{ display: "flex", gap: 20, alignItems: "flex-start" }}>
-          {/* Event list */}
-          <div
-            ref={eventListRef}
-            style={{
-              flex: 1,
-              display: "flex",
-              flexDirection: "column",
-              gap: 8,
-              minWidth: 0,
-              position: "relative",
-            }}
-          >
-            {filteredEvents.length === 0 ? (
-              <div
-                style={{
-                  textAlign: "center",
-                  padding: "48px 20px",
-                  color: theme.textSecondary,
-                  fontFamily: "'Overpass Mono', monospace",
-                  fontSize: 12,
-                }}
-              >
-                No events match your filters.
-              </div>
-            ) : (
-              filteredEvents.map((event) => (
-                <div
-                  key={event.id}
-                  data-event-id={event.id}
-                  onClick={connectionMode ? (e) => {
-                    e.stopPropagation();
-                    handleConnectionModeClick(event.id);
-                  } : undefined}
-                  onMouseEnter={() => setHoveredEvent(event.id)}
-                  onMouseLeave={() => setHoveredEvent(null)}
-                  style={connectionMode ? {
-                    cursor: "crosshair",
-                    borderRadius: 10,
-                    outline: connectionMode.causeEventId === event.id
-                      ? `2px solid ${theme.successGreen || "#22C55E"}`
-                      : `2px solid transparent`,
-                    transition: "outline 0.15s",
-                  } : undefined}
-                >
-                  <EventCard
-                    event={event}
-                    isExpanded={connectionMode ? false : expandedEvent === event.id}
-                    isRead={readEvents.has(event.id)}
-                    onToggle={connectionMode ? () => {} : () =>
-                      setExpandedEvent(
-                        expandedEvent === event.id ? null : event.id
-                      )
-                    }
-                    isTeacher={isTeacher}
-                    onEdit={handleEditEvent}
-                    onDelete={handleDeleteEvent}
-                    periods={displayPeriods}
-                    onReturnToTimeline={() => {
-                      const el = document.querySelector("[data-timeline-section]");
-                      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-                    }}
-                    connections={connectionsByEvent[event.id]}
-                    allEvents={approvedEvents}
-                    onScrollToEvent={handleScrollToEvent}
-                    onDeleteConnection={handleDeleteConnection}
-                    onEditConnection={handleEditConnection}
-                    onSuggestDeleteConnection={!isTeacher ? handleSuggestDeleteConnection : undefined}
-                    connectionMode={connectionMode}
-                  />
-                </div>
-              ))
-            )}
-            <ConnectionLines
-              connections={approvedConnections}
-              containerRef={eventListRef}
-              expandedEvent={expandedEvent}
-              hoveredEvent={hoveredEvent}
-              filteredEventIds={filteredEventIds}
-            />
-          </div>
-
-          {/* Contributors sidebar */}
-          {showContributors && (
-            <div style={{ width: 220, flexShrink: 0 }}>
-              <ContributorSidebar events={approvedEvents} />
-            </div>
-          )}
-        </div>
+        <EventList
+          filteredEvents={filteredEvents}
+          connectionMode={connectionMode}
+          expandedEvent={expandedEvent}
+          setExpandedEvent={setExpandedEvent}
+          hoveredEvent={hoveredEvent}
+          setHoveredEvent={setHoveredEvent}
+          readEvents={readEvents}
+          connectionsByEvent={connectionsByEvent}
+          approvedEvents={approvedEvents}
+          approvedConnections={approvedConnections}
+          filteredEventIds={filteredEventIds}
+          displayPeriods={displayPeriods}
+          isTeacher={isTeacher}
+          showContributors={showContributors}
+          handleConnectionModeClick={handleConnectionModeClick}
+          handleEditEvent={handleEditEvent}
+          handleDeleteEvent={handleDeleteEvent}
+          handleScrollToEvent={handleScrollToEvent}
+          handleDeleteConnection={handleDeleteConnection}
+          handleEditConnection={handleEditConnection}
+          handleSuggestDeleteConnection={handleSuggestDeleteConnection}
+        />
 
         {/* Footer */}
         <div

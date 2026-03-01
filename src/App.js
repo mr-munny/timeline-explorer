@@ -4,7 +4,7 @@ import { useTheme } from "./contexts/ThemeContext";
 import { PERIOD_COLORS, TAGS, getPeriod } from "./data/constants";
 import { compareEventDates } from "./utils/dateUtils";
 import { TEACHER_EMAIL } from "./firebase";
-import { subscribeToEvents, submitEvent, deleteEvent, updateEvent, seedDatabase, subscribeToPeriods, subscribeToAllSectionPeriods, savePeriods, subscribeToSections, saveSections, subscribeToDefaultPeriods, saveDefaultPeriods, subscribeToCompellingQuestion, subscribeToAllSectionCompellingQuestions, saveCompellingQuestion, subscribeToDefaultCompellingQuestion, saveDefaultCompellingQuestion, subscribeToTimelineRange, subscribeToAllSectionTimelineRanges, saveTimelineRange, subscribeToDefaultTimelineRange, saveDefaultTimelineRange, subscribeToFieldConfig, subscribeToAllSectionFieldConfigs, saveFieldConfig, subscribeToDefaultFieldConfig, saveDefaultFieldConfig, assignStudentSection, subscribeToAllStudentSections, reassignStudentSection, removeStudentSection, subscribeToConnections, submitConnection, deleteConnection } from "./services/database";
+import { subscribeToEvents, submitEvent, deleteEvent, updateEvent, seedDatabase, subscribeToPeriods, subscribeToAllSectionPeriods, savePeriods, subscribeToSections, saveSections, subscribeToDefaultPeriods, saveDefaultPeriods, subscribeToCompellingQuestion, subscribeToAllSectionCompellingQuestions, saveCompellingQuestion, subscribeToDefaultCompellingQuestion, saveDefaultCompellingQuestion, subscribeToTimelineRange, subscribeToAllSectionTimelineRanges, saveTimelineRange, subscribeToDefaultTimelineRange, saveDefaultTimelineRange, subscribeToFieldConfig, subscribeToAllSectionFieldConfigs, saveFieldConfig, subscribeToDefaultFieldConfig, saveDefaultFieldConfig, assignStudentSection, subscribeToAllStudentSections, reassignStudentSection, removeStudentSection, subscribeToConnections, submitConnection, deleteConnection, updateConnection } from "./services/database";
 import { writeToSheet } from "./services/sheets";
 import SEED_EVENTS from "./data/seedEvents";
 import VisualTimeline from "./components/VisualTimeline";
@@ -104,6 +104,7 @@ export default function App() {
   const [allConnections, setAllConnections] = useState([]);
   const [showAddConnectionPanel, setShowAddConnectionPanel] = useState(false);
   const [connectionMode, setConnectionMode] = useState(null);
+  const [editingConnection, setEditingConnection] = useState(null);
   const [hoveredEvent, setHoveredEvent] = useState(null);
   const eventListRef = useRef(null);
   const [readEvents, setReadEvents] = useState(() => {
@@ -730,9 +731,10 @@ export default function App() {
         addedByEmail: user.email,
         addedByUid: user.uid,
         section: section === "all" ? (activeSections[0]?.id || "Period1") : section,
+        ...(isTeacher ? { status: "approved" } : {}),
       });
     },
-    [user, section, activeSections]
+    [user, section, activeSections, isTeacher]
   );
 
   const handleDeleteConnection = useCallback(async (connectionId) => {
@@ -742,6 +744,64 @@ export default function App() {
       console.error("Delete connection failed:", err);
     }
   }, []);
+
+  const handleSuggestDeleteConnection = useCallback(async (connection) => {
+    if (!window.confirm("Suggest this connection be deleted? A teacher will review your request.")) return;
+    try {
+      await submitConnection({
+        deleteOf: connection.id,
+        causeEventId: connection.causeEventId,
+        effectEventId: connection.effectEventId,
+        description: connection.description,
+        addedBy: user.displayName || user.email.split("@")[0],
+        addedByEmail: user.email,
+        addedByUid: user.uid,
+        section: connection.section || (section === "all" ? (activeSections[0]?.id || "Period1") : section),
+      });
+    } catch (err) {
+      console.error("Suggest delete connection failed:", err);
+    }
+  }, [user, section, activeSections]);
+
+  const handleEditConnection = useCallback((connection) => {
+    setEditingConnection(connection);
+  }, []);
+
+  const handleSaveConnectionEdit = useCallback(
+    async (formData) => {
+      const changeFields = ["description", "causeEventId", "effectEventId"];
+      const changes = {};
+      for (const key of changeFields) {
+        const oldVal = editingConnection[key];
+        const newVal = formData[key];
+        if (String(oldVal ?? "") !== String(newVal ?? "")) {
+          changes[key] = { from: oldVal ?? null, to: newVal ?? null };
+        }
+      }
+      if (isTeacher) {
+        const existingHistory = editingConnection.editHistory || [];
+        await updateConnection(editingConnection.id, {
+          ...formData,
+          editHistory: [...existingHistory, {
+            name: user.displayName || user.email.split("@")[0],
+            email: user.email,
+            date: new Date().toISOString(),
+            changes,
+          }],
+        });
+      } else {
+        await submitConnection({
+          ...formData,
+          editOf: editingConnection.id,
+          addedBy: user.displayName || user.email.split("@")[0],
+          addedByEmail: user.email,
+          addedByUid: user.uid,
+          section: editingConnection.section || (section === "all" ? (activeSections[0]?.id || "Period1") : section),
+        });
+      }
+    },
+    [editingConnection, isTeacher, user, section, activeSections]
+  );
 
   const handleConnectionModeClick = useCallback((eventId) => {
     if (!connectionMode) return;
@@ -943,6 +1003,8 @@ export default function App() {
                         gap: 4,
                         transition: "all 0.15s",
                       }}
+                      onMouseEnter={(e) => { if (!showAdminPanel) e.currentTarget.style.background = theme.teacherGreen + "35"; }}
+                      onMouseLeave={(e) => { if (!showAdminPanel) e.currentTarget.style.background = theme.teacherGreenSubtle; }}
                     >
                       <Icon icon={cogOutline} width={12} />
                       Admin
@@ -1001,6 +1063,8 @@ export default function App() {
                               letterSpacing: "0.05em",
                               transition: "all 0.15s",
                             }}
+                            onMouseEnter={(e) => { if (!timelineRangeEditingDefaults) { e.currentTarget.style.borderColor = theme.teacherGreen; e.currentTarget.style.color = theme.teacherGreen; } }}
+                            onMouseLeave={(e) => { if (!timelineRangeEditingDefaults) { e.currentTarget.style.borderColor = theme.inputBorder; e.currentTarget.style.color = theme.textMuted; } }}
                           >
                             Default
                           </button>
@@ -1020,7 +1084,10 @@ export default function App() {
                               color: timelineRangeLocked ? theme.textMuted : theme.teacherGreen,
                               display: "inline-flex",
                               transition: "color 0.15s",
+                              borderRadius: 3,
                             }}
+                            onMouseEnter={(e) => { e.currentTarget.style.color = theme.teacherGreen; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.color = timelineRangeLocked ? theme.textMuted : theme.teacherGreen; }}
                           >
                             <Icon icon={timelineRangeLocked ? lockOutline : lockOpenVariantOutline} width={12} />
                           </button>
@@ -1188,6 +1255,8 @@ export default function App() {
                                 letterSpacing: "0.05em",
                                 transition: "all 0.15s",
                               }}
+                              onMouseEnter={(e) => { if (!editingDefaults) { e.currentTarget.style.borderColor = theme.teacherGreen; e.currentTarget.style.color = theme.teacherGreen; } }}
+                              onMouseLeave={(e) => { if (!editingDefaults) { e.currentTarget.style.borderColor = theme.inputBorder; e.currentTarget.style.color = theme.textMuted; } }}
                             >
                               Default
                             </button>
@@ -1207,7 +1276,10 @@ export default function App() {
                                 color: periodsLocked ? theme.textMuted : theme.teacherGreen,
                                 display: "inline-flex",
                                 transition: "color 0.15s",
+                                borderRadius: 3,
                               }}
+                              onMouseEnter={(e) => { e.currentTarget.style.color = theme.teacherGreen; }}
+                              onMouseLeave={(e) => { e.currentTarget.style.color = periodsLocked ? theme.textMuted : theme.teacherGreen; }}
                             >
                               <Icon icon={periodsLocked ? lockOutline : lockOpenVariantOutline} width={12} />
                             </button>
@@ -1291,6 +1363,8 @@ export default function App() {
                                           display: "inline-flex",
                                           transition: "color 0.15s",
                                         }}
+                                        onMouseEnter={(e) => { if (!isEditing) e.currentTarget.style.color = theme.textPrimary; }}
+                                        onMouseLeave={(e) => { if (!isEditing) e.currentTarget.style.color = theme.textMuted; }}
                                       >
                                         <Icon icon={pencilOutline} width={11} />
                                       </button>
@@ -1471,6 +1545,8 @@ export default function App() {
                               gap: 4,
                               transition: "all 0.15s",
                             }}
+                            onMouseEnter={(e) => { e.currentTarget.style.borderColor = theme.textSecondary; e.currentTarget.style.color = theme.textPrimary; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.borderColor = theme.inputBorder; e.currentTarget.style.color = theme.textSecondary; }}
                           >
                             <Icon icon={plusIcon} width={12} />
                             Add Time Period
@@ -1522,6 +1598,8 @@ export default function App() {
                                 letterSpacing: "0.05em",
                                 transition: "all 0.15s",
                               }}
+                              onMouseEnter={(e) => { if (!cqEditingDefaults) { e.currentTarget.style.borderColor = theme.teacherGreen; e.currentTarget.style.color = theme.teacherGreen; } }}
+                              onMouseLeave={(e) => { if (!cqEditingDefaults) { e.currentTarget.style.borderColor = theme.inputBorder; e.currentTarget.style.color = theme.textMuted; } }}
                             >
                               Default
                             </button>
@@ -1541,7 +1619,10 @@ export default function App() {
                                 color: cqLocked ? theme.textMuted : theme.teacherGreen,
                                 display: "inline-flex",
                                 transition: "color 0.15s",
+                                borderRadius: 3,
                               }}
+                              onMouseEnter={(e) => { e.currentTarget.style.color = theme.teacherGreen; }}
+                              onMouseLeave={(e) => { e.currentTarget.style.color = cqLocked ? theme.textMuted : theme.teacherGreen; }}
                             >
                               <Icon icon={cqLocked ? lockOutline : lockOpenVariantOutline} width={12} />
                             </button>
@@ -1585,6 +1666,8 @@ export default function App() {
                             transition: "all 0.15s",
                             marginBottom: 6,
                           }}
+                          onMouseEnter={(e) => { if (!cqLocked) e.currentTarget.style.background = theme.subtleBg; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
                         >
                           <Icon icon={draftCQEnabled ? eyeOutline : eyeOffOutline} width={13} />
                           {draftCQEnabled ? "Visible to students" : "Hidden from students"}
@@ -1647,6 +1730,8 @@ export default function App() {
                               letterSpacing: "0.05em",
                               transition: "all 0.15s",
                             }}
+                            onMouseEnter={(e) => { e.currentTarget.style.filter = "brightness(1.15)"; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.filter = "none"; }}
                           >
                             <Icon icon={checkIcon} width={13} />
                             Update
@@ -1698,6 +1783,8 @@ export default function App() {
                                 letterSpacing: "0.05em",
                                 transition: "all 0.15s",
                               }}
+                              onMouseEnter={(e) => { if (!fieldConfigEditingDefaults) { e.currentTarget.style.borderColor = theme.teacherGreen; e.currentTarget.style.color = theme.teacherGreen; } }}
+                              onMouseLeave={(e) => { if (!fieldConfigEditingDefaults) { e.currentTarget.style.borderColor = theme.inputBorder; e.currentTarget.style.color = theme.textMuted; } }}
                             >
                               Default
                             </button>
@@ -1717,7 +1804,10 @@ export default function App() {
                                 color: fieldConfigLocked ? theme.textMuted : theme.teacherGreen,
                                 display: "inline-flex",
                                 transition: "color 0.15s",
+                                borderRadius: 3,
                               }}
+                              onMouseEnter={(e) => { e.currentTarget.style.color = theme.teacherGreen; }}
+                              onMouseLeave={(e) => { e.currentTarget.style.color = fieldConfigLocked ? theme.textMuted : theme.teacherGreen; }}
                             >
                               <Icon icon={fieldConfigLocked ? lockOutline : lockOpenVariantOutline} width={12} />
                             </button>
@@ -1804,6 +1894,8 @@ export default function App() {
                                           letterSpacing: "0.03em",
                                           transition: "all 0.15s",
                                         }}
+                                        onMouseEnter={(e) => { if (mode !== m) { const c = m === "mandatory" ? theme.teacherGreen : m === "optional" ? "#D97706" : theme.errorRed; e.currentTarget.style.borderColor = c; e.currentTarget.style.color = c; } }}
+                                        onMouseLeave={(e) => { if (mode !== m) { e.currentTarget.style.borderColor = theme.inputBorder; e.currentTarget.style.color = theme.textMuted; } }}
                                       >
                                         {m === "mandatory" ? "Req" : m === "optional" ? "Opt" : "Hide"}
                                       </button>
@@ -1905,6 +1997,8 @@ export default function App() {
                           cursor: "pointer",
                           transition: "all 0.15s",
                         }}
+                        onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.background = theme.headerBorder + "60"; }}
+                        onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.background = theme.headerButtonBg; }}
                       >
                         {s.name}
                       </button>
@@ -1929,7 +2023,10 @@ export default function App() {
                     fontFamily: "'Overpass Mono', monospace",
                     fontWeight: 700,
                     cursor: seeding ? "default" : "pointer",
+                    transition: "filter 0.15s",
                   }}
+                  onMouseEnter={(e) => { if (!seeding) e.currentTarget.style.filter = "brightness(1.15)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.filter = "none"; }}
                 >
                   <Icon icon={databasePlusOutline} width={14} style={{ verticalAlign: "middle", marginRight: 4 }} />
                   {seeding ? "Seeding..." : "Seed Database"}
@@ -1949,7 +2046,10 @@ export default function App() {
                     fontWeight: 700,
                     cursor: "pointer",
                     position: "relative",
+                    transition: "filter 0.15s",
                   }}
+                  onMouseEnter={(e) => { e.currentTarget.style.filter = "brightness(1.15)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.filter = "none"; }}
                 >
                   <Icon icon={inboxArrowDown} width={14} style={{ verticalAlign: "middle", marginRight: 4 }} />
                   Review ({pendingEvents.length + pendingConnections.length})
@@ -1968,7 +2068,10 @@ export default function App() {
                   fontWeight: 700,
                   cursor: "pointer",
                   letterSpacing: "0.02em",
+                  transition: "filter 0.15s",
                 }}
+                onMouseEnter={(e) => { e.currentTarget.style.filter = "brightness(1.1)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.filter = "none"; }}
               >
                 <Icon icon={plusIcon} width={14} style={{ verticalAlign: "middle", marginRight: 2 }} />
                 Add Event
@@ -1986,7 +2089,10 @@ export default function App() {
                   fontWeight: 700,
                   cursor: "pointer",
                   letterSpacing: "0.02em",
+                  transition: "all 0.15s",
                 }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = theme.accentGold + "15"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
               >
                 <Icon icon={vectorLink} width={14} style={{ verticalAlign: "middle", marginRight: 4 }} />
                 Add Connection
@@ -2005,6 +2111,8 @@ export default function App() {
                   cursor: "pointer",
                   transition: "all 0.15s",
                 }}
+                onMouseEnter={(e) => { if (!connectionMode) e.currentTarget.style.background = theme.headerBorder + "40"; }}
+                onMouseLeave={(e) => { if (!connectionMode) e.currentTarget.style.background = "transparent"; }}
                 title="Click two events to connect them"
               >
                 <Icon icon={vectorLink} width={13} style={{ verticalAlign: "middle", marginRight: 4 }} />
@@ -2023,7 +2131,10 @@ export default function App() {
                   fontFamily: "'Overpass Mono', monospace",
                   cursor: "pointer",
                   lineHeight: 1,
+                  transition: "all 0.15s",
                 }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = theme.headerBorder + "40"; e.currentTarget.style.color = theme.headerText; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = theme.headerSubtext; }}
               >
                 {mode === "dark" ? "\u2600" : "\u263E"}
               </button>
@@ -2039,7 +2150,10 @@ export default function App() {
                   fontFamily: "'Overpass Mono', monospace",
                   fontWeight: 600,
                   cursor: "pointer",
+                  transition: "all 0.15s",
                 }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = theme.headerBorder + "40"; e.currentTarget.style.color = theme.headerText; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = theme.headerSubtext; }}
               >
                 <Icon icon={logoutIcon} width={13} style={{ verticalAlign: "middle", marginRight: 4 }} />
                 Sign Out
@@ -2233,7 +2347,10 @@ export default function App() {
               background: theme.inputBg,
               cursor: "pointer",
               color: theme.textTertiary,
+              transition: "all 0.15s",
             }}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = theme.textTertiary; e.currentTarget.style.color = theme.textPrimary; }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = theme.inputBorder; e.currentTarget.style.color = theme.textTertiary; }}
           >
             <Icon icon={sortOrder === "chrono" ? sortAscending : sortDescending} width={14} style={{ verticalAlign: "middle", marginRight: 3 }} />
             {sortOrder === "chrono" ? "Oldest" : "Newest"}
@@ -2252,6 +2369,8 @@ export default function App() {
               fontWeight: 600,
               transition: "all 0.15s",
             }}
+            onMouseEnter={(e) => { if (!showContributors) { e.currentTarget.style.borderColor = theme.textTertiary; e.currentTarget.style.color = theme.textPrimary; } }}
+            onMouseLeave={(e) => { if (!showContributors) { e.currentTarget.style.borderColor = theme.inputBorder; e.currentTarget.style.color = theme.textTertiary; } }}
           >
             <Icon icon={accountGroup} width={14} style={{ verticalAlign: "middle", marginRight: 4 }} />
             Contributors
@@ -2355,7 +2474,10 @@ export default function App() {
                 cursor: "pointer",
                 fontFamily: "'Overpass Mono', monospace",
                 fontWeight: 700,
+                transition: "opacity 0.15s",
               }}
+              onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.7"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
             >
               <Icon icon={filterRemoveOutline} width={12} style={{ verticalAlign: "middle", marginRight: 2 }} />
               Clear
@@ -2483,6 +2605,8 @@ export default function App() {
                     allEvents={approvedEvents}
                     onScrollToEvent={handleScrollToEvent}
                     onDeleteConnection={handleDeleteConnection}
+                    onEditConnection={handleEditConnection}
+                    onSuggestDeleteConnection={!isTeacher ? handleSuggestDeleteConnection : undefined}
                     connectionMode={connectionMode}
                   />
                 </div>
@@ -2567,6 +2691,7 @@ export default function App() {
           userName={user.displayName || user.email.split("@")[0]}
           approvedEvents={approvedEvents}
           periods={displayPeriods}
+          isTeacher={isTeacher}
         />
       )}
 
@@ -2580,6 +2705,20 @@ export default function App() {
           periods={displayPeriods}
           prefilledCause={connectionMode.causeEventId}
           prefilledEffect={connectionMode.effectEventId}
+          isTeacher={isTeacher}
+        />
+      )}
+
+      {/* Edit Connection Modal */}
+      {editingConnection && (
+        <AddConnectionPanel
+          onAdd={handleSaveConnectionEdit}
+          onClose={() => setEditingConnection(null)}
+          userName={user.displayName || user.email.split("@")[0]}
+          approvedEvents={approvedEvents}
+          periods={displayPeriods}
+          editingConnection={editingConnection}
+          isTeacher={isTeacher}
         />
       )}
 
@@ -2589,6 +2728,7 @@ export default function App() {
           pendingEvents={pendingEvents}
           pendingConnections={pendingConnections}
           allEvents={approvedEvents}
+          allConnections={allConnections}
           onClose={() => setShowModeration(false)}
           periods={displayPeriods}
           getSectionName={getSectionName}

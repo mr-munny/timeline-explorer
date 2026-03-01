@@ -115,7 +115,11 @@ function EventSearchDropdown({ label, events, selectedId, onSelect, excludeId, p
               display: "flex",
               alignItems: "center",
               flexShrink: 0,
+              borderRadius: 3,
+              transition: "all 0.15s",
             }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = theme.textPrimary; e.currentTarget.style.background = theme.subtleBg; }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = theme.textSecondary; e.currentTarget.style.background = "none"; }}
           >
             <Icon icon={closeIcon} width={16} />
           </button>
@@ -226,11 +230,12 @@ function EventSearchDropdown({ label, events, selectedId, onSelect, excludeId, p
   );
 }
 
-export default function AddConnectionPanel({ onAdd, onClose, userName, approvedEvents, periods, prefilledCause, prefilledEffect }) {
+export default function AddConnectionPanel({ onAdd, onClose, userName, approvedEvents, periods, prefilledCause, prefilledEffect, editingConnection, isTeacher }) {
   const { theme } = useTheme();
-  const [causeEventId, setCauseEventId] = useState(prefilledCause || null);
-  const [effectEventId, setEffectEventId] = useState(prefilledEffect || null);
-  const [description, setDescription] = useState("");
+  const isEditing = !!editingConnection;
+  const [causeEventId, setCauseEventId] = useState(isEditing ? editingConnection.causeEventId : (prefilledCause || null));
+  const [effectEventId, setEffectEventId] = useState(isEditing ? editingConnection.effectEventId : (prefilledEffect || null));
+  const [description, setDescription] = useState(isEditing ? editingConnection.description : "");
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
@@ -314,7 +319,7 @@ export default function AddConnectionPanel({ onAdd, onClose, userName, approvedE
                 color: theme.textPrimary,
               }}
             >
-              Connect Two Events
+              {isEditing ? "Edit Connection" : "Connect Two Events"}
             </h2>
             <p
               style={{
@@ -324,8 +329,11 @@ export default function AddConnectionPanel({ onAdd, onClose, userName, approvedE
                 fontFamily: "'Overpass Mono', monospace",
               }}
             >
-              Submitting as <strong style={{ color: theme.textDescription }}>{userName}</strong> &middot;
-              Requires teacher approval
+              {isEditing
+                ? <>Editing as <strong style={{ color: theme.textDescription }}>{userName}</strong></>
+                : <>Submitting as <strong style={{ color: theme.textDescription }}>{userName}</strong>
+                  {!isTeacher && <> &middot; Requires teacher approval</>}</>
+              }
             </p>
           </div>
           <button
@@ -339,7 +347,11 @@ export default function AddConnectionPanel({ onAdd, onClose, userName, approvedE
               padding: 4,
               display: "flex",
               alignItems: "center",
+              borderRadius: 4,
+              transition: "all 0.15s",
             }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = theme.textPrimary; e.currentTarget.style.background = theme.subtleBg; }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = theme.textSecondary; e.currentTarget.style.background = "none"; }}
           >
             <Icon icon={closeIcon} width={20} />
           </button>
@@ -451,8 +463,14 @@ export default function AddConnectionPanel({ onAdd, onClose, userName, approvedE
               letterSpacing: "0.03em",
               transition: "all 0.15s",
             }}
+            onMouseEnter={(e) => { if (!submitting) e.currentTarget.style.filter = "brightness(1.1)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.filter = "none"; }}
           >
-            {submitting ? "Submitting..." : <><Icon icon={sendIcon} width={14} style={{ verticalAlign: "middle", marginRight: 5 }} />Submit Connection for Approval</>}
+            {submitting
+              ? (isEditing ? "Saving..." : "Submitting...")
+              : <><Icon icon={sendIcon} width={14} style={{ verticalAlign: "middle", marginRight: 5 }} />
+                {isEditing ? "Save Changes" : isTeacher ? "Add Connection" : "Submit Connection for Approval"}</>
+            }
           </button>
         </div>
       </div>

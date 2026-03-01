@@ -268,7 +268,11 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
               padding: 4,
               display: "flex",
               alignItems: "center",
+              borderRadius: 4,
+              transition: "all 0.15s",
             }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = theme.textPrimary; e.currentTarget.style.background = theme.subtleBg; }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = theme.textSecondary; e.currentTarget.style.background = "none"; }}
           >
             <Icon icon={closeIcon} width={20} />
           </button>
@@ -689,6 +693,8 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
               letterSpacing: "0.03em",
               transition: "all 0.15s",
             }}
+            onMouseEnter={(e) => { if (!submitting) e.currentTarget.style.filter = "brightness(1.1)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.filter = "none"; }}
           >
             {submitting
               ? (isEditing ? "Saving..." : "Submitting...")

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { getPeriod, TAGS } from "../data/constants";
 import { formatEventDate, MONTHS } from "../utils/dateUtils";
-import { approveEvent, rejectEvent, updateEvent, approveEdit, approveConnection, rejectConnection, updateConnection } from "../services/database";
+import { approveEvent, rejectEvent, updateEvent, approveEdit, approveConnection, rejectConnection, updateConnection, approveConnectionEdit, approveConnectionDeletion } from "../services/database";
 import { writeToSheet } from "../services/sheets";
 import { Icon } from "@iconify/react";
 import closeIcon from "@iconify-icons/mdi/close";
@@ -12,7 +12,7 @@ import contentSave from "@iconify-icons/mdi/content-save";
 import arrowRightBold from "@iconify-icons/mdi/arrow-right-bold";
 import { useTheme } from "../contexts/ThemeContext";
 
-export default function ModerationPanel({ pendingEvents, pendingConnections = [], allEvents = [], onClose, periods = [], getSectionName = (id) => id, onEventApproved }) {
+export default function ModerationPanel({ pendingEvents, pendingConnections = [], allEvents = [], allConnections = [], onClose, periods = [], getSectionName = (id) => id, onEventApproved }) {
   const { theme } = useTheme();
   const [activeTab, setActiveTab] = useState("events");
   const [editingId, setEditingId] = useState(null);
@@ -115,7 +115,34 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
   const handleApproveConnection = async (conn) => {
     setProcessing(conn.id);
     try {
-      await approveConnection(conn.id);
+      if (conn.deleteOf) {
+        await approveConnectionDeletion(conn.id, conn.deleteOf);
+      } else if (conn.editOf) {
+        const originalConn = findConnection(conn.editOf);
+        const { editOf, addedBy, addedByEmail, addedByUid, status, dateAdded, id, section, editHistory: _, ...edits } = conn;
+        const existingHistory = originalConn?.editHistory || [];
+        const changes = {};
+        if (originalConn) {
+          for (const key of ["description", "causeEventId", "effectEventId"]) {
+            const oldVal = originalConn[key];
+            const newVal = conn[key];
+            if (String(oldVal ?? "") !== String(newVal ?? "")) {
+              changes[key] = { from: oldVal ?? null, to: newVal ?? null };
+            }
+          }
+        }
+        await approveConnectionEdit(conn.id, conn.editOf, {
+          ...edits,
+          editHistory: [...existingHistory, {
+            name: conn.addedBy,
+            email: conn.addedByEmail,
+            date: conn.dateAdded,
+            changes,
+          }],
+        });
+      } else {
+        await approveConnection(conn.id);
+      }
     } catch (err) {
       console.error("Approve connection failed:", err);
     }
@@ -145,6 +172,7 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
   };
 
   const findEvent = (id) => allEvents.find((e) => e.id === id);
+  const findConnection = (id) => allConnections.find((c) => c.id === id);
 
   // Simple word-level diff using longest common subsequence
   const computeWordDiff = (oldStr, newStr) => {
@@ -274,7 +302,11 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
               padding: 4,
               display: "flex",
               alignItems: "center",
+              borderRadius: 4,
+              transition: "all 0.15s",
             }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = theme.textPrimary; e.currentTarget.style.background = theme.subtleBg; }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = theme.textSecondary; e.currentTarget.style.background = "none"; }}
           >
             <Icon icon={closeIcon} width={20} />
           </button>
@@ -301,6 +333,8 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                 cursor: "pointer",
                 transition: "all 0.15s",
               }}
+              onMouseEnter={(e) => { if (activeTab !== tab.id) e.currentTarget.style.color = theme.textPrimary; }}
+              onMouseLeave={(e) => { if (activeTab !== tab.id) e.currentTarget.style.color = theme.textSecondary; }}
             >
               {tab.label}
             </button>
@@ -532,7 +566,10 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                             fontFamily: "'Overpass Mono', monospace",
                             cursor: "pointer",
                             color: theme.textTertiary,
+                            transition: "all 0.15s",
                           }}
+                          onMouseEnter={(e) => { e.currentTarget.style.background = theme.subtleBg; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.background = "none"; }}
                         >
                           Cancel
                         </button>
@@ -549,7 +586,10 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                             fontFamily: "'Overpass Mono', monospace",
                             fontWeight: 700,
                             cursor: "pointer",
+                            transition: "filter 0.15s",
                           }}
+                          onMouseEnter={(e) => { e.currentTarget.style.filter = "brightness(1.1)"; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.filter = "none"; }}
                         >
                           <Icon icon={contentSave} width={13} style={{ verticalAlign: "middle", marginRight: 3 }} />
                           Save Edits
@@ -789,7 +829,10 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                             fontFamily: "'Overpass Mono', monospace",
                             fontWeight: 600,
                             cursor: "pointer",
+                            transition: "all 0.15s",
                           }}
+                          onMouseEnter={(e) => { e.currentTarget.style.background = (theme.errorRed || "#DC2626") + "10"; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.background = "none"; }}
                         >
                           <Icon icon={cancelIcon} width={13} style={{ verticalAlign: "middle", marginRight: 3 }} />
                           Reject
@@ -807,7 +850,10 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                             fontFamily: "'Overpass Mono', monospace",
                             fontWeight: 600,
                             cursor: "pointer",
+                            transition: "all 0.15s",
                           }}
+                          onMouseEnter={(e) => { e.currentTarget.style.background = theme.subtleBg; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.background = "none"; }}
                         >
                           <Icon icon={pencilIcon} width={13} style={{ verticalAlign: "middle", marginRight: 3 }} />
                           Edit
@@ -825,7 +871,10 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                             fontFamily: "'Overpass Mono', monospace",
                             fontWeight: 700,
                             cursor: "pointer",
+                            transition: "filter 0.15s",
                           }}
+                          onMouseEnter={(e) => { e.currentTarget.style.filter = "brightness(1.15)"; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.filter = "none"; }}
                         >
                           {isProcessing ? "..." : <><Icon icon={checkIcon} width={14} style={{ verticalAlign: "middle", marginRight: 3 }} />Approve</>}
                         </button>
@@ -927,7 +976,10 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                             border: `1.5px solid ${theme.inputBorder}`, borderRadius: 6,
                             fontSize: 11, fontFamily: "'Overpass Mono', monospace",
                             cursor: "pointer", color: theme.textTertiary,
+                            transition: "all 0.15s",
                           }}
+                          onMouseEnter={(e) => { e.currentTarget.style.background = theme.subtleBg; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.background = "none"; }}
                         >
                           Cancel
                         </button>
@@ -939,7 +991,10 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                             color: theme.activeToggleText, border: "none", borderRadius: 6,
                             fontSize: 11, fontFamily: "'Overpass Mono', monospace",
                             fontWeight: 700, cursor: "pointer",
+                            transition: "filter 0.15s",
                           }}
+                          onMouseEnter={(e) => { e.currentTarget.style.filter = "brightness(1.1)"; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.filter = "none"; }}
                         >
                           <Icon icon={contentSave} width={13} style={{ verticalAlign: "middle", marginRight: 3 }} />
                           Save
@@ -948,18 +1003,141 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                     </div>
                   ) : (
                     <>
-                      <p style={{
-                        fontSize: 12, lineHeight: 1.6, color: theme.textDescription,
-                        margin: "0 0 8px 0", fontFamily: "'Newsreader', serif",
-                      }}>
-                        {conn.description}
-                      </p>
-                      <div style={{
-                        fontSize: 10, color: theme.textTertiary,
-                        fontFamily: "'Overpass Mono', monospace", marginBottom: 10,
-                      }}>
-                        by {conn.addedBy} &middot; {getSectionName(conn.section)}
-                      </div>
+                      {conn.deleteOf ? (
+                        <>
+                          <div style={{
+                            display: "inline-block", padding: "2px 8px", borderRadius: 4,
+                            background: "#FEE2E2", color: "#991B1B", fontSize: 10,
+                            fontFamily: "'Overpass Mono', monospace", fontWeight: 700,
+                            marginBottom: 8,
+                          }}>
+                            Suggested Deletion
+                          </div>
+                          <p style={{
+                            fontSize: 12, lineHeight: 1.6, color: theme.textDescription,
+                            margin: "0 0 8px 0", fontFamily: "'Newsreader', serif",
+                          }}>
+                            {conn.description}
+                          </p>
+                          <div style={{
+                            fontSize: 10, color: theme.textTertiary,
+                            fontFamily: "'Overpass Mono', monospace", marginBottom: 10,
+                          }}>
+                            by {conn.addedBy} &middot; {getSectionName(conn.section)}
+                            {!findConnection(conn.deleteOf) && <> &middot; <span style={{ color: theme.errorRed }}>Original connection already deleted</span></>}
+                          </div>
+                        </>
+                      ) : conn.editOf ? (() => {
+                        const originalConn = findConnection(conn.editOf);
+                        return (
+                          <>
+                            <div style={{
+                              display: "inline-block", padding: "2px 8px", borderRadius: 4,
+                              background: "#FEF3C7", color: "#92400E", fontSize: 10,
+                              fontFamily: "'Overpass Mono', monospace", fontWeight: 700,
+                              marginBottom: 8,
+                            }}>
+                              Suggested Edit
+                            </div>
+                            <div style={{
+                              fontSize: 10, color: theme.textTertiary,
+                              fontFamily: "'Overpass Mono', monospace", marginBottom: 10,
+                            }}>
+                              by {conn.addedBy} &middot; {getSectionName(conn.section)}
+                              {!originalConn && <> &middot; <span style={{ color: theme.errorRed }}>Original connection not found</span></>}
+                            </div>
+                            {originalConn && (
+                              <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 10 }}>
+                                {String(originalConn.description ?? "") !== String(conn.description ?? "") && (
+                                  <div style={{
+                                    padding: "6px 10px", background: theme.warmSubtleBg,
+                                    borderRadius: 6, borderLeft: "3px solid #D97706",
+                                  }}>
+                                    <div style={{
+                                      fontSize: 9, fontWeight: 700, fontFamily: "'Overpass Mono', monospace",
+                                      color: theme.textTertiary, textTransform: "uppercase", marginBottom: 4,
+                                    }}>
+                                      Description
+                                    </div>
+                                    <div style={{ fontSize: 11, fontFamily: "'Newsreader', serif", lineHeight: 1.5 }}>
+                                      {computeWordDiff(originalConn.description, conn.description).map((part, i) => (
+                                        <span key={i} style={{
+                                          color: part.type === "del" ? (theme.errorRed || "#DC2626") : part.type === "add" ? "#16A34A" : theme.textDescription,
+                                          textDecoration: part.type === "del" ? "line-through" : "none",
+                                          fontWeight: part.type === "add" ? 600 : "normal",
+                                          opacity: part.type === "del" ? 0.7 : 1,
+                                          background: part.type === "add" ? "#DCFCE7" : part.type === "del" ? "#FEE2E2" : "transparent",
+                                          borderRadius: part.type !== "same" ? 2 : 0,
+                                          padding: part.type !== "same" ? "0 2px" : 0,
+                                        }}>{part.text}</span>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                                {originalConn.causeEventId !== conn.causeEventId && (
+                                  <div style={{
+                                    padding: "6px 10px", background: theme.warmSubtleBg,
+                                    borderRadius: 6, borderLeft: "3px solid #D97706",
+                                  }}>
+                                    <div style={{
+                                      fontSize: 9, fontWeight: 700, fontFamily: "'Overpass Mono', monospace",
+                                      color: theme.textTertiary, textTransform: "uppercase", marginBottom: 4,
+                                    }}>
+                                      Cause Event
+                                    </div>
+                                    <div style={{ fontSize: 11, fontFamily: "'Newsreader', serif" }}>
+                                      <span style={{ color: theme.errorRed || "#DC2626", textDecoration: "line-through", opacity: 0.7 }}>
+                                        {findEvent(originalConn.causeEventId)?.title || "Unknown"}
+                                      </span>
+                                      <span style={{ margin: "0 6px", color: theme.textTertiary }}>{"\u2192"}</span>
+                                      <span style={{ color: "#16A34A", fontWeight: 600 }}>
+                                        {findEvent(conn.causeEventId)?.title || "Unknown"}
+                                      </span>
+                                    </div>
+                                  </div>
+                                )}
+                                {originalConn.effectEventId !== conn.effectEventId && (
+                                  <div style={{
+                                    padding: "6px 10px", background: theme.warmSubtleBg,
+                                    borderRadius: 6, borderLeft: "3px solid #D97706",
+                                  }}>
+                                    <div style={{
+                                      fontSize: 9, fontWeight: 700, fontFamily: "'Overpass Mono', monospace",
+                                      color: theme.textTertiary, textTransform: "uppercase", marginBottom: 4,
+                                    }}>
+                                      Effect Event
+                                    </div>
+                                    <div style={{ fontSize: 11, fontFamily: "'Newsreader', serif" }}>
+                                      <span style={{ color: theme.errorRed || "#DC2626", textDecoration: "line-through", opacity: 0.7 }}>
+                                        {findEvent(originalConn.effectEventId)?.title || "Unknown"}
+                                      </span>
+                                      <span style={{ margin: "0 6px", color: theme.textTertiary }}>{"\u2192"}</span>
+                                      <span style={{ color: "#16A34A", fontWeight: 600 }}>
+                                        {findEvent(conn.effectEventId)?.title || "Unknown"}
+                                      </span>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </>
+                        );
+                      })() : (
+                        <>
+                          <p style={{
+                            fontSize: 12, lineHeight: 1.6, color: theme.textDescription,
+                            margin: "0 0 8px 0", fontFamily: "'Newsreader', serif",
+                          }}>
+                            {conn.description}
+                          </p>
+                          <div style={{
+                            fontSize: 10, color: theme.textTertiary,
+                            fontFamily: "'Overpass Mono', monospace", marginBottom: 10,
+                          }}>
+                            by {conn.addedBy} &middot; {getSectionName(conn.section)}
+                          </div>
+                        </>
+                      )}
                       <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
                         <button
                           onClick={() => handleRejectConnection(conn.id)}
@@ -969,35 +1147,46 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                             border: `1.5px solid ${theme.errorRed}`, borderRadius: 6,
                             color: theme.errorRed, fontSize: 11,
                             fontFamily: "'Overpass Mono', monospace", fontWeight: 600, cursor: "pointer",
+                            transition: "all 0.15s",
                           }}
+                          onMouseEnter={(e) => { e.currentTarget.style.background = (theme.errorRed || "#DC2626") + "10"; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.background = "none"; }}
                         >
                           <Icon icon={cancelIcon} width={13} style={{ verticalAlign: "middle", marginRight: 3 }} />
                           Reject
                         </button>
-                        <button
-                          onClick={() => { setEditingConnId(conn.id); setEditConnDesc(conn.description); }}
-                          disabled={isProcessing}
-                          style={{
-                            padding: "6px 14px", background: "none",
-                            border: `1.5px solid ${theme.inputBorder}`, borderRadius: 6,
-                            color: theme.textDescription, fontSize: 11,
-                            fontFamily: "'Overpass Mono', monospace", fontWeight: 600, cursor: "pointer",
-                          }}
-                        >
-                          <Icon icon={pencilIcon} width={13} style={{ verticalAlign: "middle", marginRight: 3 }} />
-                          Edit
-                        </button>
+                        {!conn.editOf && !conn.deleteOf && (
+                          <button
+                            onClick={() => { setEditingConnId(conn.id); setEditConnDesc(conn.description); }}
+                            disabled={isProcessing}
+                            style={{
+                              padding: "6px 14px", background: "none",
+                              border: `1.5px solid ${theme.inputBorder}`, borderRadius: 6,
+                              color: theme.textDescription, fontSize: 11,
+                              fontFamily: "'Overpass Mono', monospace", fontWeight: 600, cursor: "pointer",
+                              transition: "all 0.15s",
+                            }}
+                            onMouseEnter={(e) => { e.currentTarget.style.background = theme.subtleBg; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.background = "none"; }}
+                          >
+                            <Icon icon={pencilIcon} width={13} style={{ verticalAlign: "middle", marginRight: 3 }} />
+                            Edit
+                          </button>
+                        )}
                         <button
                           onClick={() => handleApproveConnection(conn)}
                           disabled={isProcessing}
                           style={{
-                            padding: "6px 14px", background: theme.successGreen,
+                            padding: "6px 14px", background: conn.deleteOf ? (theme.errorRed || "#DC2626") : theme.successGreen,
                             color: "#fff", border: "none", borderRadius: 6,
                             fontSize: 11, fontFamily: "'Overpass Mono', monospace",
                             fontWeight: 700, cursor: "pointer",
+                            transition: "filter 0.15s",
                           }}
+                          onMouseEnter={(e) => { e.currentTarget.style.filter = "brightness(1.15)"; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.filter = "none"; }}
                         >
-                          {isProcessing ? "..." : <><Icon icon={checkIcon} width={14} style={{ verticalAlign: "middle", marginRight: 3 }} />Approve</>}
+                          {isProcessing ? "..." : <><Icon icon={checkIcon} width={14} style={{ verticalAlign: "middle", marginRight: 3 }} />{conn.deleteOf ? "Delete" : "Approve"}</>}
                         </button>
                       </div>
                     </>

@@ -4,9 +4,10 @@ import { useTheme } from "./contexts/ThemeContext";
 import { getPeriod, DEFAULT_PERIODS } from "./data/constants";
 import { compareEventDates } from "./utils/dateUtils";
 import { TEACHER_EMAIL } from "./firebase";
-import { submitEvent, deleteEvent, updateEvent, savePeriods, saveSections, saveCompellingQuestion, saveTimelineRange, saveFieldConfig, assignStudentSection, reassignStudentSection, removeStudentSection, submitConnection, deleteConnection, updateConnection } from "./services/database";
+import { savePeriods, saveSections, saveCompellingQuestion, saveTimelineRange, saveFieldConfig, assignStudentSection, reassignStudentSection, removeStudentSection } from "./services/database";
 import useFirebaseSubscriptions from "./hooks/useFirebaseSubscriptions";
-import { writeToSheet } from "./services/sheets";
+import useEventHandlers from "./hooks/useEventHandlers";
+import useConnectionHandlers from "./hooks/useConnectionHandlers";
 import VisualTimeline from "./components/VisualTimeline";
 import EventCard from "./components/EventCard";
 import AddEventPanel from "./components/AddEventPanel";
@@ -75,9 +76,6 @@ export default function App() {
     (id) => activeSections.find((s) => s.id === id)?.name || id,
     [activeSections]
   );
-
-  const floorToDecade = (value) => Math.floor(value / 10) * 10;
-  const ceilToDecade = (value) => Math.ceil(value / 10) * 10;
 
   const switchSection = (newSection) => {
     setSection(newSection);
@@ -264,210 +262,45 @@ export default function App() {
   const findPeriod = (id) => getPeriod(displayPeriods, id);
   const displayCQ = section === "all" ? null : compellingQuestion;
 
-  // Auto-expand timeline range when event outside range is approved
-  const handleEventApproved = useCallback((event) => {
-    const year = Number(event.year);
-    if (isNaN(year)) return;
-    const endYear = event.endYear ? Number(event.endYear) : null;
-    let newStart = timelineStart;
-    let newEnd = timelineEnd;
-    let changed = false;
-    if (year < timelineStart) {
-      newStart = floorToDecade(year);
-      changed = true;
-    }
-    const maxYear = endYear && !isNaN(endYear) ? Math.max(year, endYear) : year;
-    if (maxYear > timelineEnd) {
-      newEnd = ceilToDecade(maxYear);
-      changed = true;
-    }
-    if (changed) {
-      setTimelineStart(newStart);
-      setTimelineEnd(newEnd);
-      // Persist to the event's section (or current section)
-      const targetSection = event.section || section;
-      if (targetSection && targetSection !== "all") {
-        saveTimelineRange(targetSection, { start: newStart, end: newEnd });
-      }
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [timelineStart, timelineEnd, section]);
+  const {
+    handleEventApproved,
+    handleAddEvent,
+    handleDeleteEvent,
+    handleEditEvent,
+    handleSaveEdit,
+  } = useEventHandlers({
+    user,
+    userName,
+    isTeacher,
+    defaultSection,
+    section,
+    timelineStart,
+    setTimelineStart,
+    timelineEnd,
+    setTimelineEnd,
+    editingEvent,
+    setEditingEvent,
+  });
 
-  const handleAddEvent = useCallback(
-    async (formData) => {
-      const eventData = {
-        ...formData,
-        addedBy: userName,
-        addedByEmail: user.email,
-        addedByUid: user.uid,
-        section: defaultSection,
-        ...(isTeacher ? { status: "approved" } : {}),
-      };
-      await submitEvent(eventData);
-      if (isTeacher) {
-        writeToSheet(eventData);
-        handleEventApproved(eventData);
-      }
-    },
-    [user, isTeacher, userName, defaultSection, handleEventApproved]
-  );
-
-  const handleDeleteEvent = useCallback(async (eventId) => {
-    try {
-      await deleteEvent(eventId);
-    } catch (err) {
-      console.error("Delete failed:", err);
-    }
-  }, []);
-
-  const handleEditEvent = useCallback((event) => {
-    setEditingEvent(event);
-  }, []);
-
-  const handleSaveEdit = useCallback(
-    async (formData) => {
-      const updates = {
-        ...formData,
-        year: parseInt(formData.year),
-        month: formData.month ? parseInt(formData.month) : null,
-        day: formData.day ? parseInt(formData.day) : null,
-        endYear: formData.endYear ? parseInt(formData.endYear) : null,
-        endMonth: formData.endMonth ? parseInt(formData.endMonth) : null,
-        endDay: formData.endDay ? parseInt(formData.endDay) : null,
-      };
-      // Compute which fields changed for edit history
-      const changeFields = ["title", "year", "month", "day", "endYear", "endMonth", "endDay", "period", "tags", "sourceType", "description", "sourceNote", "sourceUrl", "imageUrl", "region"];
-      const changes = {};
-      for (const key of changeFields) {
-        const oldVal = editingEvent[key];
-        const newVal = updates[key] !== undefined ? updates[key] : oldVal;
-        const isEqual = key === "tags" ? JSON.stringify(oldVal) === JSON.stringify(newVal) : String(oldVal ?? "") === String(newVal ?? "");
-        if (!isEqual) changes[key] = { from: oldVal ?? null, to: newVal ?? null };
-      }
-      if (isTeacher) {
-        // Teacher: apply edit directly, append to edit history
-        const existingHistory = editingEvent.editHistory || [];
-        await updateEvent(editingEvent.id, {
-          ...updates,
-          editHistory: [...existingHistory, {
-            name: userName,
-            email: user.email,
-            date: new Date().toISOString(),
-            changes,
-          }],
-        });
-      } else {
-        // Student: submit as pending edit proposal
-        await submitEvent({
-          ...updates,
-          editOf: editingEvent.id,
-          addedBy: userName,
-          addedByEmail: user.email,
-          addedByUid: user.uid,
-          section: editingEvent.section || (defaultSection),
-        });
-      }
-    },
-    [editingEvent, isTeacher, user, userName, defaultSection]
-  );
-
-  const handleAddConnection = useCallback(
-    async (formData) => {
-      await submitConnection({
-        ...formData,
-        addedBy: userName,
-        addedByEmail: user.email,
-        addedByUid: user.uid,
-        section: defaultSection,
-        ...(isTeacher ? { status: "approved" } : {}),
-      });
-    },
-    [user, isTeacher, userName, defaultSection]
-  );
-
-  const handleDeleteConnection = useCallback(async (connectionId) => {
-    try {
-      await deleteConnection(connectionId);
-    } catch (err) {
-      console.error("Delete connection failed:", err);
-    }
-  }, []);
-
-  const handleSuggestDeleteConnection = useCallback(async (connection) => {
-    if (!window.confirm("Suggest this connection be deleted? A teacher will review your request.")) return;
-    try {
-      await submitConnection({
-        deleteOf: connection.id,
-        causeEventId: connection.causeEventId,
-        effectEventId: connection.effectEventId,
-        description: connection.description,
-        addedBy: userName,
-        addedByEmail: user.email,
-        addedByUid: user.uid,
-        section: connection.section || (defaultSection),
-      });
-    } catch (err) {
-      console.error("Suggest delete connection failed:", err);
-    }
-  }, [user, userName, defaultSection]);
-
-  const handleEditConnection = useCallback((connection) => {
-    setEditingConnection(connection);
-  }, []);
-
-  const handleSaveConnectionEdit = useCallback(
-    async (formData) => {
-      const changeFields = ["description", "causeEventId", "effectEventId"];
-      const changes = {};
-      for (const key of changeFields) {
-        const oldVal = editingConnection[key];
-        const newVal = formData[key];
-        if (String(oldVal ?? "") !== String(newVal ?? "")) {
-          changes[key] = { from: oldVal ?? null, to: newVal ?? null };
-        }
-      }
-      if (isTeacher) {
-        const existingHistory = editingConnection.editHistory || [];
-        await updateConnection(editingConnection.id, {
-          ...formData,
-          editHistory: [...existingHistory, {
-            name: userName,
-            email: user.email,
-            date: new Date().toISOString(),
-            changes,
-          }],
-        });
-      } else {
-        await submitConnection({
-          ...formData,
-          editOf: editingConnection.id,
-          addedBy: userName,
-          addedByEmail: user.email,
-          addedByUid: user.uid,
-          section: editingConnection.section || (defaultSection),
-        });
-      }
-    },
-    [editingConnection, isTeacher, user, userName, defaultSection]
-  );
-
-  const handleConnectionModeClick = useCallback((eventId) => {
-    if (!connectionMode) return;
-    if (connectionMode.step === "selectCause") {
-      setConnectionMode({ step: "selectEffect", causeEventId: eventId });
-    } else if (connectionMode.step === "selectEffect") {
-      if (eventId === connectionMode.causeEventId) return;
-      setConnectionMode({ ...connectionMode, step: "describe", effectEventId: eventId });
-    }
-  }, [connectionMode]);
-
-  const handleScrollToEvent = useCallback((eventId) => {
-    setExpandedEvent(eventId);
-    setTimeout(() => {
-      const el = document.querySelector(`[data-event-id="${eventId}"]`);
-      if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
-    }, 100);
-  }, []);
+  const {
+    handleAddConnection,
+    handleDeleteConnection,
+    handleSuggestDeleteConnection,
+    handleEditConnection,
+    handleSaveConnectionEdit,
+    handleConnectionModeClick,
+    handleScrollToEvent,
+  } = useConnectionHandlers({
+    user,
+    userName,
+    isTeacher,
+    defaultSection,
+    editingConnection,
+    setEditingConnection,
+    connectionMode,
+    setConnectionMode,
+    setExpandedEvent,
+  });
 
   // Escape key exits connection mode
   useEffect(() => {

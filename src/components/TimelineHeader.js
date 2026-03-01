@@ -27,11 +27,13 @@ export default function TimelineHeader({
   connectionMode,
   setConnectionMode,
   logout,
+  showPendingQueue,
+  setShowPendingQueue,
 }) {
   return (
     <div style={{ background: theme.headerBg, color: theme.headerText, padding: "24px 28px 16px" }}>
-      <div style={{ maxWidth: 960, margin: "0 auto", position: "relative" }}>
-          <div>
+      <div style={{ maxWidth: 960, margin: "0 auto", display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16 }}>
+          <div style={{ flexShrink: 0 }}>
             <div
               style={{
                 display: "flex",
@@ -202,7 +204,7 @@ export default function TimelineHeader({
               </div>
             )}
           </div>
-          <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", position: "absolute", top: 0, right: 0 }}>
+          <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", justifyContent: "flex-end" }}>
             {!showAdminView && (
               <>
                 {isTeacher && (pendingEvents.length + pendingConnections.length) > 0 && (
@@ -226,6 +228,28 @@ export default function TimelineHeader({
                   >
                     <Icon icon={inboxArrowDown} width={14} style={{ verticalAlign: "middle", marginRight: 4 }} />
                     Review ({pendingEvents.length + pendingConnections.length})
+                  </button>
+                )}
+                {!isTeacher && (pendingEvents.length + pendingConnections.length) > 0 && (
+                  <button
+                    onClick={() => setShowPendingQueue(true)}
+                    style={{
+                      padding: "10px 18px",
+                      background: "transparent",
+                      color: theme.accentGold,
+                      border: `1.5px solid ${theme.accentGold}`,
+                      borderRadius: 8,
+                      fontSize: 12,
+                      fontFamily: "'Overpass Mono', monospace",
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      transition: "all 0.15s",
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = theme.accentGold + "15"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+                  >
+                    <Icon icon={inboxArrowDown} width={14} style={{ verticalAlign: "middle", marginRight: 4 }} />
+                    Pending ({pendingEvents.length + pendingConnections.length})
                   </button>
                 )}
                 <button

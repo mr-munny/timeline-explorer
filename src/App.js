@@ -686,16 +686,7 @@ export default function App() {
 
       {/* Header */}
       <div style={{ background: theme.headerBg, color: theme.headerText, padding: "24px 28px 16px" }}>
-        <div style={{ maxWidth: 960, margin: "0 auto" }}>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "flex-start",
-              flexWrap: "wrap",
-              gap: 12,
-            }}
-          >
+        <div style={{ maxWidth: 960, margin: "0 auto", position: "relative" }}>
             <div>
               <div
                 style={{
@@ -705,22 +696,7 @@ export default function App() {
                   marginBottom: 2,
                 }}
               >
-                <span
-                  style={{
-                    fontSize: 10,
-                    fontWeight: 700,
-                    color: theme.accentGold,
-                    fontFamily: "'Overpass Mono', monospace",
-                    letterSpacing: "0.1em",
-                    textTransform: "uppercase",
-                    background: theme.accentGoldSubtle,
-                    padding: "3px 8px",
-                    borderRadius: 4,
-                  }}
-                >
-                  Historian's Workshop
-                </span>
-                {isTeacher && (
+{isTeacher && (
                   <span
                     style={{
                       fontSize: 10,
@@ -882,7 +858,7 @@ export default function App() {
                 </div>
               )}
             </div>
-            <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+            <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", position: "absolute", top: 0, right: 0 }}>
               {!showAdminView && (
                 <>
                   {/* TEMPORARY: Remove after seeding */}
@@ -1038,7 +1014,6 @@ export default function App() {
                 Sign Out
               </button>
             </div>
-          </div>
         </div>
       </div>
 

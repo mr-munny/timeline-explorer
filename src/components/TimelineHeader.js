@@ -22,7 +22,6 @@ export default function TimelineHeader({
   section,
   activeSections,
   switchSection,
-  setShowModeration,
   setShowAddPanel,
   setShowAddConnectionPanel,
   connectionMode,
@@ -208,7 +207,7 @@ export default function TimelineHeader({
               <>
                 {isTeacher && (pendingEvents.length + pendingConnections.length) > 0 && (
                   <button
-                    onClick={() => setShowModeration(true)}
+                    onClick={() => setShowAdminView(true)}
                     style={{
                       padding: "10px 18px",
                       background: theme.errorRed,

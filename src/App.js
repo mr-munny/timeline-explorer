@@ -14,7 +14,6 @@ import VisualTimeline from "./components/VisualTimeline";
 import AddEventPanel from "./components/AddEventPanel";
 import AddConnectionPanel from "./components/AddConnectionPanel";
 import AdminView from "./components/AdminView";
-import ModerationPanel from "./components/ModerationPanel";
 import LoginScreen from "./components/LoginScreen";
 import SectionPicker from "./components/SectionPicker";
 import TimelineHeader from "./components/TimelineHeader";
@@ -40,7 +39,6 @@ export default function App() {
   const [showAddPanel, setShowAddPanel] = useState(false);
   const [editingEvent, setEditingEvent] = useState(null);
   const [showContributors, setShowContributors] = useState(false);
-  const [showModeration, setShowModeration] = useState(false);
   const [showAdminView, setShowAdminView] = useState(false);
   const [sectionFilter, setSectionFilter] = useState("all");
   const [showAddConnectionPanel, setShowAddConnectionPanel] = useState(false);
@@ -330,7 +328,6 @@ export default function App() {
         section={section}
         activeSections={activeSections}
         switchSection={switchSection}
-        setShowModeration={setShowModeration}
         setShowAddPanel={setShowAddPanel}
         setShowAddConnectionPanel={setShowAddConnectionPanel}
         connectionMode={connectionMode}
@@ -577,19 +574,6 @@ export default function App() {
         />
       )}
 
-      {/* Moderation Modal (teacher only) */}
-      {showModeration && isTeacher && (
-        <ModerationPanel
-          pendingEvents={pendingEvents}
-          pendingConnections={pendingConnections}
-          allEvents={approvedEvents}
-          allConnections={allConnections}
-          onClose={() => setShowModeration(false)}
-          periods={displayPeriods}
-          getSectionName={getSectionName}
-          onEventApproved={handleEventApproved}
-        />
-      )}
     </div>
   );
 }

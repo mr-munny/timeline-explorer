@@ -3,12 +3,19 @@ export const MONTHS = [
   "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
 ];
 
-/** Format a date into display string: "Jun 6, 1944", "Jun 1944", or "1944" */
+/** Format a year for display, handling BCE years */
+function formatYear(year) {
+  if (year < 0) return `${Math.abs(year)} BCE`;
+  return String(year);
+}
+
+/** Format a date into display string: "Jun 6, 1944", "Jun 1944", "1944", or "500 BCE" */
 export function formatDate(year, month, day) {
   if (!year && year !== 0) return "";
-  if (month && day) return `${MONTHS[month - 1]} ${day}, ${year}`;
-  if (month) return `${MONTHS[month - 1]} ${year}`;
-  return String(year);
+  const yearStr = formatYear(year);
+  if (month && day) return `${MONTHS[month - 1]} ${day}, ${yearStr}`;
+  if (month) return `${MONTHS[month - 1]} ${yearStr}`;
+  return yearStr;
 }
 
 /** Format an event's start date */

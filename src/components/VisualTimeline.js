@@ -4,10 +4,20 @@ import { useTheme } from "../contexts/ThemeContext";
 import { eventStartFraction, eventEndFraction, formatEventDate } from "../utils/dateUtils";
 
 const MIN_ZOOM = 1;
-const MAX_ZOOM = 20;
+const MAX_ZOOM = 50;
 const ZOOM_STEP = 0.5;
 const ZOOM_WHEEL_FACTOR = 0.003;
 const CLUSTER_PX_THRESHOLD = 14;
+
+/** Format a year label for the timeline axis.
+ *  When hasBCE is true (range includes negative years), shows "500 BCE" / "1500 CE".
+ *  When hasBCE is false (CE-only range), shows plain numbers. */
+function formatYearLabel(year, hasBCE) {
+  if (year === 0) return null; // year 0 doesn't exist
+  if (!hasBCE) return String(year);
+  if (year < 0) return `${Math.abs(year)} BCE`;
+  return `${year} CE`;
+}
 
 function getDominantPeriod(items) {
   const counts = {};
@@ -30,6 +40,8 @@ export default function VisualTimeline({
   timelineEnd = 2000,
   currentYear,
   periods = [],
+  expandedEventId,
+  connectionsByEvent,
 }) {
   const { theme } = useTheme();
   const minYear = timelineStart;
@@ -275,11 +287,14 @@ export default function VisualTimeline({
         const barMaxPx = Math.max(d.px, d.endPx);
         return centerPx >= barMinPx - CLUSTER_PX_THRESHOLD && centerPx <= barMaxPx + CLUSTER_PX_THRESHOLD;
       });
+      const uniquePeriods = new Set(c.items.map((i) => i.period.id));
+      const isMixed = uniquePeriods.size > 1;
       return {
         id: `cluster-${idx}`,
         centerPct,
         count: c.items.length,
         isSingle,
+        isMixed,
         items: c.items,
         period: isSingle ? c.items[0].period : getDominantPeriod(c.items),
         bumped,
@@ -288,6 +303,33 @@ export default function VisualTimeline({
 
     return { durationMarkers: durMarkers, clusteredMarkers: singularClusters, durationLaneCount };
   }, [filteredEvents, zoomLevel, viewportWidth, periods, minYear, totalSpan]);
+
+  // Connection arcs for the expanded event
+  const connectionArcs = useMemo(() => {
+    if (!expandedEventId || !connectionsByEvent || !canvasWidth) return [];
+    const conns = connectionsByEvent[expandedEventId];
+    if (!conns) return [];
+
+    // Build position lookup from filtered events
+    const eventX = {};
+    filteredEvents.forEach((ev) => {
+      const frac = eventStartFraction(ev);
+      if (frac !== null) eventX[ev.id] = ((frac - minYear) / totalSpan) * canvasWidth;
+    });
+    if (eventX[expandedEventId] === undefined) return [];
+
+    const arcs = [];
+    for (const conn of [...(conns.causes || []), ...(conns.effects || [])]) {
+      const otherId = conn.causeEventId === expandedEventId ? conn.effectEventId : conn.causeEventId;
+      if (eventX[otherId] === undefined) continue;
+      arcs.push({
+        id: conn.id,
+        x1: eventX[conn.causeEventId],
+        x2: eventX[conn.effectEventId],
+      });
+    }
+    return arcs;
+  }, [expandedEventId, connectionsByEvent, filteredEvents, canvasWidth, minYear, totalSpan]);
 
   // Cluster/node click handler (used for both single and multi-event nodes)
   const handleNodeClick = useCallback((e, cluster) => {
@@ -317,20 +359,30 @@ export default function VisualTimeline({
     return () => document.removeEventListener("pointerdown", onClick);
   }, [openClusterId]);
 
-  // Dynamic year label interval
+  // Dynamic year label interval — scales from 1-year to 1000-year ticks
   const labelInterval = useMemo(() => {
     if (!viewportWidth) return 10;
     const pixelsPerYear = (viewportWidth * zoomLevel) / totalSpan;
     if (pixelsPerYear >= 40) return 1;
     if (pixelsPerYear >= 20) return 2;
     if (pixelsPerYear >= 8) return 5;
-    return 10;
+    if (pixelsPerYear >= 4) return 10;
+    if (pixelsPerYear >= 2) return 25;
+    if (pixelsPerYear >= 1) return 50;
+    if (pixelsPerYear >= 0.5) return 100;
+    if (pixelsPerYear >= 0.2) return 250;
+    if (pixelsPerYear >= 0.1) return 500;
+    return 1000;
   }, [viewportWidth, zoomLevel, totalSpan]);
+
+  // Whether the range includes BCE years (affects label formatting)
+  const hasBCE = minYear < 0;
 
   const yearLabels = useMemo(() => {
     const labels = [];
     const start = Math.ceil(minYear / labelInterval) * labelInterval;
     for (let y = start; y <= maxYear; y += labelInterval) {
+      if (y === 0) continue; // year 0 doesn't exist
       labels.push(y);
     }
     return labels;
@@ -458,6 +510,7 @@ export default function VisualTimeline({
           onPointerUp={handlePointerUp}
           onPointerCancel={handlePointerUp}
           style={{
+            position: "relative",
             width: canvasWidth || "100%",
             minWidth: "100%",
             cursor: isPanning ? "grabbing" : zoomLevel > 1 ? "grab" : "default",
@@ -556,6 +609,58 @@ export default function VisualTimeline({
               })()}
           </div>
 
+          {/* Connection arcs for the expanded event — arcs curve downward below the markers */}
+          {connectionArcs.length > 0 && (
+            <svg
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                width: canvasWidth,
+                height: 42 + (durationLaneCount > 0 ? durationLaneCount * 12 + 4 : 0) + 28 + 40,
+                pointerEvents: "none",
+                zIndex: 4,
+                overflow: "visible",
+              }}
+            >
+              <defs>
+                <marker
+                  id="conn-arrow"
+                  viewBox="0 0 8 6"
+                  refX="7"
+                  refY="3"
+                  markerWidth="7"
+                  markerHeight="5"
+                  orient="auto"
+                >
+                  <path d="M0,0.5 L7,3 L0,5.5" fill="none" stroke={theme.accentGold} strokeWidth="1" />
+                </marker>
+              </defs>
+              {connectionArcs.map((arc) => {
+                const dotY = 42 + (durationLaneCount > 0 ? durationLaneCount * 12 + 4 : 0) + 7;
+                const dist = Math.abs(arc.x2 - arc.x1);
+                const arcHeight = Math.min(36, Math.max(14, dist * 0.12));
+                const midX = (arc.x1 + arc.x2) / 2;
+                const cy = dotY + arcHeight;
+                return (
+                  <g key={arc.id}>
+                    <path
+                      d={`M ${arc.x1} ${dotY} Q ${midX} ${cy} ${arc.x2} ${dotY}`}
+                      fill="none"
+                      stroke={theme.accentGold}
+                      strokeWidth={1.5}
+                      opacity={0.55}
+                      markerEnd="url(#conn-arrow)"
+                    />
+                    {/* Endpoint dots */}
+                    <circle cx={arc.x1} cy={dotY} r={2.5} fill={theme.accentGold} opacity={0.7} />
+                    <circle cx={arc.x2} cy={dotY} r={2.5} fill={theme.accentGold} opacity={0.7} />
+                  </g>
+                );
+              })}
+            </svg>
+          )}
+
           {/* Event markers — duration bars in lanes on top, singular dots/clusters below */}
           <div style={{ position: "relative", height: (durationLaneCount > 0 ? durationLaneCount * 12 + 4 : 0) + 28, marginTop: 2 }}>
             {/* Duration bars — each in its assigned lane */}
@@ -631,6 +736,7 @@ export default function VisualTimeline({
               }
 
               // Multi-event cluster node: larger dot with count badge
+              const clusterColor = cluster.isMixed ? theme.textSecondary : cluster.period.color;
               return (
                 <div
                   key={cluster.id}
@@ -653,11 +759,11 @@ export default function VisualTimeline({
                       width: 16,
                       height: 16,
                       borderRadius: "50%",
-                      background: cluster.period.color,
+                      background: clusterColor,
                       border: `2px solid ${theme.cardBg}`,
                       boxShadow: isOpen
-                        ? `0 0 0 2px ${cluster.period.color}60, 0 0 8px ${cluster.period.color}30`
-                        : `0 0 0 1px ${cluster.period.color}40`,
+                        ? `0 0 0 2px ${clusterColor}60, 0 0 8px ${clusterColor}30`
+                        : `0 0 0 1px ${clusterColor}40`,
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
@@ -684,7 +790,16 @@ export default function VisualTimeline({
           {/* Year labels — edge labels clamped to prevent clipping */}
           <div style={{ position: "relative", height: 14 }}>
             {yearLabels.map((y) => {
-              const isDecade = y % 10 === 0;
+              const label = formatYearLabel(y, hasBCE);
+              if (label === null) return null;
+              // Major tick: adapts to interval scale
+              const isMajor = labelInterval >= 100
+                ? y % 500 === 0
+                : labelInterval >= 10
+                  ? y % 100 === 0
+                  : labelInterval >= 5
+                    ? y % 50 === 0
+                    : y % 10 === 0;
               const pct = getPosition(y);
               return (
                 <span
@@ -693,15 +808,15 @@ export default function VisualTimeline({
                     position: "absolute",
                     left: `${pct}%`,
                     transform: `translateX(-${pct}%)`,
-                    fontSize: isDecade ? 9 : 8,
+                    fontSize: isMajor ? 9 : 8,
                     color: theme.textMuted,
                     fontFamily: "'Overpass Mono', monospace",
-                    fontWeight: isDecade ? 600 : 400,
+                    fontWeight: isMajor ? 600 : 400,
                     whiteSpace: "nowrap",
-                    opacity: isDecade ? 1 : 0.6,
+                    opacity: isMajor ? 1 : 0.6,
                   }}
                 >
-                  {y}
+                  {label}
                 </span>
               );
             })}

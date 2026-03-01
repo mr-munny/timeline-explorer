@@ -16,7 +16,6 @@ import chevronDown from "@iconify-icons/mdi/chevron-down";
 import SectionConfiguration from "./SectionConfiguration";
 import StudentRoster from "./StudentRoster";
 
-const currentYear = new Date().getFullYear();
 const floorToDecade = (value) => Math.floor(value / 10) * 10;
 const ceilToDecade = (value) => Math.ceil(value / 10) * 10;
 
@@ -275,7 +274,7 @@ export default function AdminPanel({
                 onChange={(e) => setDraftStart(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter") e.target.blur(); }}
                 onBlur={() => {
-                  const v = floorToDecade(Math.max(0, Math.min(Number(draftStart), timelineEnd - 10)));
+                  const v = floorToDecade(Math.min(Number(draftStart), timelineEnd - 10));
                   setTimelineStart(v);
                   setDraftStart(String(v));
                   isEditingTimelineRangeRef.current = true;
@@ -323,8 +322,7 @@ export default function AdminPanel({
                 onChange={(e) => setDraftEnd(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter") e.target.blur(); }}
                 onBlur={() => {
-                  const maxEnd = ceilToDecade(currentYear);
-                  const v = ceilToDecade(Math.max(timelineStart + 10, Math.min(Number(draftEnd), maxEnd)));
+                  const v = ceilToDecade(Math.max(timelineStart + 10, Number(draftEnd)));
                   setTimelineEnd(v);
                   setDraftEnd(String(v));
                   isEditingTimelineRangeRef.current = true;

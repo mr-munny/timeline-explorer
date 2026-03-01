@@ -7,6 +7,7 @@ import shieldAccountOutline from "@iconify-icons/mdi/shield-account-outline";
 import vectorLink from "@iconify-icons/mdi/vector-link";
 import cogOutline from "@iconify-icons/mdi/cog-outline";
 import arrowLeft from "@iconify-icons/mdi/arrow-left";
+import bellRingOutline from "@iconify-icons/mdi/bell-ring-outline";
 
 export default function TimelineHeader({
   theme,
@@ -24,12 +25,14 @@ export default function TimelineHeader({
   switchSection,
   setShowAddPanel,
   setShowAddConnectionPanel,
-  connectionMode,
-  setConnectionMode,
   logout,
   showPendingQueue,
   setShowPendingQueue,
+  myRevisionEvents = [],
+  myRevisionConnections = [],
+  setShowRevisionPanel,
 }) {
+  const revisionCount = myRevisionEvents.length + myRevisionConnections.length;
   return (
     <div style={{ background: theme.headerBg, color: theme.headerText, padding: "24px 28px 16px" }}>
       <div style={{ maxWidth: 960, margin: "0 auto", display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16 }}>
@@ -230,6 +233,28 @@ export default function TimelineHeader({
                     Review ({pendingEvents.length + pendingConnections.length})
                   </button>
                 )}
+                {revisionCount > 0 && (
+                  <button
+                    onClick={() => setShowRevisionPanel(true)}
+                    style={{
+                      padding: "10px 18px",
+                      background: "transparent",
+                      color: "#D97706",
+                      border: "1.5px solid #D97706",
+                      borderRadius: 8,
+                      fontSize: 12,
+                      fontFamily: "'Overpass Mono', monospace",
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      transition: "all 0.15s",
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = "#D9770615"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+                  >
+                    <Icon icon={bellRingOutline} width={14} style={{ verticalAlign: "middle", marginRight: 4 }} />
+                    Revisions ({revisionCount})
+                  </button>
+                )}
                 {!isTeacher && (pendingEvents.length + pendingConnections.length) > 0 && (
                   <button
                     onClick={() => setShowPendingQueue(true)}
@@ -293,27 +318,6 @@ export default function TimelineHeader({
                 >
                   <Icon icon={vectorLink} width={14} style={{ verticalAlign: "middle", marginRight: 4 }} />
                   Add Connection
-                </button>
-                <button
-                  onClick={() => setConnectionMode(connectionMode ? null : { step: "selectCause" })}
-                  style={{
-                    padding: "10px 14px",
-                    background: connectionMode ? theme.accentGold : "transparent",
-                    color: connectionMode ? theme.headerBg : theme.headerSubtext,
-                    border: `1px solid ${connectionMode ? theme.accentGold : theme.headerBorder}`,
-                    borderRadius: 8,
-                    fontSize: 11,
-                    fontFamily: "'Overpass Mono', monospace",
-                    fontWeight: 600,
-                    cursor: "pointer",
-                    transition: "all 0.15s",
-                  }}
-                  onMouseEnter={(e) => { if (!connectionMode) e.currentTarget.style.background = theme.headerBorder + "40"; }}
-                  onMouseLeave={(e) => { if (!connectionMode) e.currentTarget.style.background = "transparent"; }}
-                  title="Click two events to connect them"
-                >
-                  <Icon icon={vectorLink} width={13} style={{ verticalAlign: "middle", marginRight: 4 }} />
-                  {connectionMode ? "Exit Connect Mode" : "Connect Events"}
                 </button>
               </>
             )}

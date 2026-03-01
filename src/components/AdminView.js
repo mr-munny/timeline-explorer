@@ -8,6 +8,8 @@ export default function AdminView({
   sections,
   pendingEvents,
   pendingConnections,
+  needsRevisionEvents = [],
+  needsRevisionConnections = [],
   allEvents,
   allConnections,
   allStudentAssignments,
@@ -20,11 +22,13 @@ export default function AdminView({
   displayPeriods,
   reassignStudentSection,
   removeStudentSection,
+  user,
+  userName,
 }) {
   const { theme } = useTheme();
   const [selectedTab, setSelectedTab] = useState("moderation");
 
-  const pendingCount = (pendingEvents?.length || 0) + (pendingConnections?.length || 0);
+  const pendingCount = (pendingEvents?.length || 0) + (pendingConnections?.length || 0) + (needsRevisionEvents?.length || 0) + (needsRevisionConnections?.length || 0);
 
   const selectedSection = useMemo(
     () => sections.find((s) => s.id === selectedTab),
@@ -58,11 +62,15 @@ export default function AdminView({
             embedded
             pendingEvents={pendingEvents}
             pendingConnections={pendingConnections}
+            needsRevisionEvents={needsRevisionEvents}
+            needsRevisionConnections={needsRevisionConnections}
             allEvents={allEvents}
             allConnections={allConnections}
             periods={displayPeriods}
             getSectionName={getSectionName}
             onEventApproved={onEventApproved}
+            user={user}
+            userName={userName}
           />
         ) : selectedSection ? (
           <AdminSectionSettings

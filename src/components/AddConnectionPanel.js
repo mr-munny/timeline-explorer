@@ -230,7 +230,7 @@ function EventSearchDropdown({ label, events, selectedId, onSelect, excludeId, p
   );
 }
 
-export default function AddConnectionPanel({ onAdd, onClose, userName, approvedEvents, periods, prefilledCause, prefilledEffect, editingConnection, isTeacher }) {
+export default function AddConnectionPanel({ onAdd, onClose, userName, approvedEvents, periods, prefilledCause, prefilledEffect, editingConnection, isTeacher, revisionMode = false, feedback = null }) {
   const { theme } = useTheme();
   const isEditing = !!editingConnection;
   const [causeEventId, setCauseEventId] = useState(isEditing ? editingConnection.causeEventId : (prefilledCause || null));
@@ -319,7 +319,7 @@ export default function AddConnectionPanel({ onAdd, onClose, userName, approvedE
                 color: theme.textPrimary,
               }}
             >
-              {isEditing ? "Edit Connection" : "Connect Two Events"}
+              {revisionMode ? "Revise Your Connection" : isEditing ? "Edit Connection" : "Connect Two Events"}
             </h2>
             <p
               style={{
@@ -329,7 +329,9 @@ export default function AddConnectionPanel({ onAdd, onClose, userName, approvedE
                 fontFamily: "'Overpass Mono', monospace",
               }}
             >
-              {isEditing
+              {revisionMode
+                ? <>Address teacher feedback and resubmit</>
+                : isEditing
                 ? <>Editing as <strong style={{ color: theme.textDescription }}>{userName}</strong></>
                 : <>Submitting as <strong style={{ color: theme.textDescription }}>{userName}</strong>
                   {!isTeacher && <> &middot; Requires teacher approval</>}</>
@@ -356,6 +358,37 @@ export default function AddConnectionPanel({ onAdd, onClose, userName, approvedE
             <Icon icon={closeIcon} width={20} />
           </button>
         </div>
+
+        {/* Teacher feedback banner (revision mode) */}
+        {revisionMode && feedback && (
+          <div style={{
+            background: theme.warmSubtleBg || "#FEF3C7",
+            border: "1.5px solid #D97706",
+            borderLeft: "4px solid #D97706",
+            borderRadius: 8,
+            padding: "12px 16px",
+            marginBottom: 4,
+          }}>
+            <div style={{
+              fontSize: 10, fontWeight: 700, fontFamily: "'Overpass Mono', monospace",
+              color: "#92400E", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6,
+            }}>
+              Teacher Feedback
+            </div>
+            <p style={{
+              fontSize: 13, fontFamily: "'Newsreader', serif",
+              color: theme.textDescription, lineHeight: 1.6, margin: 0,
+            }}>
+              {feedback.text}
+            </p>
+            <div style={{
+              fontSize: 10, fontFamily: "'Overpass Mono', monospace",
+              color: theme.textTertiary, marginTop: 6,
+            }}>
+              {feedback.givenBy} &middot; {new Date(feedback.date).toLocaleDateString()}
+            </div>
+          </div>
+        )}
 
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           <EventSearchDropdown
@@ -469,7 +502,7 @@ export default function AddConnectionPanel({ onAdd, onClose, userName, approvedE
             {submitting
               ? (isEditing ? "Saving..." : "Submitting...")
               : <><Icon icon={sendIcon} width={14} style={{ verticalAlign: "middle", marginRight: 5 }} />
-                {isEditing ? "Save Changes" : isTeacher ? "Add Connection" : "Submit Connection for Approval"}</>
+                {revisionMode ? "Resubmit for Review" : isEditing ? "Save Changes" : isTeacher ? "Add Connection" : "Submit Connection for Approval"}</>
             }
           </button>
         </div>

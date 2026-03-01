@@ -6,7 +6,6 @@ import ContributorSidebar from "./ContributorSidebar";
 
 export default function EventList({
   filteredEvents,
-  connectionMode,
   expandedEvent,
   setExpandedEvent,
   readEvents,
@@ -17,7 +16,6 @@ export default function EventList({
   displayPeriods,
   isTeacher,
   showContributors,
-  handleConnectionModeClick,
   handleEditEvent,
   handleDeleteEvent,
   handleScrollToEvent,
@@ -60,26 +58,14 @@ export default function EventList({
             <div
               key={event.id}
               data-event-id={event.id}
-              onClick={connectionMode ? (e) => {
-                e.stopPropagation();
-                handleConnectionModeClick(event.id);
-              } : undefined}
               onMouseEnter={() => setHoveredEvent(event.id)}
               onMouseLeave={() => setHoveredEvent(null)}
-              style={connectionMode ? {
-                cursor: "crosshair",
-                borderRadius: 10,
-                outline: connectionMode.causeEventId === event.id
-                  ? `2px solid ${theme.successGreen || "#22C55E"}`
-                  : `2px solid transparent`,
-                transition: "outline 0.15s",
-              } : undefined}
             >
               <EventCard
                 event={event}
-                isExpanded={connectionMode ? false : expandedEvent === event.id}
+                isExpanded={expandedEvent === event.id}
                 isRead={readEvents.has(event.id)}
-                onToggle={connectionMode ? () => {} : () =>
+                onToggle={() =>
                   setExpandedEvent(
                     expandedEvent === event.id ? null : event.id
                   )
@@ -98,7 +84,6 @@ export default function EventList({
                 onDeleteConnection={handleDeleteConnection}
                 onEditConnection={handleEditConnection}
                 onSuggestDeleteConnection={!isTeacher ? handleSuggestDeleteConnection : undefined}
-                connectionMode={connectionMode}
               />
             </div>
           ))

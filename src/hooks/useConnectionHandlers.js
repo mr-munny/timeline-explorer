@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { submitConnection, deleteConnection, updateConnection } from "../services/database";
+import { submitConnection, deleteConnection, updateConnection, resubmitConnection } from "../services/database";
 
 export default function useConnectionHandlers({
   user,
@@ -9,6 +9,8 @@ export default function useConnectionHandlers({
   editingConnection,
   setEditingConnection,
   setExpandedEvent,
+  revisingConnection,
+  setRevisingConnection,
 }) {
   const handleAddConnection = useCallback(
     async (formData) => {
@@ -98,6 +100,20 @@ export default function useConnectionHandlers({
     }, 100);
   }, [setExpandedEvent]);
 
+  const handleConnectionRevisionResubmit = useCallback(
+    async (formData) => {
+      if (!revisingConnection) return;
+      await resubmitConnection(
+        revisingConnection.id,
+        formData,
+        revisingConnection.feedback,
+        revisingConnection.feedbackHistory || []
+      );
+      setRevisingConnection(null);
+    },
+    [revisingConnection, setRevisingConnection]
+  );
+
   return {
     handleAddConnection,
     handleDeleteConnection,
@@ -105,5 +121,6 @@ export default function useConnectionHandlers({
     handleEditConnection,
     handleSaveConnectionEdit,
     handleScrollToEvent,
+    handleConnectionRevisionResubmit,
   };
 }

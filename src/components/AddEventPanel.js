@@ -23,7 +23,7 @@ const DEFAULT_FIELD_CONFIG = {
   region: "optional",
 };
 
-export default function AddEventPanel({ onAdd, onClose, userName, timelineStart = 1910, timelineEnd = 2000, periods = [], fieldConfig, editingEvent, isTeacher }) {
+export default function AddEventPanel({ onAdd, onClose, userName, timelineStart = 1910, timelineEnd = 2000, periods = [], fieldConfig, editingEvent, isTeacher, revisionMode = false, feedback = null }) {
   const fc = { ...DEFAULT_FIELD_CONFIG, ...(fieldConfig || {}) };
   const { theme, getThemedSourceTypeBg } = useTheme();
   const isEditing = !!editingEvent;
@@ -241,7 +241,7 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
                 color: theme.textPrimary,
               }}
             >
-              {isEditing ? "Edit Historical Event" : "Add a Historical Event"}
+              {revisionMode ? "Revise Your Submission" : isEditing ? "Edit Historical Event" : "Add a Historical Event"}
             </h2>
             <p
               style={{
@@ -251,7 +251,9 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
                 fontFamily: "'Overpass Mono', monospace",
               }}
             >
-              {isEditing
+              {revisionMode
+                ? <>Address teacher feedback and resubmit</>
+                : isEditing
                 ? <>Editing as <strong style={{ color: theme.textDescription }}>{userName}</strong></>
                 : <>Submitting as <strong style={{ color: theme.textDescription }}>{userName}</strong>{!isTeacher && <> &middot; Requires teacher approval</>}</>
               }
@@ -277,6 +279,37 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
             <Icon icon={closeIcon} width={20} />
           </button>
         </div>
+
+        {/* Teacher feedback banner (revision mode) */}
+        {revisionMode && feedback && (
+          <div style={{
+            background: theme.warmSubtleBg || "#FEF3C7",
+            border: "1.5px solid #D97706",
+            borderLeft: "4px solid #D97706",
+            borderRadius: 8,
+            padding: "12px 16px",
+            marginBottom: 4,
+          }}>
+            <div style={{
+              fontSize: 10, fontWeight: 700, fontFamily: "'Overpass Mono', monospace",
+              color: "#92400E", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6,
+            }}>
+              Teacher Feedback
+            </div>
+            <p style={{
+              fontSize: 13, fontFamily: "'Newsreader', serif",
+              color: theme.textDescription, lineHeight: 1.6, margin: 0,
+            }}>
+              {feedback.text}
+            </p>
+            <div style={{
+              fontSize: 10, fontFamily: "'Overpass Mono', monospace",
+              color: theme.textTertiary, marginTop: 6,
+            }}>
+              {feedback.givenBy} &middot; {new Date(feedback.date).toLocaleDateString()}
+            </div>
+          </div>
+        )}
 
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           {/* Title + Year row */}
@@ -698,7 +731,7 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
           >
             {submitting
               ? (isEditing ? "Saving..." : "Submitting...")
-              : <><Icon icon={sendIcon} width={14} style={{ verticalAlign: "middle", marginRight: 5 }} />{isEditing ? "Save Changes" : isTeacher ? "Add Event" : "Submit Event for Approval"}</>
+              : <><Icon icon={sendIcon} width={14} style={{ verticalAlign: "middle", marginRight: 5 }} />{revisionMode ? "Resubmit for Review" : isEditing ? "Save Changes" : isTeacher ? "Add Event" : "Submit Event for Approval"}</>
             }
           </button>
         </div>

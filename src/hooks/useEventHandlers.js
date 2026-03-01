@@ -113,8 +113,11 @@ export default function useEventHandlers({
             changes,
           }],
         });
+      } else if (editingEvent.status === "pending") {
+        // Student editing own pending submission: update in-place
+        await updateEvent(editingEvent.id, updates);
       } else {
-        // Student: submit as pending edit proposal
+        // Student editing approved event: submit as pending edit proposal
         await submitEvent({
           ...updates,
           editOf: editingEvent.id,

@@ -78,6 +78,9 @@ export default function useConnectionHandlers({
             changes,
           }],
         });
+      } else if (editingConnection.status === "pending") {
+        // Student editing own pending submission: update in-place
+        await updateConnection(editingConnection.id, formData);
       } else {
         await submitConnection({
           ...formData,

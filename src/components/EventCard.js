@@ -17,10 +17,11 @@ import mapMarkerOutline from "@iconify-icons/mdi/map-marker-outline";
 import schoolOutline from "@iconify-icons/mdi/school-outline";
 import { useTheme } from "../contexts/ThemeContext";
 
-export default function EventCard({ event, isExpanded, isRead, onToggle, isTeacher, onEdit, onDelete, periods = [], onReturnToTimeline, connections, allEvents = [], onScrollToEvent, onDeleteConnection, connectionMode }) {
+export default function EventCard({ event, isExpanded, isRead, onToggle, isTeacher, onEdit, onDelete, periods = [], onReturnToTimeline, connections, allEvents = [], onScrollToEvent, onDeleteConnection, onEditConnection, onSuggestDeleteConnection, connectionMode }) {
   const { theme } = useTheme();
   const [showEditHistory, setShowEditHistory] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [showConnEditHistory, setShowConnEditHistory] = useState(new Set());
   const period = getPeriod(periods, event.period);
   const periodColor = period?.color || "#6B7280";
   const editHistory = event.editHistory || [];
@@ -538,48 +539,184 @@ export default function EventCard({ event, isExpanded, isRead, onToggle, isTeach
                 const target = allEvents.find((e) => e.id === conn.effectEventId);
                 if (!target) return null;
                 const targetPeriod = getPeriod(periods, target.period);
+                const connHistory = conn.editHistory || [];
                 return (
-                  <div
-                    key={conn.id}
-                    onClick={(e) => { e.stopPropagation(); if (onScrollToEvent) onScrollToEvent(conn.effectEventId); }}
-                    style={{
-                      display: "flex",
-                      alignItems: "flex-start",
-                      gap: 8,
-                      padding: "6px 8px",
-                      marginBottom: 4,
-                      borderRadius: 5,
-                      cursor: "pointer",
-                      transition: "background 0.1s",
-                    }}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = theme.subtleBg; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
-                  >
-                    <Icon icon={arrowRightThick} width={14} style={{ color: theme.accentGold || "#F59E0B", marginTop: 2, flexShrink: 0 }} />
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 12, fontFamily: "'Newsreader', serif", fontWeight: 600, color: theme.textPrimary }}>
-                        Leads to:{" "}
-                        <span style={{ color: targetPeriod?.color || theme.textSecondary }}>{formatEventDate(target)}</span>
-                        {" "}{target.title}
+                  <div key={conn.id}>
+                    <div
+                      onClick={(e) => { e.stopPropagation(); if (onScrollToEvent) onScrollToEvent(conn.effectEventId); }}
+                      style={{
+                        display: "flex",
+                        alignItems: "flex-start",
+                        gap: 8,
+                        padding: "6px 8px",
+                        marginBottom: connHistory.length > 0 ? 0 : 4,
+                        borderRadius: 5,
+                        cursor: "pointer",
+                        transition: "background 0.1s",
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = theme.subtleBg; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+                    >
+                      <Icon icon={arrowRightThick} width={14} style={{ color: theme.accentGold || "#F59E0B", marginTop: 2, flexShrink: 0 }} />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 12, fontFamily: "'Newsreader', serif", fontWeight: 600, color: theme.textPrimary }}>
+                          Leads to:{" "}
+                          <span style={{ color: targetPeriod?.color || theme.textSecondary }}>{formatEventDate(target)}</span>
+                          {" "}{target.title}
+                        </div>
+                        <div style={{ fontSize: 11, color: theme.textSecondary, fontFamily: "'Newsreader', serif", marginTop: 2, lineHeight: 1.4 }}>
+                          {conn.description}
+                        </div>
                       </div>
-                      <div style={{ fontSize: 11, color: theme.textSecondary, fontFamily: "'Newsreader', serif", marginTop: 2, lineHeight: 1.4 }}>
-                        {conn.description}
+                      <div style={{ display: "flex", gap: 2, flexShrink: 0 }}>
+                        {onEditConnection && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); onEditConnection(conn); }}
+                            style={{
+                              background: "none", border: "none", cursor: "pointer",
+                              color: theme.textMuted, padding: 2,
+                              display: "flex", alignItems: "center",
+                              borderRadius: 3, transition: "all 0.15s",
+                            }}
+                            onMouseEnter={(e) => { e.currentTarget.style.color = theme.textPrimary; e.currentTarget.style.background = theme.subtleBg; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.color = theme.textMuted; e.currentTarget.style.background = "none"; }}
+                          >
+                            <Icon icon={pencilOutline} width={14} />
+                          </button>
+                        )}
+                        {isTeacher && onDeleteConnection && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (window.confirm("Delete this connection?")) onDeleteConnection(conn.id);
+                            }}
+                            style={{
+                              background: "none", border: "none", cursor: "pointer",
+                              color: theme.textMuted, padding: 2,
+                              display: "flex", alignItems: "center",
+                              borderRadius: 3, transition: "all 0.15s",
+                            }}
+                            onMouseEnter={(e) => { e.currentTarget.style.color = theme.errorRed || "#DC2626"; e.currentTarget.style.background = (theme.errorRed || "#DC2626") + "10"; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.color = theme.textMuted; e.currentTarget.style.background = "none"; }}
+                          >
+                            <Icon icon={closeCircleOutline} width={14} />
+                          </button>
+                        )}
+                        {!isTeacher && onSuggestDeleteConnection && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onSuggestDeleteConnection(conn);
+                            }}
+                            style={{
+                              background: "none", border: "none", cursor: "pointer",
+                              color: theme.textMuted, padding: 2,
+                              display: "flex", alignItems: "center",
+                              borderRadius: 3, transition: "all 0.15s",
+                            }}
+                            onMouseEnter={(e) => { e.currentTarget.style.color = theme.errorRed || "#DC2626"; e.currentTarget.style.background = (theme.errorRed || "#DC2626") + "10"; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.color = theme.textMuted; e.currentTarget.style.background = "none"; }}
+                          >
+                            <Icon icon={deleteOutline} width={14} />
+                          </button>
+                        )}
                       </div>
                     </div>
-                    {isTeacher && onDeleteConnection && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (window.confirm("Delete this connection?")) onDeleteConnection(conn.id);
-                        }}
-                        style={{
-                          background: "none", border: "none", cursor: "pointer",
-                          color: theme.textMuted, padding: 2, flexShrink: 0,
-                          display: "flex", alignItems: "center",
-                        }}
-                      >
-                        <Icon icon={closeCircleOutline} width={14} />
-                      </button>
+                    {connHistory.length > 0 && (
+                      <div style={{ paddingLeft: 30, marginBottom: 4 }}>
+                        <span
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setShowConnEditHistory(prev => {
+                              const next = new Set(prev);
+                              next.has(conn.id) ? next.delete(conn.id) : next.add(conn.id);
+                              return next;
+                            });
+                          }}
+                          style={{
+                            color: theme.textTertiary, fontSize: 9,
+                            fontFamily: "'Overpass Mono', monospace", fontStyle: "italic",
+                            cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 3,
+                            transition: "color 0.15s",
+                          }}
+                          onMouseEnter={(e) => { e.currentTarget.style.color = theme.textDescription; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.color = theme.textTertiary; }}
+                        >
+                          <Icon icon={pencilOutline} width={8} />
+                          edited by {[...new Set(connHistory.map(e => e.name))].join(", ")}
+                          <span style={{ fontSize: 7 }}>{showConnEditHistory.has(conn.id) ? "\u25B2" : "\u25BC"}</span>
+                        </span>
+                        {showConnEditHistory.has(conn.id) && (
+                          <div style={{
+                            marginTop: 4, padding: "6px 8px", background: theme.subtleBg,
+                            borderRadius: 5, fontSize: 9, fontFamily: "'Overpass Mono', monospace",
+                            display: "flex", flexDirection: "column", gap: 6,
+                          }}>
+                            {connHistory.map((entry, i) => (
+                              <div key={i}>
+                                <div style={{ display: "flex", justifyContent: "space-between", gap: 6, color: theme.textDescription }}>
+                                  <span style={{ fontWeight: 600 }}>{entry.name}</span>
+                                  <span style={{ color: theme.textTertiary }}>
+                                    {new Date(entry.date).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+                                  </span>
+                                </div>
+                                {entry.changes && Object.keys(entry.changes).length > 0 && (
+                                  <div style={{ display: "flex", flexDirection: "column", gap: 2, marginTop: 3 }}>
+                                    {Object.entries(entry.changes).map(([key, { from, to }]) => {
+                                      const label = key === "causeEventId" ? "Cause Event"
+                                        : key === "effectEventId" ? "Effect Event"
+                                        : "Description";
+                                      const isEventRef = key === "causeEventId" || key === "effectEventId";
+                                      const isText = key === "description";
+                                      return (
+                                        <div key={key} style={{
+                                          padding: "2px 5px", background: theme.warmSubtleBg,
+                                          borderRadius: 3, borderLeft: "2px solid #D97706",
+                                        }}>
+                                          <div style={{ fontSize: 7, fontWeight: 700, color: theme.textTertiary, textTransform: "uppercase" }}>
+                                            {label}
+                                          </div>
+                                          <div style={{ fontSize: 9, lineHeight: 1.4 }}>
+                                            {isEventRef ? (
+                                              <>
+                                                <span style={{ color: theme.errorRed || "#DC2626", textDecoration: "line-through", opacity: 0.7 }}>
+                                                  {allEvents.find(e => e.id === from)?.title || from || "None"}
+                                                </span>
+                                                <span style={{ margin: "0 3px", color: theme.textTertiary }}>{"\u2192"}</span>
+                                                <span style={{ color: "#16A34A", fontWeight: 600 }}>
+                                                  {allEvents.find(e => e.id === to)?.title || to || "None"}
+                                                </span>
+                                              </>
+                                            ) : isText ? (
+                                              computeWordDiff(from, to).map((part, pi) => (
+                                                <span key={pi} style={{
+                                                  color: part.type === "del" ? (theme.errorRed || "#DC2626") : part.type === "add" ? "#16A34A" : theme.textDescription,
+                                                  textDecoration: part.type === "del" ? "line-through" : "none",
+                                                  fontWeight: part.type === "add" ? 600 : "normal",
+                                                  opacity: part.type === "del" ? 0.7 : 1,
+                                                  background: part.type === "add" ? "#DCFCE7" : part.type === "del" ? "#FEE2E2" : "transparent",
+                                                  borderRadius: part.type !== "same" ? 2 : 0,
+                                                  padding: part.type !== "same" ? "0 1px" : 0,
+                                                }}>{part.text}</span>
+                                              ))
+                                            ) : (
+                                              <>
+                                                <span style={{ color: theme.errorRed || "#DC2626", textDecoration: "line-through", opacity: 0.7 }}>{String(from ?? "")}</span>
+                                                <span style={{ margin: "0 3px", color: theme.textTertiary }}>{"\u2192"}</span>
+                                                <span style={{ color: "#16A34A", fontWeight: 600 }}>{String(to ?? "")}</span>
+                                              </>
+                                            )}
+                                          </div>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     )}
                   </div>
                 );
@@ -589,48 +726,184 @@ export default function EventCard({ event, isExpanded, isRead, onToggle, isTeach
                 const source = allEvents.find((e) => e.id === conn.causeEventId);
                 if (!source) return null;
                 const sourcePeriod = getPeriod(periods, source.period);
+                const connHistory = conn.editHistory || [];
                 return (
-                  <div
-                    key={conn.id}
-                    onClick={(e) => { e.stopPropagation(); if (onScrollToEvent) onScrollToEvent(conn.causeEventId); }}
-                    style={{
-                      display: "flex",
-                      alignItems: "flex-start",
-                      gap: 8,
-                      padding: "6px 8px",
-                      marginBottom: 4,
-                      borderRadius: 5,
-                      cursor: "pointer",
-                      transition: "background 0.1s",
-                    }}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = theme.subtleBg; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
-                  >
-                    <Icon icon={arrowLeftThick} width={14} style={{ color: theme.accentGold || "#F59E0B", marginTop: 2, flexShrink: 0 }} />
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 12, fontFamily: "'Newsreader', serif", fontWeight: 600, color: theme.textPrimary }}>
-                        Caused by:{" "}
-                        <span style={{ color: sourcePeriod?.color || theme.textSecondary }}>{formatEventDate(source)}</span>
-                        {" "}{source.title}
+                  <div key={conn.id}>
+                    <div
+                      onClick={(e) => { e.stopPropagation(); if (onScrollToEvent) onScrollToEvent(conn.causeEventId); }}
+                      style={{
+                        display: "flex",
+                        alignItems: "flex-start",
+                        gap: 8,
+                        padding: "6px 8px",
+                        marginBottom: connHistory.length > 0 ? 0 : 4,
+                        borderRadius: 5,
+                        cursor: "pointer",
+                        transition: "background 0.1s",
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = theme.subtleBg; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+                    >
+                      <Icon icon={arrowLeftThick} width={14} style={{ color: theme.accentGold || "#F59E0B", marginTop: 2, flexShrink: 0 }} />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 12, fontFamily: "'Newsreader', serif", fontWeight: 600, color: theme.textPrimary }}>
+                          Caused by:{" "}
+                          <span style={{ color: sourcePeriod?.color || theme.textSecondary }}>{formatEventDate(source)}</span>
+                          {" "}{source.title}
+                        </div>
+                        <div style={{ fontSize: 11, color: theme.textSecondary, fontFamily: "'Newsreader', serif", marginTop: 2, lineHeight: 1.4 }}>
+                          {conn.description}
+                        </div>
                       </div>
-                      <div style={{ fontSize: 11, color: theme.textSecondary, fontFamily: "'Newsreader', serif", marginTop: 2, lineHeight: 1.4 }}>
-                        {conn.description}
+                      <div style={{ display: "flex", gap: 2, flexShrink: 0 }}>
+                        {onEditConnection && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); onEditConnection(conn); }}
+                            style={{
+                              background: "none", border: "none", cursor: "pointer",
+                              color: theme.textMuted, padding: 2,
+                              display: "flex", alignItems: "center",
+                              borderRadius: 3, transition: "all 0.15s",
+                            }}
+                            onMouseEnter={(e) => { e.currentTarget.style.color = theme.textPrimary; e.currentTarget.style.background = theme.subtleBg; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.color = theme.textMuted; e.currentTarget.style.background = "none"; }}
+                          >
+                            <Icon icon={pencilOutline} width={14} />
+                          </button>
+                        )}
+                        {isTeacher && onDeleteConnection && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (window.confirm("Delete this connection?")) onDeleteConnection(conn.id);
+                            }}
+                            style={{
+                              background: "none", border: "none", cursor: "pointer",
+                              color: theme.textMuted, padding: 2,
+                              display: "flex", alignItems: "center",
+                              borderRadius: 3, transition: "all 0.15s",
+                            }}
+                            onMouseEnter={(e) => { e.currentTarget.style.color = theme.errorRed || "#DC2626"; e.currentTarget.style.background = (theme.errorRed || "#DC2626") + "10"; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.color = theme.textMuted; e.currentTarget.style.background = "none"; }}
+                          >
+                            <Icon icon={closeCircleOutline} width={14} />
+                          </button>
+                        )}
+                        {!isTeacher && onSuggestDeleteConnection && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onSuggestDeleteConnection(conn);
+                            }}
+                            style={{
+                              background: "none", border: "none", cursor: "pointer",
+                              color: theme.textMuted, padding: 2,
+                              display: "flex", alignItems: "center",
+                              borderRadius: 3, transition: "all 0.15s",
+                            }}
+                            onMouseEnter={(e) => { e.currentTarget.style.color = theme.errorRed || "#DC2626"; e.currentTarget.style.background = (theme.errorRed || "#DC2626") + "10"; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.color = theme.textMuted; e.currentTarget.style.background = "none"; }}
+                          >
+                            <Icon icon={deleteOutline} width={14} />
+                          </button>
+                        )}
                       </div>
                     </div>
-                    {isTeacher && onDeleteConnection && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (window.confirm("Delete this connection?")) onDeleteConnection(conn.id);
-                        }}
-                        style={{
-                          background: "none", border: "none", cursor: "pointer",
-                          color: theme.textMuted, padding: 2, flexShrink: 0,
-                          display: "flex", alignItems: "center",
-                        }}
-                      >
-                        <Icon icon={closeCircleOutline} width={14} />
-                      </button>
+                    {connHistory.length > 0 && (
+                      <div style={{ paddingLeft: 30, marginBottom: 4 }}>
+                        <span
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setShowConnEditHistory(prev => {
+                              const next = new Set(prev);
+                              next.has(conn.id) ? next.delete(conn.id) : next.add(conn.id);
+                              return next;
+                            });
+                          }}
+                          style={{
+                            color: theme.textTertiary, fontSize: 9,
+                            fontFamily: "'Overpass Mono', monospace", fontStyle: "italic",
+                            cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 3,
+                            transition: "color 0.15s",
+                          }}
+                          onMouseEnter={(e) => { e.currentTarget.style.color = theme.textDescription; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.color = theme.textTertiary; }}
+                        >
+                          <Icon icon={pencilOutline} width={8} />
+                          edited by {[...new Set(connHistory.map(e => e.name))].join(", ")}
+                          <span style={{ fontSize: 7 }}>{showConnEditHistory.has(conn.id) ? "\u25B2" : "\u25BC"}</span>
+                        </span>
+                        {showConnEditHistory.has(conn.id) && (
+                          <div style={{
+                            marginTop: 4, padding: "6px 8px", background: theme.subtleBg,
+                            borderRadius: 5, fontSize: 9, fontFamily: "'Overpass Mono', monospace",
+                            display: "flex", flexDirection: "column", gap: 6,
+                          }}>
+                            {connHistory.map((entry, i) => (
+                              <div key={i}>
+                                <div style={{ display: "flex", justifyContent: "space-between", gap: 6, color: theme.textDescription }}>
+                                  <span style={{ fontWeight: 600 }}>{entry.name}</span>
+                                  <span style={{ color: theme.textTertiary }}>
+                                    {new Date(entry.date).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+                                  </span>
+                                </div>
+                                {entry.changes && Object.keys(entry.changes).length > 0 && (
+                                  <div style={{ display: "flex", flexDirection: "column", gap: 2, marginTop: 3 }}>
+                                    {Object.entries(entry.changes).map(([key, { from, to }]) => {
+                                      const label = key === "causeEventId" ? "Cause Event"
+                                        : key === "effectEventId" ? "Effect Event"
+                                        : "Description";
+                                      const isEventRef = key === "causeEventId" || key === "effectEventId";
+                                      const isText = key === "description";
+                                      return (
+                                        <div key={key} style={{
+                                          padding: "2px 5px", background: theme.warmSubtleBg,
+                                          borderRadius: 3, borderLeft: "2px solid #D97706",
+                                        }}>
+                                          <div style={{ fontSize: 7, fontWeight: 700, color: theme.textTertiary, textTransform: "uppercase" }}>
+                                            {label}
+                                          </div>
+                                          <div style={{ fontSize: 9, lineHeight: 1.4 }}>
+                                            {isEventRef ? (
+                                              <>
+                                                <span style={{ color: theme.errorRed || "#DC2626", textDecoration: "line-through", opacity: 0.7 }}>
+                                                  {allEvents.find(e => e.id === from)?.title || from || "None"}
+                                                </span>
+                                                <span style={{ margin: "0 3px", color: theme.textTertiary }}>{"\u2192"}</span>
+                                                <span style={{ color: "#16A34A", fontWeight: 600 }}>
+                                                  {allEvents.find(e => e.id === to)?.title || to || "None"}
+                                                </span>
+                                              </>
+                                            ) : isText ? (
+                                              computeWordDiff(from, to).map((part, pi) => (
+                                                <span key={pi} style={{
+                                                  color: part.type === "del" ? (theme.errorRed || "#DC2626") : part.type === "add" ? "#16A34A" : theme.textDescription,
+                                                  textDecoration: part.type === "del" ? "line-through" : "none",
+                                                  fontWeight: part.type === "add" ? 600 : "normal",
+                                                  opacity: part.type === "del" ? 0.7 : 1,
+                                                  background: part.type === "add" ? "#DCFCE7" : part.type === "del" ? "#FEE2E2" : "transparent",
+                                                  borderRadius: part.type !== "same" ? 2 : 0,
+                                                  padding: part.type !== "same" ? "0 1px" : 0,
+                                                }}>{part.text}</span>
+                                              ))
+                                            ) : (
+                                              <>
+                                                <span style={{ color: theme.errorRed || "#DC2626", textDecoration: "line-through", opacity: 0.7 }}>{String(from ?? "")}</span>
+                                                <span style={{ margin: "0 3px", color: theme.textTertiary }}>{"\u2192"}</span>
+                                                <span style={{ color: "#16A34A", fontWeight: 600 }}>{String(to ?? "")}</span>
+                                              </>
+                                            )}
+                                          </div>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     )}
                   </div>
                 );
@@ -656,7 +929,10 @@ export default function EventCard({ event, isExpanded, isRead, onToggle, isTeach
                   fontFamily: "'Overpass Mono', monospace",
                   fontWeight: 600,
                   cursor: "pointer",
+                  transition: "all 0.15s",
                 }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = theme.subtleBg; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "none"; }}
               >
                 <Icon icon={pencilOutline} width={13} style={{ verticalAlign: "middle", marginRight: 3 }} />
                 {isTeacher ? "Edit" : "Suggest Edit"}
@@ -680,7 +956,10 @@ export default function EventCard({ event, isExpanded, isRead, onToggle, isTeach
                   fontFamily: "'Overpass Mono', monospace",
                   fontWeight: 600,
                   cursor: "pointer",
+                  transition: "all 0.15s",
                 }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = (theme.errorRed || "#DC2626") + "10"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "none"; }}
               >
                 <Icon icon={deleteOutline} width={13} style={{ verticalAlign: "middle", marginRight: 3 }} />
                 Delete Event

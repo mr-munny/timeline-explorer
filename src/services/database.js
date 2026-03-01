@@ -92,12 +92,12 @@ export function subscribeToConnections(section, callback) {
   });
 }
 
-// Submit a new connection (always pending)
+// Submit a new connection (pending by default, can override status)
 export async function submitConnection(connectionData) {
   const newRef = push(connectionsRef);
   await set(newRef, {
-    ...connectionData,
     status: "pending",
+    ...connectionData,
     dateAdded: new Date().toISOString(),
   });
   return newRef.key;
@@ -125,6 +125,22 @@ export async function deleteConnection(connectionId) {
 export async function updateConnection(connectionId, updates) {
   const connRef = ref(db, `connections/${connectionId}`);
   await update(connRef, updates);
+}
+
+// Approve a connection edit proposal: apply changes to original, remove proposal
+export async function approveConnectionEdit(editProposalId, originalConnectionId, updates) {
+  const originalRef = ref(db, `connections/${originalConnectionId}`);
+  await update(originalRef, updates);
+  const proposalRef = ref(db, `connections/${editProposalId}`);
+  await remove(proposalRef);
+}
+
+// Approve a connection deletion proposal: delete original connection, remove proposal
+export async function approveConnectionDeletion(proposalId, originalConnectionId) {
+  const originalRef = ref(db, `connections/${originalConnectionId}`);
+  await remove(originalRef);
+  const proposalRef = ref(db, `connections/${proposalId}`);
+  await remove(proposalRef);
 }
 
 // ── Periods ─────────────────────────────────────────────────

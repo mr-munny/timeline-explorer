@@ -318,10 +318,16 @@ export default function VisualTimeline({
     });
     if (eventX[expandedEventId] === undefined) return [];
 
+    // Map each event to its cluster so we can skip arcs within the same node
+    const eventCluster = {};
+    clusteredMarkers.forEach((c) => c.items.forEach((item) => { eventCluster[item.event.id] = c.id; }));
+
     const arcs = [];
     for (const conn of [...(conns.causes || []), ...(conns.effects || [])]) {
       const otherId = conn.causeEventId === expandedEventId ? conn.effectEventId : conn.causeEventId;
       if (eventX[otherId] === undefined) continue;
+      // Skip arcs between events that share a combined node
+      if (eventCluster[conn.causeEventId] && eventCluster[conn.causeEventId] === eventCluster[conn.effectEventId]) continue;
       arcs.push({
         id: conn.id,
         x1: eventX[conn.causeEventId],
@@ -329,7 +335,7 @@ export default function VisualTimeline({
       });
     }
     return arcs;
-  }, [expandedEventId, connectionsByEvent, filteredEvents, canvasWidth, minYear, totalSpan]);
+  }, [expandedEventId, connectionsByEvent, filteredEvents, canvasWidth, minYear, totalSpan, clusteredMarkers]);
 
   // Cluster/node click handler (used for both single and multi-event nodes)
   const handleNodeClick = useCallback((e, cluster) => {

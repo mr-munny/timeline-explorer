@@ -31,8 +31,9 @@ export default function App() {
   const { theme, mode, toggleTheme, getThemedPeriodBg } = useTheme();
   const userName = user ? (user.displayName || user.email.split("@")[0]) : "";
   const [section, setSection] = useState(getInitialSection);
-  const [selectedPeriod, setSelectedPeriod] = useState("all");
-  const [selectedTag, setSelectedTag] = useState("all");
+  const [selectedPeriods, setSelectedPeriods] = useState([]);
+  const [selectedTags, setSelectedTags] = useState([]);
+  const [tagMatchMode, setTagMatchMode] = useState("or");
   const [expandedEvent, setExpandedEvent] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortOrder, setSortOrder] = useState("chrono");
@@ -160,11 +161,46 @@ export default function App() {
     return map;
   }, [approvedConnections]);
 
+  const togglePeriod = useCallback((periodId) => {
+    setSelectedPeriods((prev) =>
+      prev.includes(periodId) ? prev.filter((id) => id !== periodId) : [...prev, periodId]
+    );
+  }, []);
+
+  const toggleTag = useCallback((tag) => {
+    setSelectedTags((prev) =>
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
+    );
+  }, []);
+
+  const clearAllFilters = useCallback(() => {
+    setSelectedPeriods([]);
+    setSelectedTags([]);
+    setTagMatchMode("or");
+    setSearchTerm("");
+    setSectionFilter("all");
+  }, []);
+
   // Filtered + sorted events for display
   const filteredEvents = useMemo(() => {
     let evts = [...approvedEvents];
-    if (selectedPeriod !== "all") evts = evts.filter((e) => e.period === selectedPeriod);
-    if (selectedTag !== "all") evts = evts.filter((e) => (e.tags || []).includes(selectedTag));
+    if (selectedPeriods.length > 0) {
+      const periodSet = new Set(selectedPeriods);
+      evts = evts.filter((e) => periodSet.has(e.period));
+    }
+    if (selectedTags.length > 0) {
+      if (tagMatchMode === "and") {
+        evts = evts.filter((e) => {
+          const eventTags = e.tags || [];
+          return selectedTags.every((tag) => eventTags.includes(tag));
+        });
+      } else {
+        evts = evts.filter((e) => {
+          const eventTags = e.tags || [];
+          return selectedTags.some((tag) => eventTags.includes(tag));
+        });
+      }
+    }
     if (isTeacher && sectionFilter !== "all") {
       evts = evts.filter((e) => e.section === sectionFilter);
     }
@@ -183,7 +219,7 @@ export default function App() {
       return sortOrder === "chrono" ? cmp : -cmp;
     });
     return evts;
-  }, [approvedEvents, selectedPeriod, selectedTag, searchTerm, sortOrder, isTeacher, sectionFilter]);
+  }, [approvedEvents, selectedPeriods, selectedTags, tagMatchMode, searchTerm, sortOrder, isTeacher, sectionFilter]);
 
   const filteredEventIds = useMemo(
     () => new Set(filteredEvents.map((e) => e.id)),
@@ -207,6 +243,14 @@ export default function App() {
   }, [section, allSectionPeriods, periods, activeSections]);
 
   const displayPeriods = section === "all" ? mergedPeriods : periods;
+
+  // Compute union of selected period era ranges for auto-zoom
+  const selectedEraRange = useMemo(() => {
+    if (selectedPeriods.length === 0) return null;
+    const selected = selectedPeriods.map((id) => displayPeriods.find((p) => p.id === id)).filter(Boolean);
+    if (selected.length === 0) return null;
+    return { start: Math.min(...selected.map((p) => p.era[0])), end: Math.max(...selected.map((p) => p.era[1])) };
+  }, [selectedPeriods, displayPeriods]);
   const findPeriod = (id) => getPeriod(displayPeriods, id);
   const displayCQ = section === "all" ? null : compellingQuestion;
 
@@ -360,9 +404,10 @@ export default function App() {
         <div style={{ maxWidth: 960, margin: "0 auto" }}>
           <VisualTimeline
             filteredEvents={filteredEvents}
-            onEraClick={setSelectedPeriod}
+            onEraClick={togglePeriod}
             onEventSelect={handleScrollToEvent}
-            selectedPeriod={selectedPeriod}
+            selectedPeriods={selectedPeriods}
+            selectedEraRange={selectedEraRange}
             timelineStart={timelineStart}
             timelineEnd={timelineEnd}
             currentYear={new Date().getFullYear()}
@@ -380,10 +425,13 @@ export default function App() {
           getThemedPeriodBg={getThemedPeriodBg}
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}
-          selectedPeriod={selectedPeriod}
-          setSelectedPeriod={setSelectedPeriod}
-          selectedTag={selectedTag}
-          setSelectedTag={setSelectedTag}
+          selectedPeriods={selectedPeriods}
+          togglePeriod={togglePeriod}
+          selectedTags={selectedTags}
+          toggleTag={toggleTag}
+          tagMatchMode={tagMatchMode}
+          setTagMatchMode={setTagMatchMode}
+          clearAllFilters={clearAllFilters}
           sectionFilter={sectionFilter}
           setSectionFilter={setSectionFilter}
           sortOrder={sortOrder}

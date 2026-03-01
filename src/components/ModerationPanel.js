@@ -13,7 +13,7 @@ import arrowRightBold from "@iconify-icons/mdi/arrow-right-bold";
 import commentAlertOutline from "@iconify-icons/mdi/comment-alert-outline";
 import { useTheme } from "../contexts/ThemeContext";
 
-export default function ModerationPanel({ pendingEvents, pendingConnections = [], needsRevisionEvents = [], needsRevisionConnections = [], allEvents = [], allConnections = [], periods = [], getSectionName = (id) => id, onEventApproved, embedded = true, readOnly = false, user, userName }) {
+export default function ModerationPanel({ pendingEvents, pendingConnections = [], needsRevisionEvents = [], needsRevisionConnections = [], allEvents = [], allConnections = [], periods = [], getSectionName = (id) => id, onEventApproved, embedded = true, readOnly = false, user, userName, onEditPendingEvent, onEditPendingConnection, onWithdraw }) {
   const { theme } = useTheme();
   const [activeTab, setActiveTab] = useState("events");
   const [editingId, setEditingId] = useState(null);
@@ -776,7 +776,56 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                       </>
                       )}
 
-                      {/* Action buttons */}
+                      {/* Student self-service buttons (readOnly mode, own submissions only) */}
+                      {readOnly && user && event.addedByUid === user.uid && (
+                        <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
+                          <button
+                            onClick={() => {
+                              if (!window.confirm("Withdraw this submission? It will be removed from the review queue.")) return;
+                              onWithdraw("event", event.id);
+                            }}
+                            style={{
+                              padding: "6px 14px",
+                              background: "none",
+                              border: `1.5px solid ${theme.errorRed}`,
+                              borderRadius: 6,
+                              color: theme.errorRed,
+                              fontSize: 11,
+                              fontFamily: "'Overpass Mono', monospace",
+                              fontWeight: 600,
+                              cursor: "pointer",
+                              transition: "all 0.15s",
+                            }}
+                            onMouseEnter={(e) => { e.currentTarget.style.background = (theme.errorRed || "#DC2626") + "10"; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.background = "none"; }}
+                          >
+                            <Icon icon={cancelIcon} width={13} style={{ verticalAlign: "middle", marginRight: 3 }} />
+                            Withdraw
+                          </button>
+                          <button
+                            onClick={() => onEditPendingEvent(event)}
+                            style={{
+                              padding: "6px 14px",
+                              background: "none",
+                              border: `1.5px solid ${theme.inputBorder}`,
+                              borderRadius: 6,
+                              color: theme.textDescription,
+                              fontSize: 11,
+                              fontFamily: "'Overpass Mono', monospace",
+                              fontWeight: 600,
+                              cursor: "pointer",
+                              transition: "all 0.15s",
+                            }}
+                            onMouseEnter={(e) => { e.currentTarget.style.background = theme.subtleBg; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.background = "none"; }}
+                          >
+                            <Icon icon={pencilIcon} width={13} style={{ verticalAlign: "middle", marginRight: 3 }} />
+                            Edit
+                          </button>
+                        </div>
+                      )}
+
+                      {/* Teacher action buttons */}
                       {!readOnly && (
                       <>
                       <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
@@ -1313,6 +1362,47 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                           </div>
                         </>
                       )}
+                      {/* Student self-service buttons (readOnly mode, own submissions only) */}
+                      {readOnly && user && conn.addedByUid === user.uid && (
+                        <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
+                          <button
+                            onClick={() => {
+                              if (!window.confirm("Withdraw this connection? It will be removed from the review queue.")) return;
+                              onWithdraw("connection", conn.id);
+                            }}
+                            style={{
+                              padding: "6px 14px", background: "none",
+                              border: `1.5px solid ${theme.errorRed}`, borderRadius: 6,
+                              color: theme.errorRed, fontSize: 11,
+                              fontFamily: "'Overpass Mono', monospace", fontWeight: 600, cursor: "pointer",
+                              transition: "all 0.15s",
+                            }}
+                            onMouseEnter={(e) => { e.currentTarget.style.background = (theme.errorRed || "#DC2626") + "10"; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.background = "none"; }}
+                          >
+                            <Icon icon={cancelIcon} width={13} style={{ verticalAlign: "middle", marginRight: 3 }} />
+                            Withdraw
+                          </button>
+                          {!conn.deleteOf && (
+                            <button
+                              onClick={() => onEditPendingConnection(conn)}
+                              style={{
+                                padding: "6px 14px", background: "none",
+                                border: `1.5px solid ${theme.inputBorder}`, borderRadius: 6,
+                                color: theme.textDescription, fontSize: 11,
+                                fontFamily: "'Overpass Mono', monospace", fontWeight: 600, cursor: "pointer",
+                                transition: "all 0.15s",
+                              }}
+                              onMouseEnter={(e) => { e.currentTarget.style.background = theme.subtleBg; }}
+                              onMouseLeave={(e) => { e.currentTarget.style.background = "none"; }}
+                            >
+                              <Icon icon={pencilIcon} width={13} style={{ verticalAlign: "middle", marginRight: 3 }} />
+                              Edit
+                            </button>
+                          )}
+                        </div>
+                      )}
+
                       {!readOnly && (
                       <>
                       <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>

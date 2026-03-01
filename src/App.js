@@ -627,12 +627,19 @@ export default function App() {
             </button>
             <ModerationPanel
               readOnly
+              user={user}
               pendingEvents={pendingEvents}
               pendingConnections={pendingConnections}
               allEvents={allEvents}
               allConnections={allConnections}
               periods={displayPeriods}
               getSectionName={getSectionName}
+              onEditPendingEvent={(event) => { setEditingEvent(event); setShowPendingQueue(false); }}
+              onEditPendingConnection={(conn) => { setEditingConnection(conn); setShowPendingQueue(false); }}
+              onWithdraw={(type, id) => {
+                if (type === "event") handleDeleteEvent(id);
+                else handleDeleteConnection(id);
+              }}
             />
           </div>
         </div>

@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { useTheme } from "../contexts/ThemeContext";
 import EventCard from "./EventCard";
 import ConnectionLines from "./ConnectionLines";
@@ -9,8 +9,6 @@ export default function EventList({
   connectionMode,
   expandedEvent,
   setExpandedEvent,
-  hoveredEvent,
-  setHoveredEvent,
   readEvents,
   connectionsByEvent,
   approvedEvents,
@@ -29,6 +27,7 @@ export default function EventList({
 }) {
   const { theme } = useTheme();
   const eventListRef = useRef(null);
+  const [hoveredEvent, setHoveredEvent] = useState(null);
 
   return (
     <div style={{ display: "flex", gap: 20, alignItems: "flex-start" }}>

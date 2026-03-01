@@ -307,7 +307,7 @@ export default function EventCard({ event, isExpanded, isRead, onToggle, isTeach
                 <div
                   style={{
                     marginTop: 2,
-                    display: "inline-block",
+                    display: "block",
                     color: event.sourceType === "Primary" ? "#059669" : "#6366F1",
                     fontWeight: 700,
                   }}
@@ -367,7 +367,7 @@ export default function EventCard({ event, isExpanded, isRead, onToggle, isTeach
                     fontSize: 10,
                     fontFamily: "'Overpass Mono', monospace",
                     textDecoration: "none",
-                    display: "inline-flex",
+                    display: "flex",
                     alignItems: "center",
                     gap: 3,
                     marginTop: 2,

@@ -8,7 +8,7 @@ export default function ConnectionLines({ connections, containerRef, expandedEve
 
   const recalculate = useCallback(() => {
     if (!containerRef.current) { setLines([]); return; }
-    const activeId = expandedEvent || hoveredEvent;
+    const activeId = expandedEvent;
     if (!activeId) { setLines([]); return; }
 
     const relevantConns = connections.filter(
@@ -37,19 +37,27 @@ export default function ConnectionLines({ connections, containerRef, expandedEve
       const causeY = causeRect.top + causeRect.height / 2 - containerRect.top + containerScrollTop;
       const effectY = effectRect.top + effectRect.height / 2 - containerRect.top + containerScrollTop;
       const vertDist = Math.abs(effectY - causeY);
-      const offset = Math.min(80, vertDist * 0.25) + 30;
+
+      // sqrt scaling: grows quickly for nearby cards, tapers for distant ones
+      const offset = Math.min(100, 30 + Math.sqrt(vertDist) * 3);
+
+      // For distant cards, shift control-point Ys inward so the arc
+      // doesn't start/end perfectly horizontal (avoids sharp S-kinks)
+      const blend = vertDist > 200 ? Math.min(0.25, (vertDist - 200) / 2000) : 0;
+      const cp1Y = causeY + (effectY - causeY) * blend;
+      const cp2Y = effectY - (effectY - causeY) * blend;
 
       let d;
       if (isCause) {
         // Curves out to the right: cause RIGHT → effect RIGHT
         const sx = causeRect.right - containerRect.left;
         const ex = effectRect.right - containerRect.left;
-        d = `M ${sx},${causeY} C ${sx + offset},${causeY} ${ex + offset},${effectY} ${ex},${effectY}`;
+        d = `M ${sx},${causeY} C ${sx + offset},${cp1Y} ${ex + offset},${cp2Y} ${ex},${effectY}`;
       } else {
         // Curves out to the left: cause LEFT → effect LEFT
         const sx = causeRect.left - containerRect.left;
         const ex = effectRect.left - containerRect.left;
-        d = `M ${sx},${causeY} C ${sx - offset},${causeY} ${ex - offset},${effectY} ${ex},${effectY}`;
+        d = `M ${sx},${causeY} C ${sx - offset},${cp1Y} ${ex - offset},${cp2Y} ${ex},${effectY}`;
       }
 
       return { id: conn.id, d, isCause };
@@ -101,33 +109,26 @@ export default function ConnectionLines({ connections, containerRef, expandedEve
     >
       <defs>
         <marker
-          id="conn-arrow"
-          markerWidth="8"
-          markerHeight="6"
-          refX="8"
+          id="conn-card-arrow"
+          viewBox="0 0 8 6"
+          refX="7"
           refY="3"
+          markerWidth="7"
+          markerHeight="5"
           orient="auto"
         >
-          <polygon points="0 0, 8 3, 0 6" fill={accentColor} fillOpacity="0.7" />
+          <path d="M0,0.5 L7,3 L0,5.5" fill="none" stroke={accentColor} strokeWidth="1" />
         </marker>
-        <style>{`
-          @keyframes conn-fly {
-            from { stroke-dashoffset: 18; }
-            to   { stroke-dashoffset: 0; }
-          }
-        `}</style>
       </defs>
       {lines.map((line) => (
         <path
           key={line.id}
           d={line.d}
           stroke={accentColor}
-          strokeOpacity={0.45}
-          strokeWidth={2}
+          opacity={0.55}
+          strokeWidth={1.5}
           fill="none"
-          strokeDasharray="6 3"
-          markerEnd="url(#conn-arrow)"
-          style={{ animation: "conn-fly 0.6s linear infinite" }}
+          markerEnd="url(#conn-card-arrow)"
         />
       ))}
     </svg>

@@ -34,3 +34,19 @@ export const SOURCE_TYPES = [
   { id: "primary", label: "Primary Source", color: "#059669", bg: "#D1FAE5" },
   { id: "secondary", label: "Secondary Source", color: "#6366F1", bg: "#EEF2FF" },
 ];
+
+export const DEFAULT_FIELD_CONFIG = {
+  title: "mandatory",
+  year: "mandatory",
+  month: "hidden",
+  day: "hidden",
+  endDate: "hidden",
+  period: "mandatory",
+  tags: "mandatory",
+  sourceType: "mandatory",
+  description: "mandatory",
+  sourceNote: "mandatory",
+  sourceUrl: "optional",
+  imageUrl: "optional",
+  region: "optional",
+};

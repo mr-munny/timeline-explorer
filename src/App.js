@@ -1207,6 +1207,8 @@ export default function App() {
             timelineEnd={timelineEnd}
             currentYear={new Date().getFullYear()}
             periods={displayPeriods}
+            expandedEventId={expandedEvent}
+            connectionsByEvent={connectionsByEvent}
           />
         </div>
       </div>

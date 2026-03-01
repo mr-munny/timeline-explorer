@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { submitEvent, deleteEvent, updateEvent } from "../services/database";
+import { submitEvent, deleteEvent, updateEvent, resubmitEvent } from "../services/database";
 import { saveTimelineRange } from "../services/database";
 import { writeToSheet } from "../services/sheets";
 
@@ -18,6 +18,8 @@ export default function useEventHandlers({
   setTimelineEnd,
   editingEvent,
   setEditingEvent,
+  revisingEvent,
+  setRevisingEvent,
 }) {
   // Auto-expand timeline range when event outside range is approved
   const handleEventApproved = useCallback((event) => {
@@ -126,11 +128,35 @@ export default function useEventHandlers({
     [editingEvent, isTeacher, user, userName, defaultSection]
   );
 
+  const handleRevisionResubmit = useCallback(
+    async (formData) => {
+      if (!revisingEvent) return;
+      const updates = {
+        ...formData,
+        year: parseInt(formData.year),
+        month: formData.month ? parseInt(formData.month) : null,
+        day: formData.day ? parseInt(formData.day) : null,
+        endYear: formData.endYear ? parseInt(formData.endYear) : null,
+        endMonth: formData.endMonth ? parseInt(formData.endMonth) : null,
+        endDay: formData.endDay ? parseInt(formData.endDay) : null,
+      };
+      await resubmitEvent(
+        revisingEvent.id,
+        updates,
+        revisingEvent.feedback,
+        revisingEvent.feedbackHistory || []
+      );
+      setRevisingEvent(null);
+    },
+    [revisingEvent, setRevisingEvent]
+  );
+
   return {
     handleEventApproved,
     handleAddEvent,
     handleDeleteEvent,
     handleEditEvent,
     handleSaveEdit,
+    handleRevisionResubmit,
   };
 }

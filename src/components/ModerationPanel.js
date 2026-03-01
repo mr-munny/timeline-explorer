@@ -2,7 +2,7 @@ import { useState } from "react";
 import { getPeriod, TAGS } from "../data/constants";
 import { formatEventDate, MONTHS } from "../utils/dateUtils";
 import { computeWordDiff } from "../utils/diffUtils";
-import { approveEvent, rejectEvent, updateEvent, approveEdit, approveConnection, rejectConnection, updateConnection, approveConnectionEdit, approveConnectionDeletion } from "../services/database";
+import { approveEvent, rejectEvent, updateEvent, approveEdit, approveConnection, rejectConnection, updateConnection, approveConnectionEdit, approveConnectionDeletion, requestRevision } from "../services/database";
 import { writeToSheet } from "../services/sheets";
 import { Icon } from "@iconify/react";
 import checkIcon from "@iconify-icons/mdi/check";
@@ -10,9 +10,10 @@ import pencilIcon from "@iconify-icons/mdi/pencil";
 import cancelIcon from "@iconify-icons/mdi/cancel";
 import contentSave from "@iconify-icons/mdi/content-save";
 import arrowRightBold from "@iconify-icons/mdi/arrow-right-bold";
+import commentAlertOutline from "@iconify-icons/mdi/comment-alert-outline";
 import { useTheme } from "../contexts/ThemeContext";
 
-export default function ModerationPanel({ pendingEvents, pendingConnections = [], allEvents = [], allConnections = [], periods = [], getSectionName = (id) => id, onEventApproved, embedded = true, readOnly = false }) {
+export default function ModerationPanel({ pendingEvents, pendingConnections = [], needsRevisionEvents = [], needsRevisionConnections = [], allEvents = [], allConnections = [], periods = [], getSectionName = (id) => id, onEventApproved, embedded = true, readOnly = false, user, userName }) {
   const { theme } = useTheme();
   const [activeTab, setActiveTab] = useState("events");
   const [editingId, setEditingId] = useState(null);
@@ -20,6 +21,9 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
   const [processing, setProcessing] = useState(null);
   const [editingConnId, setEditingConnId] = useState(null);
   const [editConnDesc, setEditConnDesc] = useState("");
+  const [feedbackId, setFeedbackId] = useState(null);
+  const [feedbackText, setFeedbackText] = useState("");
+  const [feedbackType, setFeedbackType] = useState(null);
 
   const handleApprove = async (event) => {
     setProcessing(event.id);
@@ -171,6 +175,26 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
     setProcessing(null);
   };
 
+  const handleRequestRevision = async (itemType, itemId) => {
+    if (!feedbackText.trim()) return;
+    setProcessing(itemId);
+    try {
+      await requestRevision(
+        itemType === "event" ? "events" : "connections",
+        itemId,
+        feedbackText.trim(),
+        userName,
+        user?.email
+      );
+      setFeedbackId(null);
+      setFeedbackText("");
+      setFeedbackType(null);
+    } catch (err) {
+      console.error("Request revision failed:", err);
+    }
+    setProcessing(null);
+  };
+
   const findEvent = (id) => allEvents.find((e) => e.id === id);
   const findConnection = (id) => allConnections.find((c) => c.id === id);
 
@@ -242,8 +266,10 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                 fontFamily: "'Overpass Mono', monospace",
               }}
             >
-              {pendingEvents.length + pendingConnections.length} pending submission
-              {(pendingEvents.length + pendingConnections.length) !== 1 ? "s" : ""}
+              {pendingEvents.length + pendingConnections.length} pending
+              {(needsRevisionEvents.length + needsRevisionConnections.length) > 0
+                ? ` · ${needsRevisionEvents.length + needsRevisionConnections.length} awaiting revision`
+                : ""}
             </p>
           </div>
         </div>
@@ -251,8 +277,8 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
         {/* Tabs */}
         <div style={{ display: "flex", gap: 0, marginBottom: 16, borderBottom: `1.5px solid ${theme.inputBorder}` }}>
           {[
-            { id: "events", label: `Events (${pendingEvents.length})` },
-            { id: "connections", label: `Connections (${pendingConnections.length})` },
+            { id: "events", label: `Events (${pendingEvents.length + needsRevisionEvents.length})` },
+            { id: "connections", label: `Connections (${pendingConnections.length + needsRevisionConnections.length})` },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -277,7 +303,7 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
           ))}
         </div>
 
-        {activeTab === "events" && (pendingEvents.length === 0 ? (
+        {activeTab === "events" && ((pendingEvents.length === 0 && needsRevisionEvents.length === 0) ? (
           <div
             style={{
               textAlign: "center",
@@ -752,6 +778,7 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
 
                       {/* Action buttons */}
                       {!readOnly && (
+                      <>
                       <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
                         <button
                           onClick={() => handleReject(event.id)}
@@ -773,6 +800,27 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                         >
                           <Icon icon={cancelIcon} width={13} style={{ verticalAlign: "middle", marginRight: 3 }} />
                           Reject
+                        </button>
+                        <button
+                          onClick={() => { setFeedbackId(event.id); setFeedbackType("event"); setFeedbackText(""); }}
+                          disabled={isProcessing}
+                          style={{
+                            padding: "6px 14px",
+                            background: "none",
+                            border: "1.5px solid #D97706",
+                            borderRadius: 6,
+                            color: "#D97706",
+                            fontSize: 11,
+                            fontFamily: "'Overpass Mono', monospace",
+                            fontWeight: 600,
+                            cursor: "pointer",
+                            transition: "all 0.15s",
+                          }}
+                          onMouseEnter={(e) => { e.currentTarget.style.background = "#D9770610"; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.background = "none"; }}
+                        >
+                          <Icon icon={commentAlertOutline} width={13} style={{ verticalAlign: "middle", marginRight: 3 }} />
+                          Revise
                         </button>
                         <button
                           onClick={() => startEdit(event)}
@@ -816,6 +864,78 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                           {isProcessing ? "..." : <><Icon icon={checkIcon} width={14} style={{ verticalAlign: "middle", marginRight: 3 }} />Approve</>}
                         </button>
                       </div>
+                      {/* Inline feedback textarea */}
+                      {feedbackId === event.id && feedbackType === "event" && (
+                        <div style={{
+                          marginTop: 10,
+                          padding: "12px 14px",
+                          background: theme.warmSubtleBg || "#FEF3C7",
+                          borderRadius: 8,
+                          border: "1.5px solid #D97706",
+                        }}>
+                          <label style={{
+                            fontSize: 10,
+                            fontWeight: 700,
+                            fontFamily: "'Overpass Mono', monospace",
+                            color: "#92400E",
+                            textTransform: "uppercase",
+                            letterSpacing: "0.05em",
+                            marginBottom: 6,
+                            display: "block",
+                          }}>
+                            Feedback for Student
+                          </label>
+                          <textarea
+                            autoFocus
+                            value={feedbackText}
+                            onChange={(e) => setFeedbackText(e.target.value)}
+                            placeholder="What should the student fix or improve?"
+                            rows={3}
+                            style={{ ...inputStyle, borderColor: "#D97706" }}
+                          />
+                          <div style={{ display: "flex", gap: 6, justifyContent: "flex-end", marginTop: 8 }}>
+                            <button
+                              onClick={() => { setFeedbackId(null); setFeedbackText(""); setFeedbackType(null); }}
+                              style={{
+                                padding: "6px 14px",
+                                background: "none",
+                                border: `1.5px solid ${theme.inputBorder}`,
+                                borderRadius: 6,
+                                fontSize: 11,
+                                fontFamily: "'Overpass Mono', monospace",
+                                cursor: "pointer",
+                                color: theme.textTertiary,
+                                transition: "all 0.15s",
+                              }}
+                              onMouseEnter={(e) => { e.currentTarget.style.background = theme.subtleBg; }}
+                              onMouseLeave={(e) => { e.currentTarget.style.background = "none"; }}
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              onClick={() => handleRequestRevision("event", event.id)}
+                              disabled={!feedbackText.trim() || isProcessing}
+                              style={{
+                                padding: "6px 14px",
+                                background: feedbackText.trim() ? "#D97706" : theme.inputBorder,
+                                color: "#fff",
+                                border: "none",
+                                borderRadius: 6,
+                                fontSize: 11,
+                                fontFamily: "'Overpass Mono', monospace",
+                                fontWeight: 700,
+                                cursor: feedbackText.trim() ? "pointer" : "default",
+                                transition: "filter 0.15s",
+                              }}
+                              onMouseEnter={(e) => { if (feedbackText.trim()) e.currentTarget.style.filter = "brightness(1.15)"; }}
+                              onMouseLeave={(e) => { e.currentTarget.style.filter = "none"; }}
+                            >
+                              Send Feedback
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                      </>
                       )}
                     </>
                   )}
@@ -825,7 +945,124 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
           </div>
         ))}
 
-        {activeTab === "connections" && (pendingConnections.length === 0 ? (
+        {/* Awaiting revision events */}
+        {activeTab === "events" && !readOnly && needsRevisionEvents.length > 0 && (
+          <>
+            <div style={{
+              padding: "10px 0 6px",
+              marginTop: pendingEvents.length > 0 ? 12 : 0,
+              borderTop: pendingEvents.length > 0 ? `1px solid ${theme.inputBorder}` : "none",
+              fontSize: 10,
+              fontWeight: 700,
+              fontFamily: "'Overpass Mono', monospace",
+              color: "#D97706",
+              textTransform: "uppercase",
+              letterSpacing: "0.08em",
+            }}>
+              Awaiting Student Revision ({needsRevisionEvents.length})
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {needsRevisionEvents.map((event) => {
+                const unit = getPeriod(periods, event.period);
+                const isProcessing = processing === event.id;
+                return (
+                  <div
+                    key={event.id}
+                    style={{
+                      border: `1.5px solid #D9770640`,
+                      borderRadius: 10,
+                      padding: "16px 18px",
+                      borderLeft: "4px solid #D97706",
+                      opacity: 0.85,
+                    }}
+                  >
+                    <div style={{
+                      fontSize: 10, fontWeight: 700, fontFamily: "'Overpass Mono', monospace",
+                      color: "#D97706", background: theme.warmSubtleBg || "#FEF3C7",
+                      padding: "3px 8px", borderRadius: 4, display: "inline-block",
+                      marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em",
+                    }}>
+                      Awaiting Revision
+                    </div>
+                    <div style={{ display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 8 }}>
+                      <div style={{
+                        background: unit?.color || theme.textTertiary, color: "#fff",
+                        fontSize: 11, fontWeight: 700, padding: "3px 7px", borderRadius: 4,
+                        fontFamily: "'Overpass Mono', monospace", flexShrink: 0,
+                      }}>
+                        {formatEventDate(event)}
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{
+                          fontSize: 14, fontWeight: 700, color: theme.textPrimary,
+                          fontFamily: "'Newsreader', 'Georgia', serif",
+                        }}>
+                          {event.title}
+                        </div>
+                        <div style={{
+                          fontSize: 10, color: theme.textSecondary,
+                          fontFamily: "'Overpass Mono', monospace", marginTop: 2,
+                        }}>
+                          by {event.addedBy} &middot; {getSectionName(event.section)}
+                        </div>
+                      </div>
+                    </div>
+                    {/* Show the feedback that was given */}
+                    {event.feedback && (
+                      <div style={{
+                        background: theme.warmSubtleBg || "#FEF3C7",
+                        border: "1.5px solid #D97706",
+                        borderLeft: "4px solid #D97706",
+                        borderRadius: 8,
+                        padding: "10px 14px",
+                        marginBottom: 10,
+                      }}>
+                        <div style={{
+                          fontSize: 9, fontWeight: 700, fontFamily: "'Overpass Mono', monospace",
+                          color: "#92400E", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4,
+                        }}>
+                          Your Feedback
+                        </div>
+                        <p style={{
+                          fontSize: 12, fontFamily: "'Newsreader', serif",
+                          color: theme.textDescription, lineHeight: 1.6, margin: 0,
+                        }}>
+                          {event.feedback.text}
+                        </p>
+                        <div style={{
+                          fontSize: 9, fontFamily: "'Overpass Mono', monospace",
+                          color: theme.textTertiary, marginTop: 4,
+                        }}>
+                          {event.feedback.givenBy} &middot; {new Date(event.feedback.date).toLocaleDateString()}
+                        </div>
+                      </div>
+                    )}
+                    <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
+                      <button
+                        onClick={() => handleReject(event.id)}
+                        disabled={isProcessing}
+                        style={{
+                          padding: "6px 14px", background: "none",
+                          border: `1.5px solid ${theme.errorRed}`, borderRadius: 6,
+                          color: theme.errorRed, fontSize: 11,
+                          fontFamily: "'Overpass Mono', monospace", fontWeight: 600,
+                          cursor: "pointer", transition: "all 0.15s",
+                        }}
+                        onMouseEnter={(e) => { e.currentTarget.style.background = (theme.errorRed || "#DC2626") + "10"; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.background = "none"; }}
+                      >
+                        <Icon icon={cancelIcon} width={13} style={{ verticalAlign: "middle", marginRight: 3 }} />
+                        Reject
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        )}
+
+        {activeTab === "connections" && ((pendingConnections.length === 0 && needsRevisionConnections.length === 0) ? (
           <div
             style={{
               textAlign: "center",
@@ -1077,6 +1314,7 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                         </>
                       )}
                       {!readOnly && (
+                      <>
                       <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
                         <button
                           onClick={() => handleRejectConnection(conn.id)}
@@ -1094,6 +1332,24 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                           <Icon icon={cancelIcon} width={13} style={{ verticalAlign: "middle", marginRight: 3 }} />
                           Reject
                         </button>
+                        {!conn.deleteOf && (
+                          <button
+                            onClick={() => { setFeedbackId(conn.id); setFeedbackType("connection"); setFeedbackText(""); }}
+                            disabled={isProcessing}
+                            style={{
+                              padding: "6px 14px", background: "none",
+                              border: "1.5px solid #D97706", borderRadius: 6,
+                              color: "#D97706", fontSize: 11,
+                              fontFamily: "'Overpass Mono', monospace", fontWeight: 600, cursor: "pointer",
+                              transition: "all 0.15s",
+                            }}
+                            onMouseEnter={(e) => { e.currentTarget.style.background = "#D9770610"; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.background = "none"; }}
+                          >
+                            <Icon icon={commentAlertOutline} width={13} style={{ verticalAlign: "middle", marginRight: 3 }} />
+                            Revise
+                          </button>
+                        )}
                         {!conn.editOf && !conn.deleteOf && (
                           <button
                             onClick={() => { setEditingConnId(conn.id); setEditConnDesc(conn.description); }}
@@ -1128,6 +1384,62 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                           {isProcessing ? "..." : <><Icon icon={checkIcon} width={14} style={{ verticalAlign: "middle", marginRight: 3 }} />{conn.deleteOf ? "Delete" : "Approve"}</>}
                         </button>
                       </div>
+                      {/* Inline feedback textarea for connections */}
+                      {feedbackId === conn.id && feedbackType === "connection" && (
+                        <div style={{
+                          marginTop: 10, padding: "12px 14px",
+                          background: theme.warmSubtleBg || "#FEF3C7",
+                          borderRadius: 8, border: "1.5px solid #D97706",
+                        }}>
+                          <label style={{
+                            fontSize: 10, fontWeight: 700, fontFamily: "'Overpass Mono', monospace",
+                            color: "#92400E", textTransform: "uppercase", letterSpacing: "0.05em",
+                            marginBottom: 6, display: "block",
+                          }}>
+                            Feedback for Student
+                          </label>
+                          <textarea
+                            autoFocus
+                            value={feedbackText}
+                            onChange={(e) => setFeedbackText(e.target.value)}
+                            placeholder="What should the student fix or improve?"
+                            rows={3}
+                            style={{ ...inputStyle, borderColor: "#D97706" }}
+                          />
+                          <div style={{ display: "flex", gap: 6, justifyContent: "flex-end", marginTop: 8 }}>
+                            <button
+                              onClick={() => { setFeedbackId(null); setFeedbackText(""); setFeedbackType(null); }}
+                              style={{
+                                padding: "6px 14px", background: "none",
+                                border: `1.5px solid ${theme.inputBorder}`, borderRadius: 6,
+                                fontSize: 11, fontFamily: "'Overpass Mono', monospace",
+                                cursor: "pointer", color: theme.textTertiary, transition: "all 0.15s",
+                              }}
+                              onMouseEnter={(e) => { e.currentTarget.style.background = theme.subtleBg; }}
+                              onMouseLeave={(e) => { e.currentTarget.style.background = "none"; }}
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              onClick={() => handleRequestRevision("connection", conn.id)}
+                              disabled={!feedbackText.trim() || isProcessing}
+                              style={{
+                                padding: "6px 14px",
+                                background: feedbackText.trim() ? "#D97706" : theme.inputBorder,
+                                color: "#fff", border: "none", borderRadius: 6,
+                                fontSize: 11, fontFamily: "'Overpass Mono', monospace",
+                                fontWeight: 700, cursor: feedbackText.trim() ? "pointer" : "default",
+                                transition: "filter 0.15s",
+                              }}
+                              onMouseEnter={(e) => { if (feedbackText.trim()) e.currentTarget.style.filter = "brightness(1.15)"; }}
+                              onMouseLeave={(e) => { e.currentTarget.style.filter = "none"; }}
+                            >
+                              Send Feedback
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                      </>
                       )}
                     </>
                   )}
@@ -1136,6 +1448,125 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
             })}
           </div>
         ))}
+
+        {/* Awaiting revision connections */}
+        {activeTab === "connections" && !readOnly && needsRevisionConnections.length > 0 && (
+          <>
+            <div style={{
+              padding: "10px 0 6px",
+              marginTop: pendingConnections.length > 0 ? 12 : 0,
+              borderTop: pendingConnections.length > 0 ? `1px solid ${theme.inputBorder}` : "none",
+              fontSize: 10, fontWeight: 700, fontFamily: "'Overpass Mono', monospace",
+              color: "#D97706", textTransform: "uppercase", letterSpacing: "0.08em",
+            }}>
+              Awaiting Student Revision ({needsRevisionConnections.length})
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {needsRevisionConnections.map((conn) => {
+                const causeEvent = findEvent(conn.causeEventId);
+                const effectEvent = findEvent(conn.effectEventId);
+                const causeUnit = causeEvent ? getPeriod(periods, causeEvent.period) : null;
+                const effectUnit = effectEvent ? getPeriod(periods, effectEvent.period) : null;
+                const isProcessing = processing === conn.id;
+                return (
+                  <div
+                    key={conn.id}
+                    style={{
+                      border: "1.5px solid #D9770640", borderRadius: 10,
+                      padding: "16px 18px", borderLeft: "4px solid #D97706", opacity: 0.85,
+                    }}
+                  >
+                    <div style={{
+                      fontSize: 10, fontWeight: 700, fontFamily: "'Overpass Mono', monospace",
+                      color: "#D97706", background: theme.warmSubtleBg || "#FEF3C7",
+                      padding: "3px 8px", borderRadius: 4, display: "inline-block",
+                      marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em",
+                    }}>
+                      Awaiting Revision
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
+                      <div style={{
+                        display: "flex", alignItems: "center", gap: 6,
+                        padding: "4px 10px", background: theme.warmSubtleBg, borderRadius: 6,
+                        borderLeft: `3px solid ${causeUnit?.color || theme.textSecondary}`,
+                      }}>
+                        <span style={{ fontSize: 10, fontWeight: 700, fontFamily: "'Overpass Mono', monospace", color: causeUnit?.color || theme.textSecondary }}>
+                          {causeEvent?.year || "?"}
+                        </span>
+                        <span style={{ fontSize: 12, fontFamily: "'Newsreader', serif", fontWeight: 600, color: theme.textPrimary }}>
+                          {causeEvent?.title || "Unknown event"}
+                        </span>
+                      </div>
+                      <Icon icon={arrowRightBold} width={18} style={{ color: "#D97706", flexShrink: 0 }} />
+                      <div style={{
+                        display: "flex", alignItems: "center", gap: 6,
+                        padding: "4px 10px", background: theme.warmSubtleBg, borderRadius: 6,
+                        borderLeft: `3px solid ${effectUnit?.color || theme.textSecondary}`,
+                      }}>
+                        <span style={{ fontSize: 10, fontWeight: 700, fontFamily: "'Overpass Mono', monospace", color: effectUnit?.color || theme.textSecondary }}>
+                          {effectEvent?.year || "?"}
+                        </span>
+                        <span style={{ fontSize: 12, fontFamily: "'Newsreader', serif", fontWeight: 600, color: theme.textPrimary }}>
+                          {effectEvent?.title || "Unknown event"}
+                        </span>
+                      </div>
+                    </div>
+                    <p style={{
+                      fontSize: 12, lineHeight: 1.6, color: theme.textDescription,
+                      margin: "0 0 8px 0", fontFamily: "'Newsreader', serif",
+                    }}>
+                      {conn.description}
+                    </p>
+                    {conn.feedback && (
+                      <div style={{
+                        background: theme.warmSubtleBg || "#FEF3C7",
+                        border: "1.5px solid #D97706", borderLeft: "4px solid #D97706",
+                        borderRadius: 8, padding: "10px 14px", marginBottom: 10,
+                      }}>
+                        <div style={{
+                          fontSize: 9, fontWeight: 700, fontFamily: "'Overpass Mono', monospace",
+                          color: "#92400E", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4,
+                        }}>
+                          Your Feedback
+                        </div>
+                        <p style={{
+                          fontSize: 12, fontFamily: "'Newsreader', serif",
+                          color: theme.textDescription, lineHeight: 1.6, margin: 0,
+                        }}>
+                          {conn.feedback.text}
+                        </p>
+                        <div style={{
+                          fontSize: 9, fontFamily: "'Overpass Mono', monospace",
+                          color: theme.textTertiary, marginTop: 4,
+                        }}>
+                          {conn.feedback.givenBy} &middot; {new Date(conn.feedback.date).toLocaleDateString()}
+                        </div>
+                      </div>
+                    )}
+                    <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
+                      <button
+                        onClick={() => handleRejectConnection(conn.id)}
+                        disabled={isProcessing}
+                        style={{
+                          padding: "6px 14px", background: "none",
+                          border: `1.5px solid ${theme.errorRed}`, borderRadius: 6,
+                          color: theme.errorRed, fontSize: 11,
+                          fontFamily: "'Overpass Mono', monospace", fontWeight: 600,
+                          cursor: "pointer", transition: "all 0.15s",
+                        }}
+                        onMouseEnter={(e) => { e.currentTarget.style.background = (theme.errorRed || "#DC2626") + "10"; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.background = "none"; }}
+                      >
+                        <Icon icon={cancelIcon} width={13} style={{ verticalAlign: "middle", marginRight: 3 }} />
+                        Reject
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        )}
       </div>
   );
 }

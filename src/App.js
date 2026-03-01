@@ -8,7 +8,6 @@ import { savePeriods, saveSections, saveCompellingQuestion, saveTimelineRange, s
 import useFirebaseSubscriptions from "./hooks/useFirebaseSubscriptions";
 import useEventHandlers from "./hooks/useEventHandlers";
 import useConnectionHandlers from "./hooks/useConnectionHandlers";
-import useConnectionMode from "./hooks/useConnectionMode";
 import useReadEvents from "./hooks/useReadEvents";
 import VisualTimeline from "./components/VisualTimeline";
 import AddEventPanel from "./components/AddEventPanel";
@@ -23,6 +22,7 @@ import TimelineHeader from "./components/TimelineHeader";
 import FilterBar from "./components/FilterBar";
 import CompellingQuestionHero from "./components/CompellingQuestionHero";
 import EventList from "./components/EventList";
+import RevisionPanel from "./components/RevisionPanel";
 
 function getInitialSection() {
   const params = new URLSearchParams(window.location.search);
@@ -46,9 +46,11 @@ export default function App() {
   const [showAdminView, setShowAdminView] = useState(false);
   const [sectionFilter, setSectionFilter] = useState("all");
   const [showAddConnectionPanel, setShowAddConnectionPanel] = useState(false);
-  const { connectionMode, setConnectionMode, handleConnectionModeClick } = useConnectionMode();
   const [editingConnection, setEditingConnection] = useState(null);
   const [showPendingQueue, setShowPendingQueue] = useState(false);
+  const [showRevisionPanel, setShowRevisionPanel] = useState(false);
+  const [revisingEvent, setRevisingEvent] = useState(null);
+  const [revisingConnection, setRevisingConnection] = useState(null);
   const readEvents = useReadEvents(user, expandedEvent);
 
   const {
@@ -151,6 +153,28 @@ export default function App() {
   const pendingConnections = useMemo(
     () => allConnections.filter((c) => c.status === "pending"),
     [allConnections]
+  );
+
+  // Items needing revision
+  const needsRevisionEvents = useMemo(
+    () => allEvents.filter((e) => e.status === "needs_revision"),
+    [allEvents]
+  );
+
+  const needsRevisionConnections = useMemo(
+    () => allConnections.filter((c) => c.status === "needs_revision"),
+    [allConnections]
+  );
+
+  // Current student's items needing revision (for notification bell)
+  const myRevisionEvents = useMemo(
+    () => needsRevisionEvents.filter((e) => e.addedByUid === user?.uid),
+    [needsRevisionEvents, user]
+  );
+
+  const myRevisionConnections = useMemo(
+    () => needsRevisionConnections.filter((c) => c.addedByUid === user?.uid),
+    [needsRevisionConnections, user]
   );
 
   // Lookup: eventId -> { causes: [connections where event is cause], effects: [connections where event is effect] }
@@ -264,6 +288,7 @@ export default function App() {
     handleDeleteEvent,
     handleEditEvent,
     handleSaveEdit,
+    handleRevisionResubmit,
   } = useEventHandlers({
     user,
     userName,
@@ -276,6 +301,8 @@ export default function App() {
     setTimelineEnd,
     editingEvent,
     setEditingEvent,
+    revisingEvent,
+    setRevisingEvent,
   });
 
   const {
@@ -285,6 +312,7 @@ export default function App() {
     handleEditConnection,
     handleSaveConnectionEdit,
     handleScrollToEvent,
+    handleConnectionRevisionResubmit,
   } = useConnectionHandlers({
     user,
     userName,
@@ -293,6 +321,8 @@ export default function App() {
     editingConnection,
     setEditingConnection,
     setExpandedEvent,
+    revisingConnection,
+    setRevisingConnection,
   });
 
   // Loading state
@@ -372,11 +402,12 @@ export default function App() {
         switchSection={switchSection}
         setShowAddPanel={setShowAddPanel}
         setShowAddConnectionPanel={setShowAddConnectionPanel}
-        connectionMode={connectionMode}
-        setConnectionMode={setConnectionMode}
         logout={logout}
         showPendingQueue={showPendingQueue}
         setShowPendingQueue={setShowPendingQueue}
+        myRevisionEvents={myRevisionEvents}
+        myRevisionConnections={myRevisionConnections}
+        setShowRevisionPanel={setShowRevisionPanel}
       />
 
       {/* Admin View (full page, replaces timeline content) */}
@@ -385,7 +416,9 @@ export default function App() {
           sections={activeSections}
           pendingEvents={pendingEvents}
           pendingConnections={pendingConnections}
-          allEvents={approvedEvents}
+          needsRevisionEvents={needsRevisionEvents}
+          needsRevisionConnections={needsRevisionConnections}
+          allEvents={allEvents}
           allConnections={allConnections}
           allStudentAssignments={allStudentAssignments}
           getSectionName={getSectionName}
@@ -397,6 +430,8 @@ export default function App() {
           displayPeriods={displayPeriods}
           reassignStudentSection={reassignStudentSection}
           removeStudentSection={removeStudentSection}
+          user={user}
+          userName={userName}
         />
       )}
 
@@ -454,52 +489,8 @@ export default function App() {
           totalCount={approvedEvents.length}
         />
 
-        {/* Connection mode banner */}
-        {connectionMode && (
-          <div
-            style={{
-              background: theme.accentGold + "18",
-              border: `1.5px solid ${theme.accentGold}`,
-              borderRadius: 8,
-              padding: "10px 16px",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <span
-              style={{
-                fontSize: 12,
-                fontFamily: "'Overpass Mono', monospace",
-                fontWeight: 600,
-                color: theme.textDescription,
-              }}
-            >
-              {connectionMode.step === "selectCause" && "Step 1: Click the CAUSE event below"}
-              {connectionMode.step === "selectEffect" && "Step 2: Now click the EFFECT event"}
-            </span>
-            <button
-              onClick={() => setConnectionMode(null)}
-              style={{
-                padding: "4px 12px",
-                background: "transparent",
-                border: `1px solid ${theme.textSecondary}`,
-                borderRadius: 5,
-                fontSize: 11,
-                fontFamily: "'Overpass Mono', monospace",
-                fontWeight: 600,
-                color: theme.textSecondary,
-                cursor: "pointer",
-              }}
-            >
-              Cancel
-            </button>
-          </div>
-        )}
-
         <EventList
           filteredEvents={filteredEvents}
-          connectionMode={connectionMode}
           expandedEvent={expandedEvent}
           setExpandedEvent={setExpandedEvent}
           readEvents={readEvents}
@@ -510,7 +501,6 @@ export default function App() {
           displayPeriods={displayPeriods}
           isTeacher={isTeacher}
           showContributors={showContributors}
-          handleConnectionModeClick={handleConnectionModeClick}
           handleEditEvent={handleEditEvent}
           handleDeleteEvent={handleDeleteEvent}
           handleScrollToEvent={handleScrollToEvent}
@@ -587,20 +577,6 @@ export default function App() {
         />
       )}
 
-      {/* Connection mode description modal */}
-      {connectionMode && connectionMode.step === "describe" && (
-        <AddConnectionPanel
-          onAdd={handleAddConnection}
-          onClose={() => setConnectionMode(null)}
-          userName={userName}
-          approvedEvents={approvedEvents}
-          periods={displayPeriods}
-          prefilledCause={connectionMode.causeEventId}
-          prefilledEffect={connectionMode.effectEventId}
-          isTeacher={isTeacher}
-        />
-      )}
-
       {/* Pending Queue Modal (students) */}
       {showPendingQueue && (
         <div
@@ -672,6 +648,51 @@ export default function App() {
           periods={displayPeriods}
           editingConnection={editingConnection}
           isTeacher={isTeacher}
+        />
+      )}
+
+      {/* Revision Panel Modal (student notification view) */}
+      {showRevisionPanel && (
+        <RevisionPanel
+          revisionEvents={myRevisionEvents}
+          revisionConnections={myRevisionConnections}
+          allEvents={allEvents}
+          periods={displayPeriods}
+          onReviseEvent={(event) => { setShowRevisionPanel(false); setRevisingEvent(event); }}
+          onReviseConnection={(conn) => { setShowRevisionPanel(false); setRevisingConnection(conn); }}
+          onClose={() => setShowRevisionPanel(false)}
+        />
+      )}
+
+      {/* Revision-mode Event Edit Modal */}
+      {revisingEvent && (
+        <AddEventPanel
+          onAdd={handleRevisionResubmit}
+          onClose={() => setRevisingEvent(null)}
+          userName={userName}
+          timelineStart={timelineStart}
+          timelineEnd={timelineEnd}
+          periods={displayPeriods}
+          fieldConfig={activeFieldConfig}
+          editingEvent={revisingEvent}
+          isTeacher={isTeacher}
+          revisionMode
+          feedback={revisingEvent.feedback}
+        />
+      )}
+
+      {/* Revision-mode Connection Edit Modal */}
+      {revisingConnection && (
+        <AddConnectionPanel
+          onAdd={handleConnectionRevisionResubmit}
+          onClose={() => setRevisingConnection(null)}
+          userName={userName}
+          approvedEvents={approvedEvents}
+          periods={displayPeriods}
+          editingConnection={revisingConnection}
+          isTeacher={isTeacher}
+          revisionMode
+          feedback={revisingConnection.feedback}
         />
       )}
 

@@ -143,6 +143,54 @@ export async function approveConnectionDeletion(proposalId, originalConnectionId
   await remove(proposalRef);
 }
 
+// ── Revision Feedback ───────────────────────────────────────
+
+// Teacher: request revision on a pending event or connection
+export async function requestRevision(itemType, itemId, feedbackText, teacherName, teacherEmail) {
+  const itemRef = ref(db, `${itemType}/${itemId}`);
+  await update(itemRef, {
+    status: "needs_revision",
+    feedback: {
+      text: feedbackText,
+      givenBy: teacherName,
+      givenByEmail: teacherEmail,
+      date: new Date().toISOString(),
+    },
+  });
+}
+
+// Student: resubmit a revised event (moves feedback to history, sets status back to pending)
+export async function resubmitEvent(eventId, updates, currentFeedback, existingHistory) {
+  const eventRef = ref(db, `events/${eventId}`);
+  const newHistory = [
+    ...(existingHistory || []),
+    { ...currentFeedback, resolvedAt: new Date().toISOString() },
+  ];
+  await update(eventRef, {
+    ...updates,
+    status: "pending",
+    feedback: null,
+    feedbackHistory: newHistory,
+    dateAdded: new Date().toISOString(),
+  });
+}
+
+// Student: resubmit a revised connection
+export async function resubmitConnection(connId, updates, currentFeedback, existingHistory) {
+  const connRef = ref(db, `connections/${connId}`);
+  const newHistory = [
+    ...(existingHistory || []),
+    { ...currentFeedback, resolvedAt: new Date().toISOString() },
+  ];
+  await update(connRef, {
+    ...updates,
+    status: "pending",
+    feedback: null,
+    feedbackHistory: newHistory,
+    dateAdded: new Date().toISOString(),
+  });
+}
+
 // ── Periods ─────────────────────────────────────────────────
 
 // Listen to a section's custom periods in real-time

@@ -8,6 +8,7 @@ import { savePeriods, saveSections, saveCompellingQuestion, saveTimelineRange, s
 import useFirebaseSubscriptions from "./hooks/useFirebaseSubscriptions";
 import useEventHandlers from "./hooks/useEventHandlers";
 import useConnectionHandlers from "./hooks/useConnectionHandlers";
+import useConnectionMode from "./hooks/useConnectionMode";
 import useReadEvents from "./hooks/useReadEvents";
 import VisualTimeline from "./components/VisualTimeline";
 import EventCard from "./components/EventCard";
@@ -44,7 +45,7 @@ export default function App() {
   const [showAdminView, setShowAdminView] = useState(false);
   const [sectionFilter, setSectionFilter] = useState("all");
   const [showAddConnectionPanel, setShowAddConnectionPanel] = useState(false);
-  const [connectionMode, setConnectionMode] = useState(null);
+  const { connectionMode, setConnectionMode, handleConnectionModeClick } = useConnectionMode();
   const [editingConnection, setEditingConnection] = useState(null);
   const [hoveredEvent, setHoveredEvent] = useState(null);
   const eventListRef = useRef(null);
@@ -245,7 +246,6 @@ export default function App() {
     handleSuggestDeleteConnection,
     handleEditConnection,
     handleSaveConnectionEdit,
-    handleConnectionModeClick,
     handleScrollToEvent,
   } = useConnectionHandlers({
     user,
@@ -254,22 +254,8 @@ export default function App() {
     defaultSection,
     editingConnection,
     setEditingConnection,
-    connectionMode,
-    setConnectionMode,
     setExpandedEvent,
   });
-
-  // Escape key exits connection mode
-  useEffect(() => {
-    if (!connectionMode) return;
-    const handleKeyDown = (e) => {
-      if (e.key === "Escape") setConnectionMode(null);
-    };
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [connectionMode]);
-
-
 
   // Loading state
   if (loading || (!user ? false : !isTeacher && sectionLoading)) {

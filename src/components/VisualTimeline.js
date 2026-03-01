@@ -13,7 +13,7 @@ const CLUSTER_PX_THRESHOLD = 14;
  *  When hasBCE is true (range includes negative years), shows "500 BCE" / "1500 CE".
  *  When hasBCE is false (CE-only range), shows plain numbers. */
 function formatYearLabel(year, hasBCE) {
-  if (year === 0) return null; // year 0 doesn't exist
+  if (year === 0) return hasBCE ? ["1 BCE", "1 CE"] : null;
   if (!hasBCE) return String(year);
   if (year < 0) return `${Math.abs(year)} BCE`;
   return `${year} CE`;
@@ -388,7 +388,6 @@ export default function VisualTimeline({
     const labels = [];
     const start = Math.ceil(minYear / labelInterval) * labelInterval;
     for (let y = start; y <= maxYear; y += labelInterval) {
-      if (y === 0) continue; // year 0 doesn't exist
       labels.push(y);
     }
     return labels;
@@ -794,7 +793,7 @@ export default function VisualTimeline({
           </div>
 
           {/* Year labels — edge labels clamped to prevent clipping */}
-          <div style={{ position: "relative", height: 14 }}>
+          <div style={{ position: "relative", height: hasBCE ? 24 : 14 }}>
             {yearLabels.map((y) => {
               const label = formatYearLabel(y, hasBCE);
               if (label === null) return null;
@@ -807,6 +806,7 @@ export default function VisualTimeline({
                     ? y % 50 === 0
                     : y % 10 === 0;
               const pct = getPosition(y);
+              const isStacked = Array.isArray(label);
               return (
                 <span
                   key={y}
@@ -820,9 +820,15 @@ export default function VisualTimeline({
                     fontWeight: isMajor ? 600 : 400,
                     whiteSpace: "nowrap",
                     opacity: isMajor ? 1 : 0.6,
+                    ...(isStacked && {
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      lineHeight: 1.2,
+                    }),
                   }}
                 >
-                  {label}
+                  {isStacked ? label.map((line, i) => <span key={i}>{line}</span>) : label}
                 </span>
               );
             })}

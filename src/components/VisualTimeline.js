@@ -35,7 +35,8 @@ export default function VisualTimeline({
   filteredEvents,
   onEraClick,
   onEventSelect,
-  selectedPeriod,
+  selectedPeriods,
+  selectedEraRange,
   timelineStart = 1910,
   timelineEnd = 2000,
   currentYear,
@@ -140,18 +141,30 @@ export default function VisualTimeline({
     }
   }, [viewportWidth, animateToZoom]);
 
-  // Auto-zoom to fit a specific era in the viewport
-  const zoomToEra = useCallback((period) => {
-    const eraSpan = period.era[1] - period.era[0];
+  // Auto-zoom to fit selected era range (from period filter)
+  const prevEraRangeRef = useRef(null);
+  useEffect(() => {
+    const prev = prevEraRangeRef.current;
+    prevEraRangeRef.current = selectedEraRange;
+
+    if (!selectedEraRange) {
+      // Only zoom-to-fit if we previously had a selection (not on initial mount)
+      if (prev && zoomRef.current !== 1) {
+        handleZoom(1, undefined, true);
+      }
+      return;
+    }
+
+    const eraSpan = selectedEraRange.end - selectedEraRange.start;
     const eraFrac = eraSpan / totalSpan;
     const targetZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, 0.8 / eraFrac));
-    const eraCenterFrac = ((period.era[0] + period.era[1]) / 2 - minYear) / totalSpan;
+    const eraCenterFrac = ((selectedEraRange.start + selectedEraRange.end) / 2 - minYear) / totalSpan;
     const vpWidth = viewportRef.current?.clientWidth || 0;
 
     animateToZoom(targetZoom, (z) =>
       Math.max(0, eraCenterFrac * viewportWidth * z - vpWidth / 2)
     );
-  }, [viewportWidth, totalSpan, minYear, animateToZoom]);
+  }, [selectedEraRange, totalSpan, minYear, viewportWidth, animateToZoom, handleZoom]);
 
   // Wheel handler: Ctrl+wheel = zoom, plain wheel = horizontal scroll
   useEffect(() => {
@@ -534,20 +547,12 @@ export default function VisualTimeline({
             {periods.map((u) => {
               const left = getPosition(u.era[0]);
               const width = getPosition(u.era[1]) - left;
-              const isActive = selectedPeriod === "all" || selectedPeriod === u.id;
+              const isActive = selectedPeriods.length === 0 || selectedPeriods.includes(u.id);
               return (
                 <div
                   key={u.id}
                   data-era
-                  onClick={() => {
-                    const isDeselecting = u.id === selectedPeriod;
-                    onEraClick(isDeselecting ? "all" : u.id);
-                    if (isDeselecting) {
-                      handleZoom(1, undefined, true);
-                    } else {
-                      zoomToEra(u);
-                    }
-                  }}
+                  onClick={() => onEraClick(u.id)}
                   title={u.label}
                   style={{
                     position: "absolute",

@@ -11,10 +11,13 @@ export default function FilterBar({
   getThemedPeriodBg,
   searchTerm,
   setSearchTerm,
-  selectedPeriod,
-  setSelectedPeriod,
-  selectedTag,
-  setSelectedTag,
+  selectedPeriods,
+  togglePeriod,
+  selectedTags,
+  toggleTag,
+  tagMatchMode,
+  setTagMatchMode,
+  clearAllFilters,
   sectionFilter,
   setSectionFilter,
   sortOrder,
@@ -30,15 +33,21 @@ export default function FilterBar({
   filteredCount,
   totalCount,
 }) {
+  const hasActiveFilters =
+    selectedPeriods.length > 0 ||
+    selectedTags.length > 0 ||
+    searchTerm ||
+    sectionFilter !== "all";
+
   return (
     <>
-      {/* Filters row */}
+      {/* Row 1: Search + controls */}
       <div
         style={{
           display: "flex",
           gap: 8,
           flexWrap: "wrap",
-          marginBottom: 16,
+          marginBottom: 10,
           alignItems: "center",
         }}
       >
@@ -74,52 +83,6 @@ export default function FilterBar({
             }}
           />
         </div>
-        <select
-          value={selectedPeriod}
-          onChange={(e) => setSelectedPeriod(e.target.value)}
-          style={{
-            padding: "9px 12px",
-            border: `1.5px solid ${theme.inputBorder}`,
-            borderRadius: 8,
-            fontSize: 11,
-            fontFamily: "'Overpass Mono', monospace",
-            background: theme.inputBg,
-            cursor: "pointer",
-            color:
-              selectedPeriod === "all"
-                ? theme.textSecondary
-                : findPeriod(selectedPeriod)?.color,
-            fontWeight: selectedPeriod === "all" ? 500 : 700,
-          }}
-        >
-          <option value="all">All Time Periods</option>
-          {displayPeriods.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.label}
-            </option>
-          ))}
-        </select>
-        <select
-          value={selectedTag}
-          onChange={(e) => setSelectedTag(e.target.value)}
-          style={{
-            padding: "9px 12px",
-            border: `1.5px solid ${theme.inputBorder}`,
-            borderRadius: 8,
-            fontSize: 11,
-            fontFamily: "'Overpass Mono', monospace",
-            background: theme.inputBg,
-            cursor: "pointer",
-            color: selectedTag === "all" ? theme.textSecondary : theme.textPrimary,
-          }}
-        >
-          <option value="all">All Tags</option>
-          {TAGS.map((t) => (
-            <option key={t} value={t}>
-              {t}
-            </option>
-          ))}
-        </select>
         {isTeacher && section === "all" && (
           <select
             value={sectionFilter}
@@ -184,11 +147,128 @@ export default function FilterBar({
         </button>
       </div>
 
-      {/* Active filters */}
-      {(selectedPeriod !== "all" ||
-        selectedTag !== "all" ||
-        searchTerm ||
-        sectionFilter !== "all") && (
+      {/* Row 2: Period pills */}
+      {displayPeriods.length > 0 && (
+        <div
+          style={{
+            display: "flex",
+            gap: 5,
+            flexWrap: "wrap",
+            marginBottom: 8,
+            alignItems: "center",
+          }}
+        >
+          <span
+            style={{
+              fontSize: 10,
+              fontFamily: "'Overpass Mono', monospace",
+              color: theme.textMuted,
+              fontWeight: 600,
+              marginRight: 2,
+            }}
+          >
+            Periods:
+          </span>
+          {displayPeriods.map((p) => {
+            const isSelected = selectedPeriods.includes(p.id);
+            return (
+              <button
+                key={p.id}
+                onClick={() => togglePeriod(p.id)}
+                style={{
+                  padding: "4px 10px",
+                  borderRadius: 12,
+                  border: `1.5px solid ${isSelected ? p.color : theme.inputBorder}`,
+                  background: isSelected ? (getThemedPeriodBg(p) || p.bg) : "transparent",
+                  color: isSelected ? p.color : theme.textTertiary,
+                  fontSize: 10,
+                  fontFamily: "'Overpass Mono', monospace",
+                  fontWeight: isSelected ? 700 : 500,
+                  cursor: "pointer",
+                  transition: "all 0.15s",
+                }}
+              >
+                {p.label}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Row 3: Tag pills + AND/OR toggle */}
+      <div
+        style={{
+          display: "flex",
+          gap: 5,
+          flexWrap: "wrap",
+          marginBottom: 12,
+          alignItems: "center",
+        }}
+      >
+        <span
+          style={{
+            fontSize: 10,
+            fontFamily: "'Overpass Mono', monospace",
+            color: theme.textMuted,
+            fontWeight: 600,
+            marginRight: 2,
+          }}
+        >
+          Tags:
+        </span>
+        {TAGS.map((tag) => {
+          const isSelected = selectedTags.includes(tag);
+          return (
+            <button
+              key={tag}
+              onClick={() => toggleTag(tag)}
+              style={{
+                padding: "4px 10px",
+                borderRadius: 12,
+                border: `1.5px solid ${isSelected ? theme.textDescription : theme.inputBorder}`,
+                background: isSelected ? theme.subtleBg : "transparent",
+                color: isSelected ? theme.textDescription : theme.textTertiary,
+                fontSize: 10,
+                fontFamily: "'Overpass Mono', monospace",
+                fontWeight: isSelected ? 700 : 500,
+                cursor: "pointer",
+                transition: "all 0.15s",
+              }}
+            >
+              {tag}
+            </button>
+          );
+        })}
+        {selectedTags.length >= 2 && (
+          <button
+            onClick={() => setTagMatchMode((m) => (m === "or" ? "and" : "or"))}
+            title={
+              tagMatchMode === "or"
+                ? "OR mode: events with ANY selected tag"
+                : "AND mode: events with ALL selected tags"
+            }
+            style={{
+              marginLeft: 4,
+              padding: "3px 8px",
+              borderRadius: 10,
+              border: `1.5px solid ${theme.inputBorder}`,
+              background: tagMatchMode === "and" ? theme.subtleBg : "transparent",
+              color: theme.textDescription,
+              fontSize: 9,
+              fontFamily: "'Overpass Mono', monospace",
+              fontWeight: 700,
+              cursor: "pointer",
+              transition: "all 0.15s",
+              letterSpacing: "0.05em",
+            }}
+          >
+            {tagMatchMode.toUpperCase()}
+          </button>
+        )}
+      </div>
+
+      {/* Active filters summary */}
+      {hasActiveFilters && (
         <div
           style={{
             display: "flex",
@@ -207,35 +287,61 @@ export default function FilterBar({
           >
             Showing:
           </span>
-          {selectedPeriod !== "all" && (
-            <span
-              style={{
-                fontSize: 10,
-                background: getThemedPeriodBg(findPeriod(selectedPeriod)) || findPeriod(selectedPeriod)?.bg,
-                color: findPeriod(selectedPeriod)?.color,
-                padding: "3px 8px",
-                borderRadius: 4,
-                fontFamily: "'Overpass Mono', monospace",
-                fontWeight: 700,
-              }}
-            >
-              {findPeriod(selectedPeriod)?.label}
-            </span>
-          )}
-          {selectedTag !== "all" && (
-            <span
-              style={{
-                fontSize: 10,
-                background: theme.subtleBg,
-                color: theme.textDescription,
-                padding: "3px 8px",
-                borderRadius: 4,
-                fontFamily: "'Overpass Mono', monospace",
-                fontWeight: 600,
-              }}
-            >
-              {selectedTag}
-            </span>
+          {selectedPeriods.map((pId) => {
+            const p = findPeriod(pId);
+            if (!p) return null;
+            return (
+              <span
+                key={pId}
+                onClick={() => togglePeriod(pId)}
+                style={{
+                  fontSize: 10,
+                  background: getThemedPeriodBg(p) || p.bg,
+                  color: p.color,
+                  padding: "3px 8px",
+                  borderRadius: 4,
+                  fontFamily: "'Overpass Mono', monospace",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                }}
+              >
+                {p.label} &times;
+              </span>
+            );
+          })}
+          {selectedTags.length > 0 && (
+            <>
+              {selectedTags.length >= 2 && (
+                <span
+                  style={{
+                    fontSize: 9,
+                    color: theme.textMuted,
+                    fontFamily: "'Overpass Mono', monospace",
+                    fontWeight: 600,
+                  }}
+                >
+                  ({tagMatchMode.toUpperCase()})
+                </span>
+              )}
+              {selectedTags.map((tag) => (
+                <span
+                  key={tag}
+                  onClick={() => toggleTag(tag)}
+                  style={{
+                    fontSize: 10,
+                    background: theme.subtleBg,
+                    color: theme.textDescription,
+                    padding: "3px 8px",
+                    borderRadius: 4,
+                    fontFamily: "'Overpass Mono', monospace",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                  }}
+                >
+                  {tag} &times;
+                </span>
+              ))}
+            </>
           )}
           {sectionFilter !== "all" && (
             <span
@@ -267,12 +373,7 @@ export default function FilterBar({
             </span>
           )}
           <button
-            onClick={() => {
-              setSelectedPeriod("all");
-              setSelectedTag("all");
-              setSearchTerm("");
-              setSectionFilter("all");
-            }}
+            onClick={clearAllFilters}
             style={{
               fontSize: 10,
               color: theme.errorRed,

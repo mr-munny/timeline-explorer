@@ -1,10 +1,10 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { useAuth } from "./contexts/AuthContext";
 import { useTheme } from "./contexts/ThemeContext";
-import { TAGS, getPeriod } from "./data/constants";
+import { TAGS, getPeriod, DEFAULT_PERIODS } from "./data/constants";
 import { compareEventDates } from "./utils/dateUtils";
 import { TEACHER_EMAIL } from "./firebase";
-import { subscribeToEvents, submitEvent, deleteEvent, updateEvent, seedDatabase, subscribeToPeriods, subscribeToAllSectionPeriods, savePeriods, subscribeToSections, saveSections, subscribeToDefaultPeriods, saveDefaultPeriods, subscribeToCompellingQuestion, subscribeToAllSectionCompellingQuestions, saveCompellingQuestion, subscribeToDefaultCompellingQuestion, saveDefaultCompellingQuestion, subscribeToTimelineRange, subscribeToAllSectionTimelineRanges, saveTimelineRange, subscribeToDefaultTimelineRange, saveDefaultTimelineRange, subscribeToFieldConfig, subscribeToAllSectionFieldConfigs, saveFieldConfig, subscribeToDefaultFieldConfig, saveDefaultFieldConfig, assignStudentSection, subscribeToAllStudentSections, reassignStudentSection, removeStudentSection, subscribeToConnections, submitConnection, deleteConnection, updateConnection } from "./services/database";
+import { subscribeToEvents, submitEvent, deleteEvent, updateEvent, seedDatabase, subscribeToPeriods, subscribeToAllSectionPeriods, savePeriods, subscribeToSections, saveSections, subscribeToCompellingQuestion, saveCompellingQuestion, subscribeToTimelineRange, subscribeToAllSectionTimelineRanges, saveTimelineRange, subscribeToFieldConfig, saveFieldConfig, assignStudentSection, subscribeToAllStudentSections, reassignStudentSection, removeStudentSection, subscribeToConnections, submitConnection, deleteConnection, updateConnection } from "./services/database";
 import { writeToSheet } from "./services/sheets";
 import SEED_EVENTS from "./data/seedEvents";
 import VisualTimeline from "./components/VisualTimeline";
@@ -13,8 +13,8 @@ import AddEventPanel from "./components/AddEventPanel";
 import AddConnectionPanel from "./components/AddConnectionPanel";
 import ConnectionLines from "./components/ConnectionLines";
 import ContributorSidebar from "./components/ContributorSidebar";
+import AdminView from "./components/AdminView";
 import ModerationPanel from "./components/ModerationPanel";
-import AdminPanel from "./components/AdminPanel";
 import LoginScreen from "./components/LoginScreen";
 import SectionPicker from "./components/SectionPicker";
 import { Icon } from "@iconify/react";
@@ -30,6 +30,8 @@ import accountGroup from "@iconify-icons/mdi/account-group";
 import filterRemoveOutline from "@iconify-icons/mdi/filter-remove-outline";
 import shieldAccountOutline from "@iconify-icons/mdi/shield-account-outline";
 import vectorLink from "@iconify-icons/mdi/vector-link";
+import cogOutline from "@iconify-icons/mdi/cog-outline";
+import arrowLeft from "@iconify-icons/mdi/arrow-left";
 
 function getInitialSection() {
   const params = new URLSearchParams(window.location.search);
@@ -51,6 +53,7 @@ export default function App() {
   const [editingEvent, setEditingEvent] = useState(null);
   const [showContributors, setShowContributors] = useState(false);
   const [showModeration, setShowModeration] = useState(false);
+  const [showAdminView, setShowAdminView] = useState(false);
   const [sectionFilter, setSectionFilter] = useState("all");
   const [seeding, setSeeding] = useState(false);
   const [seeded, setSeeded] = useState(false);
@@ -58,23 +61,9 @@ export default function App() {
   const [timelineEnd, setTimelineEnd] = useState(2000);
   const [periods, setPeriods] = useState([]);
   const [allSectionPeriods, setAllSectionPeriods] = useState({});
-  const isEditingPeriodsRef = useRef(false);
-  const [defaultPeriods, setDefaultPeriods] = useState([]);
-  const [editingDefaults, setEditingDefaults] = useState(false);
   const [sections, setSections] = useState(null);
   const [compellingQuestion, setCompellingQuestion] = useState({ text: "", enabled: false });
-  const [cqEditingDefaults, setCqEditingDefaults] = useState(false);
-  const [defaultCompellingQuestion, setDefaultCompellingQuestion] = useState({ text: "", enabled: false });
-  const [allSectionCQs, setAllSectionCQs] = useState({});
-  const isEditingCQRef = useRef(false);
-  const [timelineRangeEditingDefaults, setTimelineRangeEditingDefaults] = useState(false);
-  const [defaultTimelineRange, setDefaultTimelineRange] = useState(null);
-  const isEditingTimelineRangeRef = useRef(false);
   const [fieldConfig, setFieldConfig] = useState(null);
-  const [fieldConfigEditingDefaults, setFieldConfigEditingDefaults] = useState(false);
-  const [defaultFieldConfig, setDefaultFieldConfig] = useState(null);
-  const isEditingFieldConfigRef = useRef(false);
-  const [allSectionFieldConfigs, setAllSectionFieldConfigs] = useState({});
   const [allStudentAssignments, setAllStudentAssignments] = useState([]);
   const [allConnections, setAllConnections] = useState([]);
   const [showAddConnectionPanel, setShowAddConnectionPanel] = useState(false);
@@ -104,10 +93,6 @@ export default function App() {
   const switchSection = (newSection) => {
     setSection(newSection);
     setExpandedEvent(null);
-    isEditingPeriodsRef.current = false;
-    setEditingDefaults(false);
-    isEditingCQRef.current = false;
-    setCqEditingDefaults(false);
     // Update URL without reload
     const url = new URL(window.location);
     url.searchParams.set("section", newSection);
@@ -139,25 +124,25 @@ export default function App() {
   useEffect(() => {
     if (!user) return;
 
-    // Teacher with ?section=all sees everything; students see their section
-    const listenSection = isTeacher && section === "all" ? "all" : section;
+    // Teacher with ?section=all or admin view open sees everything; students see their section
+    const listenSection = isTeacher && (section === "all" || showAdminView) ? "all" : section;
 
     const unsubscribe = subscribeToEvents(listenSection, (events) => {
       setAllEvents(events);
     });
 
     return () => unsubscribe();
-  }, [user, section, isTeacher]);
+  }, [user, section, isTeacher, showAdminView]);
 
   // Subscribe to Firebase connections in real-time
   useEffect(() => {
     if (!user) return;
-    const listenSection = isTeacher && section === "all" ? "all" : section;
+    const listenSection = isTeacher && (section === "all" || showAdminView) ? "all" : section;
     const unsubscribe = subscribeToConnections(listenSection, (connections) => {
       setAllConnections(connections);
     });
     return () => unsubscribe();
-  }, [user, section, isTeacher]);
+  }, [user, section, isTeacher, showAdminView]);
 
   // Subscribe to sections from Firebase
   useEffect(() => {
@@ -198,19 +183,17 @@ export default function App() {
     const updated = [...activeSections, { id, name }];
     setSections(updated);
     saveSections(updated);
-    if (defaultPeriods.length > 0) {
-      savePeriods(id, defaultPeriods);
-    }
-    if (defaultCompellingQuestion.text) {
-      saveCompellingQuestion(id, defaultCompellingQuestion);
-    }
-    if (defaultTimelineRange) {
-      saveTimelineRange(id, defaultTimelineRange);
-    }
-    if (defaultFieldConfig) {
-      saveFieldConfig(id, defaultFieldConfig);
-    }
-  }, [activeSections, defaultPeriods, defaultCompellingQuestion, defaultTimelineRange, defaultFieldConfig]);
+    // Initialize new section with sensible defaults
+    savePeriods(id, DEFAULT_PERIODS);
+    saveCompellingQuestion(id, { text: "", enabled: false });
+    saveTimelineRange(id, { start: 1900, end: 2000 });
+    saveFieldConfig(id, {
+      title: "mandatory", year: "mandatory", month: "hidden", day: "hidden",
+      endDate: "hidden", period: "mandatory", tags: "mandatory", sourceType: "mandatory",
+      description: "mandatory", sourceNote: "optional", sourceUrl: "optional",
+      imageUrl: "optional", region: "optional",
+    });
+  }, [activeSections]);
 
   const handleDeleteSection = useCallback((id) => {
     const updated = activeSections.filter((s) => s.id !== id);
@@ -227,103 +210,37 @@ export default function App() {
     saveSections(updated);
   }, [activeSections]);
 
-  // Subscribe to default periods template
+  // Subscribe to section-specific periods
   useEffect(() => {
     if (!user) return;
-    const unsub = subscribeToDefaultPeriods((data) => {
-      setDefaultPeriods(data || []);
-    });
-    return () => unsub();
-  }, [user]);
-
-  // Sync default periods into periods state when editing defaults
-  useEffect(() => {
-    if (editingDefaults && !isEditingPeriodsRef.current) {
-      setPeriods(defaultPeriods);
-    }
-  }, [editingDefaults, defaultPeriods]);
-
-  // Subscribe to section-specific periods (when not editing defaults)
-  useEffect(() => {
-    if (!user || editingDefaults) return;
-
     const effectiveSection = isTeacher && section === "all" ? "all" : section;
-
     if (effectiveSection === "all") {
       const unsub = subscribeToAllSectionPeriods(activeSections.map((s) => s.id), (periodsMap) => {
-        if (isEditingPeriodsRef.current) return;
         setAllSectionPeriods(periodsMap);
       });
       return () => unsub();
     } else {
       const unsub = subscribeToPeriods(effectiveSection, (data) => {
-        if (isEditingPeriodsRef.current) return;
         setPeriods(data || []);
       });
       return () => unsub();
     }
-  }, [user, section, isTeacher, activeSections, editingDefaults]);
+  }, [user, section, isTeacher, activeSections]);
 
-  // Save periods to the right target (section or defaults + all sections)
-  const persistPeriods = useCallback((newPeriods) => {
-    if (editingDefaults) {
-      saveDefaultPeriods(newPeriods);
-      for (const s of activeSections) {
-        savePeriods(s.id, newPeriods);
-      }
-    } else if (section !== "all") {
-      savePeriods(section, newPeriods);
-    }
-  }, [editingDefaults, section, activeSections]);
-
-  // Subscribe to default compelling question template
+  // Subscribe to section-specific compelling question
   useEffect(() => {
     if (!user) return;
-    const unsub = subscribeToDefaultCompellingQuestion((data) => {
-      setDefaultCompellingQuestion(data || { text: "", enabled: false });
-    });
-    return () => unsub();
-  }, [user]);
-
-  // Sync default CQ into state when editing defaults
-  useEffect(() => {
-    if (cqEditingDefaults && !isEditingCQRef.current) {
-      setCompellingQuestion(defaultCompellingQuestion || { text: "", enabled: false });
-    }
-  }, [cqEditingDefaults, defaultCompellingQuestion]);
-
-  // Subscribe to section-specific compelling question (when not editing defaults)
-  useEffect(() => {
-    if (!user || cqEditingDefaults) return;
-
     const effectiveSection = isTeacher && section === "all" ? "all" : section;
-
     if (effectiveSection === "all") {
-      const unsub = subscribeToAllSectionCompellingQuestions(activeSections.map((s) => s.id), (cqMap) => {
-        if (isEditingCQRef.current) return;
-        setAllSectionCQs(cqMap);
-      });
-      return () => unsub();
+      // CQ not displayed for "all" view — no subscription needed
+      return;
     } else {
       const unsub = subscribeToCompellingQuestion(effectiveSection, (data) => {
-        if (isEditingCQRef.current) return;
         setCompellingQuestion(data || { text: "", enabled: false });
       });
       return () => unsub();
     }
-  }, [user, section, isTeacher, activeSections, cqEditingDefaults]);
-
-  // Save compelling question to the right target
-  const persistCompellingQuestion = useCallback((newCQ) => {
-    if (cqEditingDefaults) {
-      saveDefaultCompellingQuestion(newCQ);
-      for (const s of activeSections) {
-        saveCompellingQuestion(s.id, newCQ);
-      }
-    } else if (section !== "all") {
-      saveCompellingQuestion(section, newCQ);
-    }
-  }, [cqEditingDefaults, section, activeSections]);
+  }, [user, section, isTeacher, activeSections]);
 
   // Default field config — defines which fields are mandatory/optional/hidden
   const DEFAULT_FIELD_CONFIG = useMemo(() => ({
@@ -348,33 +265,12 @@ export default function App() {
     ...(fieldConfig || {}),
   }), [fieldConfig, DEFAULT_FIELD_CONFIG]);
 
-  // Subscribe to default timeline range
+  // Subscribe to section-specific timeline range
   useEffect(() => {
     if (!user) return;
-    const unsub = subscribeToDefaultTimelineRange((data) => {
-      setDefaultTimelineRange(data);
-    });
-    return () => unsub();
-  }, [user]);
-
-  // Sync default timeline range into state when editing defaults
-  useEffect(() => {
-    if (timelineRangeEditingDefaults && !isEditingTimelineRangeRef.current && defaultTimelineRange) {
-      setTimelineStart(defaultTimelineRange.start);
-      setTimelineEnd(defaultTimelineRange.end);
-    }
-  }, [timelineRangeEditingDefaults, defaultTimelineRange]);
-
-  // Subscribe to section-specific timeline range (when not editing defaults)
-  useEffect(() => {
-    if (!user || timelineRangeEditingDefaults) return;
-
     const effectiveSection = isTeacher && section === "all" ? "all" : section;
-
     if (effectiveSection === "all") {
-      // For teacher "all" view, use widest range across all sections
       const unsub = subscribeToAllSectionTimelineRanges(activeSections.map((s) => s.id), (rangeMap) => {
-        if (isEditingTimelineRangeRef.current) return;
         let minStart = 1910, maxEnd = 2000;
         let hasAny = false;
         for (const sec of Object.keys(rangeMap)) {
@@ -392,7 +288,6 @@ export default function App() {
       return () => unsub();
     } else {
       const unsub = subscribeToTimelineRange(effectiveSection, (data) => {
-        if (isEditingTimelineRangeRef.current) return;
         if (data) {
           setTimelineStart(data.start);
           setTimelineEnd(data.end);
@@ -400,69 +295,22 @@ export default function App() {
       });
       return () => unsub();
     }
-  }, [user, section, isTeacher, activeSections, timelineRangeEditingDefaults]);
+  }, [user, section, isTeacher, activeSections]);
 
-  // Save timeline range to the right target
-  const persistTimelineRange = useCallback((start, end) => {
-    const range = { start, end };
-    if (timelineRangeEditingDefaults) {
-      saveDefaultTimelineRange(range);
-      for (const s of activeSections) {
-        saveTimelineRange(s.id, range);
-      }
-    } else if (section !== "all") {
-      saveTimelineRange(section, range);
-    }
-  }, [timelineRangeEditingDefaults, section, activeSections]);
-
-  // Subscribe to default field config
+  // Subscribe to section-specific field config
   useEffect(() => {
     if (!user) return;
-    const unsub = subscribeToDefaultFieldConfig((data) => {
-      setDefaultFieldConfig(data);
-    });
-    return () => unsub();
-  }, [user]);
-
-  // Sync default field config into state when editing defaults
-  useEffect(() => {
-    if (fieldConfigEditingDefaults && !isEditingFieldConfigRef.current) {
-      setFieldConfig(defaultFieldConfig);
-    }
-  }, [fieldConfigEditingDefaults, defaultFieldConfig]);
-
-  // Subscribe to section-specific field config (when not editing defaults)
-  useEffect(() => {
-    if (!user || fieldConfigEditingDefaults) return;
-
     const effectiveSection = isTeacher && section === "all" ? "all" : section;
-
     if (effectiveSection === "all") {
-      const unsub = subscribeToAllSectionFieldConfigs(activeSections.map((s) => s.id), (configMap) => {
-        if (isEditingFieldConfigRef.current) return;
-        setAllSectionFieldConfigs(configMap);
-      });
-      return () => unsub();
+      // Field config not needed for "all" view on timeline
+      return;
     } else {
       const unsub = subscribeToFieldConfig(effectiveSection, (data) => {
-        if (isEditingFieldConfigRef.current) return;
         setFieldConfig(data);
       });
       return () => unsub();
     }
-  }, [user, section, isTeacher, activeSections, fieldConfigEditingDefaults]);
-
-  // Save field config to the right target
-  const persistFieldConfig = useCallback((newConfig) => {
-    if (fieldConfigEditingDefaults) {
-      saveDefaultFieldConfig(newConfig);
-      for (const s of activeSections) {
-        saveFieldConfig(s.id, newConfig);
-      }
-    } else if (section !== "all") {
-      saveFieldConfig(section, newConfig);
-    }
-  }, [fieldConfigEditingDefaults, section, activeSections]);
+  }, [user, section, isTeacher]);
 
   // Approved events for the main timeline
   const approvedEvents = useMemo(
@@ -893,47 +741,72 @@ export default function App() {
                     Teacher View
                   </span>
                 )}
-                {isTeacher && (
-                  <AdminPanel
-                    theme={theme}
-                    section={section}
-                    getSectionName={getSectionName}
-                    timelineStart={timelineStart}
-                    timelineEnd={timelineEnd}
-                    periods={periods}
-                    compellingQuestion={compellingQuestion}
-                    activeFieldConfig={activeFieldConfig}
-                    activeSections={activeSections}
-                    allStudentAssignments={allStudentAssignments}
-                    selectedPeriod={selectedPeriod}
-                    setPeriods={setPeriods}
-                    setCompellingQuestion={setCompellingQuestion}
-                    setFieldConfig={setFieldConfig}
-                    setSelectedPeriod={setSelectedPeriod}
-                    setTimelineStart={setTimelineStart}
-                    setTimelineEnd={setTimelineEnd}
-                    editingDefaults={editingDefaults}
-                    setEditingDefaults={setEditingDefaults}
-                    cqEditingDefaults={cqEditingDefaults}
-                    setCqEditingDefaults={setCqEditingDefaults}
-                    timelineRangeEditingDefaults={timelineRangeEditingDefaults}
-                    setTimelineRangeEditingDefaults={setTimelineRangeEditingDefaults}
-                    fieldConfigEditingDefaults={fieldConfigEditingDefaults}
-                    setFieldConfigEditingDefaults={setFieldConfigEditingDefaults}
-                    persistTimelineRange={persistTimelineRange}
-                    persistPeriods={persistPeriods}
-                    persistCompellingQuestion={persistCompellingQuestion}
-                    persistFieldConfig={persistFieldConfig}
-                    isEditingTimelineRangeRef={isEditingTimelineRangeRef}
-                    isEditingPeriodsRef={isEditingPeriodsRef}
-                    isEditingCQRef={isEditingCQRef}
-                    isEditingFieldConfigRef={isEditingFieldConfigRef}
-                    handleAddSection={handleAddSection}
-                    handleDeleteSection={handleDeleteSection}
-                    handleRenameSection={handleRenameSection}
-                    reassignStudentSection={reassignStudentSection}
-                    removeStudentSection={removeStudentSection}
-                  />
+                {isTeacher && !showAdminView && (
+                  <button
+                    onClick={() => setShowAdminView(true)}
+                    style={{
+                      fontSize: 10,
+                      fontWeight: 700,
+                      color: theme.teacherGreen,
+                      fontFamily: "'Overpass Mono', monospace",
+                      letterSpacing: "0.1em",
+                      textTransform: "uppercase",
+                      background: theme.teacherGreenSubtle,
+                      padding: "3px 8px",
+                      borderRadius: 4,
+                      border: "none",
+                      cursor: "pointer",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 4,
+                      transition: "all 0.15s",
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = theme.teacherGreen + "35"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = theme.teacherGreenSubtle; }}
+                  >
+                    <Icon icon={cogOutline} width={12} />
+                    Admin
+                    {(pendingEvents.length + pendingConnections.length) > 0 && (
+                      <span style={{
+                        background: theme.errorRed,
+                        color: "#fff",
+                        fontSize: 8,
+                        fontWeight: 700,
+                        padding: "1px 4px",
+                        borderRadius: 8,
+                        marginLeft: 2,
+                      }}>
+                        {pendingEvents.length + pendingConnections.length}
+                      </span>
+                    )}
+                  </button>
+                )}
+                {showAdminView && (
+                  <button
+                    onClick={() => setShowAdminView(false)}
+                    style={{
+                      fontSize: 10,
+                      fontWeight: 700,
+                      color: theme.headerSubtext,
+                      fontFamily: "'Overpass Mono', monospace",
+                      letterSpacing: "0.1em",
+                      textTransform: "uppercase",
+                      background: theme.headerButtonBg,
+                      padding: "3px 8px",
+                      borderRadius: 4,
+                      border: "none",
+                      cursor: "pointer",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 4,
+                      transition: "all 0.15s",
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = theme.headerBorder + "60"; e.currentTarget.style.color = theme.headerText; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = theme.headerButtonBg; e.currentTarget.style.color = theme.headerSubtext; }}
+                  >
+                    <Icon icon={arrowLeft} width={12} />
+                    Back to Timeline
+                  </button>
                 )}
               </div>
               <h1
@@ -952,20 +825,34 @@ export default function App() {
                 <Icon icon={chartTimelineVariantShimmer} width={26} style={{ color: "#F59E0B" }} />
                 Timeline Explorer
               </h1>
-              <p
-                style={{
-                  fontSize: 11,
-                  color: theme.headerSubtext,
-                  margin: "6px 0 0 0",
-                  fontFamily: "'Overpass Mono', monospace",
-                }}
-              >
-                {approvedEvents.length} events &middot; {studentCount} student
-                historians &middot;{" "}
-                {[...new Set(approvedEvents.map((e) => e.period))].length} time periods
-              </p>
-              {/* View switcher (teacher only) */}
-              {isTeacher && (
+              {!showAdminView && (
+                <p
+                  style={{
+                    fontSize: 11,
+                    color: theme.headerSubtext,
+                    margin: "6px 0 0 0",
+                    fontFamily: "'Overpass Mono', monospace",
+                  }}
+                >
+                  {approvedEvents.length} events &middot; {studentCount} student
+                  historians &middot;{" "}
+                  {[...new Set(approvedEvents.map((e) => e.period))].length} time periods
+                </p>
+              )}
+              {showAdminView && (
+                <p
+                  style={{
+                    fontSize: 11,
+                    color: theme.headerSubtext,
+                    margin: "6px 0 0 0",
+                    fontFamily: "'Overpass Mono', monospace",
+                  }}
+                >
+                  Administration
+                </p>
+              )}
+              {/* View switcher (teacher only, hidden in admin) */}
+              {isTeacher && !showAdminView && (
                 <div style={{ display: "flex", gap: 4, marginTop: 10 }}>
                   {[{ id: "all", name: "All Sections" }, ...activeSections].map((s) => {
                     const isActive = section === s.id;
@@ -996,116 +883,120 @@ export default function App() {
               )}
             </div>
             <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-              {/* TEMPORARY: Remove after seeding */}
-              {isTeacher && !seeded && approvedEvents.length === 0 && (
-                <button
-                  onClick={handleSeed}
-                  disabled={seeding}
-                  style={{
-                    padding: "10px 18px",
-                    background: theme.seedPurple,
-                    color: theme.headerText,
-                    border: "none",
-                    borderRadius: 8,
-                    fontSize: 12,
-                    fontFamily: "'Overpass Mono', monospace",
-                    fontWeight: 700,
-                    cursor: seeding ? "default" : "pointer",
-                    transition: "filter 0.15s",
-                  }}
-                  onMouseEnter={(e) => { if (!seeding) e.currentTarget.style.filter = "brightness(1.15)"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.filter = "none"; }}
-                >
-                  <Icon icon={databasePlusOutline} width={14} style={{ verticalAlign: "middle", marginRight: 4 }} />
-                  {seeding ? "Seeding..." : "Seed Database"}
-                </button>
+              {!showAdminView && (
+                <>
+                  {/* TEMPORARY: Remove after seeding */}
+                  {isTeacher && !seeded && approvedEvents.length === 0 && (
+                    <button
+                      onClick={handleSeed}
+                      disabled={seeding}
+                      style={{
+                        padding: "10px 18px",
+                        background: theme.seedPurple,
+                        color: theme.headerText,
+                        border: "none",
+                        borderRadius: 8,
+                        fontSize: 12,
+                        fontFamily: "'Overpass Mono', monospace",
+                        fontWeight: 700,
+                        cursor: seeding ? "default" : "pointer",
+                        transition: "filter 0.15s",
+                      }}
+                      onMouseEnter={(e) => { if (!seeding) e.currentTarget.style.filter = "brightness(1.15)"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.filter = "none"; }}
+                    >
+                      <Icon icon={databasePlusOutline} width={14} style={{ verticalAlign: "middle", marginRight: 4 }} />
+                      {seeding ? "Seeding..." : "Seed Database"}
+                    </button>
+                  )}
+                  {isTeacher && (pendingEvents.length + pendingConnections.length) > 0 && (
+                    <button
+                      onClick={() => setShowModeration(true)}
+                      style={{
+                        padding: "10px 18px",
+                        background: theme.errorRed,
+                        color: theme.headerText,
+                        border: "none",
+                        borderRadius: 8,
+                        fontSize: 12,
+                        fontFamily: "'Overpass Mono', monospace",
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        position: "relative",
+                        transition: "filter 0.15s",
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.filter = "brightness(1.15)"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.filter = "none"; }}
+                    >
+                      <Icon icon={inboxArrowDown} width={14} style={{ verticalAlign: "middle", marginRight: 4 }} />
+                      Review ({pendingEvents.length + pendingConnections.length})
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setShowAddPanel(true)}
+                    style={{
+                      padding: "10px 18px",
+                      background: theme.accentGold,
+                      color: theme.headerBg,
+                      border: "none",
+                      borderRadius: 8,
+                      fontSize: 12,
+                      fontFamily: "'Overpass Mono', monospace",
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      letterSpacing: "0.02em",
+                      transition: "filter 0.15s",
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.filter = "brightness(1.1)"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.filter = "none"; }}
+                  >
+                    <Icon icon={plusIcon} width={14} style={{ verticalAlign: "middle", marginRight: 2 }} />
+                    Add Event
+                  </button>
+                  <button
+                    onClick={() => setShowAddConnectionPanel(true)}
+                    style={{
+                      padding: "10px 18px",
+                      background: "transparent",
+                      color: theme.accentGold,
+                      border: `1.5px solid ${theme.accentGold}`,
+                      borderRadius: 8,
+                      fontSize: 12,
+                      fontFamily: "'Overpass Mono', monospace",
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      letterSpacing: "0.02em",
+                      transition: "all 0.15s",
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = theme.accentGold + "15"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+                  >
+                    <Icon icon={vectorLink} width={14} style={{ verticalAlign: "middle", marginRight: 4 }} />
+                    Add Connection
+                  </button>
+                  <button
+                    onClick={() => setConnectionMode(connectionMode ? null : { step: "selectCause" })}
+                    style={{
+                      padding: "10px 14px",
+                      background: connectionMode ? theme.accentGold : "transparent",
+                      color: connectionMode ? theme.headerBg : theme.headerSubtext,
+                      border: `1px solid ${connectionMode ? theme.accentGold : theme.headerBorder}`,
+                      borderRadius: 8,
+                      fontSize: 11,
+                      fontFamily: "'Overpass Mono', monospace",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      transition: "all 0.15s",
+                    }}
+                    onMouseEnter={(e) => { if (!connectionMode) e.currentTarget.style.background = theme.headerBorder + "40"; }}
+                    onMouseLeave={(e) => { if (!connectionMode) e.currentTarget.style.background = "transparent"; }}
+                    title="Click two events to connect them"
+                  >
+                    <Icon icon={vectorLink} width={13} style={{ verticalAlign: "middle", marginRight: 4 }} />
+                    {connectionMode ? "Exit Connect Mode" : "Connect Events"}
+                  </button>
+                </>
               )}
-              {isTeacher && (pendingEvents.length + pendingConnections.length) > 0 && (
-                <button
-                  onClick={() => setShowModeration(true)}
-                  style={{
-                    padding: "10px 18px",
-                    background: theme.errorRed,
-                    color: theme.headerText,
-                    border: "none",
-                    borderRadius: 8,
-                    fontSize: 12,
-                    fontFamily: "'Overpass Mono', monospace",
-                    fontWeight: 700,
-                    cursor: "pointer",
-                    position: "relative",
-                    transition: "filter 0.15s",
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.filter = "brightness(1.15)"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.filter = "none"; }}
-                >
-                  <Icon icon={inboxArrowDown} width={14} style={{ verticalAlign: "middle", marginRight: 4 }} />
-                  Review ({pendingEvents.length + pendingConnections.length})
-                </button>
-              )}
-              <button
-                onClick={() => setShowAddPanel(true)}
-                style={{
-                  padding: "10px 18px",
-                  background: theme.accentGold,
-                  color: theme.headerBg,
-                  border: "none",
-                  borderRadius: 8,
-                  fontSize: 12,
-                  fontFamily: "'Overpass Mono', monospace",
-                  fontWeight: 700,
-                  cursor: "pointer",
-                  letterSpacing: "0.02em",
-                  transition: "filter 0.15s",
-                }}
-                onMouseEnter={(e) => { e.currentTarget.style.filter = "brightness(1.1)"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.filter = "none"; }}
-              >
-                <Icon icon={plusIcon} width={14} style={{ verticalAlign: "middle", marginRight: 2 }} />
-                Add Event
-              </button>
-              <button
-                onClick={() => setShowAddConnectionPanel(true)}
-                style={{
-                  padding: "10px 18px",
-                  background: "transparent",
-                  color: theme.accentGold,
-                  border: `1.5px solid ${theme.accentGold}`,
-                  borderRadius: 8,
-                  fontSize: 12,
-                  fontFamily: "'Overpass Mono', monospace",
-                  fontWeight: 700,
-                  cursor: "pointer",
-                  letterSpacing: "0.02em",
-                  transition: "all 0.15s",
-                }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = theme.accentGold + "15"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
-              >
-                <Icon icon={vectorLink} width={14} style={{ verticalAlign: "middle", marginRight: 4 }} />
-                Add Connection
-              </button>
-              <button
-                onClick={() => setConnectionMode(connectionMode ? null : { step: "selectCause" })}
-                style={{
-                  padding: "10px 14px",
-                  background: connectionMode ? theme.accentGold : "transparent",
-                  color: connectionMode ? theme.headerBg : theme.headerSubtext,
-                  border: `1px solid ${connectionMode ? theme.accentGold : theme.headerBorder}`,
-                  borderRadius: 8,
-                  fontSize: 11,
-                  fontFamily: "'Overpass Mono', monospace",
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  transition: "all 0.15s",
-                }}
-                onMouseEnter={(e) => { if (!connectionMode) e.currentTarget.style.background = theme.headerBorder + "40"; }}
-                onMouseLeave={(e) => { if (!connectionMode) e.currentTarget.style.background = "transparent"; }}
-                title="Click two events to connect them"
-              >
-                <Icon icon={vectorLink} width={13} style={{ verticalAlign: "middle", marginRight: 4 }} />
-                {connectionMode ? "Exit Connect Mode" : "Connect Events"}
-              </button>
               <button
                 onClick={toggleTheme}
                 title={mode === "dark" ? "Switch to light mode" : "Switch to dark mode"}
@@ -1151,6 +1042,30 @@ export default function App() {
         </div>
       </div>
 
+      {/* Admin View (full page, replaces timeline content) */}
+      {showAdminView && isTeacher && (
+        <AdminView
+          sections={activeSections}
+          pendingEvents={pendingEvents}
+          pendingConnections={pendingConnections}
+          allEvents={approvedEvents}
+          allConnections={allConnections}
+          allStudentAssignments={allStudentAssignments}
+          getSectionName={getSectionName}
+          onClose={() => setShowAdminView(false)}
+          onAddSection={handleAddSection}
+          onDeleteSection={handleDeleteSection}
+          onRenameSection={handleRenameSection}
+          onEventApproved={handleEventApproved}
+          displayPeriods={displayPeriods}
+          reassignStudentSection={reassignStudentSection}
+          removeStudentSection={removeStudentSection}
+        />
+      )}
+
+      {/* Timeline Content (hidden when admin view is open) */}
+      {!showAdminView && (
+        <>
       {/* Compelling Question Hero */}
       {displayCQ && displayCQ.enabled && displayCQ.text.trim() && (
         <div style={{ background: theme.cardBg, borderBottom: `1px solid ${theme.cardBorder}` }}>
@@ -1643,6 +1558,8 @@ export default function App() {
           </p>
         </div>
       </div>
+        </>
+      )}
 
       {/* Add Event Modal */}
       {showAddPanel && (

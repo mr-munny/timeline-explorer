@@ -20,6 +20,7 @@ import { useTheme } from "../contexts/ThemeContext";
 export default function EventCard({ event, isExpanded, isRead, onToggle, isTeacher, onEdit, onDelete, periods = [], onReturnToTimeline, connections, allEvents = [], onScrollToEvent, onDeleteConnection, connectionMode }) {
   const { theme } = useTheme();
   const [showEditHistory, setShowEditHistory] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
   const period = getPeriod(periods, event.period);
   const periodColor = period?.color || "#6B7280";
   const editHistory = event.editHistory || [];
@@ -229,7 +230,7 @@ export default function EventCard({ event, isExpanded, isRead, onToggle, isTeach
                 <img
                   src={event.imageUrl}
                   alt={event.title}
-                  onClick={(e) => e.stopPropagation()}
+                  onClick={(e) => { e.stopPropagation(); setLightboxOpen(true); }}
                   style={{
                     maxWidth: "100%",
                     maxHeight: 250,
@@ -237,6 +238,7 @@ export default function EventCard({ event, isExpanded, isRead, onToggle, isTeach
                     objectFit: "contain",
                     background: theme.subtleBg,
                     display: "block",
+                    cursor: "zoom-in",
                   }}
                   onError={(e) => { e.currentTarget.parentElement.style.display = "none"; }}
                 />
@@ -685,6 +687,32 @@ export default function EventCard({ event, isExpanded, isRead, onToggle, isTeach
               </button>
             )}
           </div>
+        </div>
+      )}
+      {lightboxOpen && event.imageUrl && (
+        <div
+          onClick={(e) => { e.stopPropagation(); setLightboxOpen(false); }}
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 9999,
+            background: "rgba(0,0,0,0.85)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: "zoom-out",
+          }}
+        >
+          <img
+            src={event.imageUrl}
+            alt={event.title}
+            style={{
+              maxWidth: "90vw",
+              maxHeight: "90vh",
+              objectFit: "contain",
+              borderRadius: 8,
+            }}
+          />
         </div>
       )}
     </div>

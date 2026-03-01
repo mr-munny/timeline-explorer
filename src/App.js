@@ -44,7 +44,6 @@ export default function App() {
   const [showAddConnectionPanel, setShowAddConnectionPanel] = useState(false);
   const { connectionMode, setConnectionMode, handleConnectionModeClick } = useConnectionMode();
   const [editingConnection, setEditingConnection] = useState(null);
-  const [hoveredEvent, setHoveredEvent] = useState(null);
   const readEvents = useReadEvents(user, expandedEvent);
 
   const {
@@ -103,12 +102,7 @@ export default function App() {
     savePeriods(id, DEFAULT_PERIODS);
     saveCompellingQuestion(id, { text: "", enabled: false });
     saveTimelineRange(id, { start: 1900, end: 2000 });
-    saveFieldConfig(id, {
-      title: "mandatory", year: "mandatory", month: "hidden", day: "hidden",
-      endDate: "hidden", period: "mandatory", tags: "mandatory", sourceType: "mandatory",
-      description: "mandatory", sourceNote: "optional", sourceUrl: "optional",
-      imageUrl: "optional", region: "optional",
-    });
+    saveFieldConfig(id, DEFAULT_FIELD_CONFIG);
   }, [activeSections]);
 
   const handleDeleteSection = useCallback((id) => {
@@ -367,13 +361,7 @@ export default function App() {
           <VisualTimeline
             filteredEvents={filteredEvents}
             onEraClick={setSelectedPeriod}
-            onEventSelect={(id) => {
-              setExpandedEvent(id);
-              setTimeout(() => {
-                const el = document.querySelector(`[data-event-id="${id}"]`);
-                if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
-              }, 100);
-            }}
+            onEventSelect={handleScrollToEvent}
             selectedPeriod={selectedPeriod}
             timelineStart={timelineStart}
             timelineEnd={timelineEnd}
@@ -460,8 +448,6 @@ export default function App() {
           connectionMode={connectionMode}
           expandedEvent={expandedEvent}
           setExpandedEvent={setExpandedEvent}
-          hoveredEvent={hoveredEvent}
-          setHoveredEvent={setHoveredEvent}
           readEvents={readEvents}
           connectionsByEvent={connectionsByEvent}
           approvedEvents={approvedEvents}

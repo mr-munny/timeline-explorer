@@ -43,7 +43,6 @@ const lightTheme = {
   successGreen: "#059669",
   teacherGreen: "#34D399",
   teacherGreenSubtle: "#34D39918",
-  seedPurple: "#6366F1",
 
   modalOverlay: "rgba(0,0,0,0.4)",
   modalShadow: "0 24px 48px rgba(0,0,0,0.15)",
@@ -93,7 +92,6 @@ const darkTheme = {
   successGreen: "#059669",
   teacherGreen: "#34D399",
   teacherGreenSubtle: "#34D39922",
-  seedPurple: "#6366F1",
 
   modalOverlay: "rgba(0,0,0,0.6)",
   modalShadow: "0 24px 48px rgba(0,0,0,0.4)",

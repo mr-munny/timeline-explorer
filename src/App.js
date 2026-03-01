@@ -8,6 +8,7 @@ import { savePeriods, saveSections, saveCompellingQuestion, saveTimelineRange, s
 import useFirebaseSubscriptions from "./hooks/useFirebaseSubscriptions";
 import useEventHandlers from "./hooks/useEventHandlers";
 import useConnectionHandlers from "./hooks/useConnectionHandlers";
+import useReadEvents from "./hooks/useReadEvents";
 import VisualTimeline from "./components/VisualTimeline";
 import EventCard from "./components/EventCard";
 import AddEventPanel from "./components/AddEventPanel";
@@ -47,13 +48,7 @@ export default function App() {
   const [editingConnection, setEditingConnection] = useState(null);
   const [hoveredEvent, setHoveredEvent] = useState(null);
   const eventListRef = useRef(null);
-  const [readEvents, setReadEvents] = useState(() => {
-    if (!user) return new Set();
-    try {
-      const stored = localStorage.getItem(`readEvents_${user.uid}`);
-      return stored ? new Set(JSON.parse(stored)) : new Set();
-    } catch { return new Set(); }
-  });
+  const readEvents = useReadEvents(user, expandedEvent);
 
   const {
     allEvents,
@@ -85,27 +80,6 @@ export default function App() {
     url.searchParams.set("section", newSection);
     window.history.replaceState({}, "", url);
   };
-
-  // Re-initialize readEvents when user changes
-  useEffect(() => {
-    if (!user) { setReadEvents(new Set()); return; }
-    try {
-      const stored = localStorage.getItem(`readEvents_${user.uid}`);
-      setReadEvents(stored ? new Set(JSON.parse(stored)) : new Set());
-    } catch { setReadEvents(new Set()); }
-  }, [user]);
-
-  // Mark event as read when expanded
-  useEffect(() => {
-    if (!expandedEvent || !user) return;
-    setReadEvents((prev) => {
-      if (prev.has(expandedEvent)) return prev;
-      const next = new Set(prev);
-      next.add(expandedEvent);
-      try { localStorage.setItem(`readEvents_${user.uid}`, JSON.stringify([...next])); } catch {}
-      return next;
-    });
-  }, [expandedEvent, user]);
 
   // Lock student to their assigned section (overrides URL param)
   useEffect(() => {

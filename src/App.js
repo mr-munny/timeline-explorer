@@ -384,6 +384,8 @@ export default function App() {
     sourceType: "mandatory",
     description: "mandatory",
     sourceNote: "mandatory",
+    sourceUrl: "optional",
+    imageUrl: "optional",
     region: "optional",
   }), []);
 
@@ -685,7 +687,7 @@ export default function App() {
         endDay: formData.endDay ? parseInt(formData.endDay) : null,
       };
       // Compute which fields changed for edit history
-      const changeFields = ["title", "year", "month", "day", "endYear", "endMonth", "endDay", "period", "tags", "sourceType", "description", "sourceNote", "region"];
+      const changeFields = ["title", "year", "month", "day", "endYear", "endMonth", "endDay", "period", "tags", "sourceType", "description", "sourceNote", "sourceUrl", "imageUrl", "region"];
       const changes = {};
       for (const key of changeFields) {
         const oldVal = editingEvent[key];
@@ -1747,6 +1749,8 @@ export default function App() {
                             { key: "sourceType", label: "Source Type" },
                             { key: "description", label: "Description" },
                             { key: "sourceNote", label: "Source Citation" },
+                            { key: "sourceUrl", label: "Source URL" },
+                            { key: "imageUrl", label: "Image URL" },
                             { key: "region", label: "Region" },
                           ].map(({ key, label }) => {
                             const mode = activeFieldConfig[key] || "mandatory";

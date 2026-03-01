@@ -18,6 +18,8 @@ const DEFAULT_FIELD_CONFIG = {
   sourceType: "mandatory",
   description: "mandatory",
   sourceNote: "mandatory",
+  sourceUrl: "optional",
+  imageUrl: "optional",
   region: "optional",
 };
 
@@ -38,6 +40,8 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
     sourceType: editingEvent.sourceType || "Primary",
     description: editingEvent.description || "",
     sourceNote: editingEvent.sourceNote || "",
+    sourceUrl: editingEvent.sourceUrl || "",
+    imageUrl: editingEvent.imageUrl || "",
     region: editingEvent.region || "",
   } : {
     title: "",
@@ -52,6 +56,8 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
     sourceType: "Primary",
     description: "",
     sourceNote: "",
+    sourceUrl: "",
+    imageUrl: "",
     region: "",
   });
   const [errors, setErrors] = useState({});
@@ -113,13 +119,21 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
     if (fc.tags === "mandatory" && form.tags.length === 0) e.tags = true;
     if (fc.description === "mandatory" && !form.description.trim()) e.description = true;
     if (fc.sourceNote === "mandatory" && !form.sourceNote.trim()) e.sourceNote = true;
+    if (fc.sourceUrl !== "hidden" && form.sourceUrl.trim()) {
+      try { new URL(form.sourceUrl.trim()); } catch { e.sourceUrl = true; }
+    }
+    if (fc.sourceUrl === "mandatory" && !form.sourceUrl.trim()) e.sourceUrl = true;
+    if (fc.imageUrl !== "hidden" && form.imageUrl.trim()) {
+      try { new URL(form.imageUrl.trim()); } catch { e.imageUrl = true; }
+    }
+    if (fc.imageUrl === "mandatory" && !form.imageUrl.trim()) e.imageUrl = true;
     if (fc.region === "mandatory" && !form.region.trim()) e.region = true;
     setErrors(e);
     setWarnings(w);
     return Object.keys(e).length === 0;
   };
 
-  const FIELD_NAMES = { title: "Title", year: "Year", month: "Month", day: "Day", endYear: "End Year", endMonth: "End Month", endDay: "End Day", period: "Time Period", tags: "Tags", description: "Description", sourceNote: "Source Citation", region: "Region" };
+  const FIELD_NAMES = { title: "Title", year: "Year", month: "Month", day: "Day", endYear: "End Year", endMonth: "End Month", endDay: "End Day", period: "Time Period", tags: "Tags", description: "Description", sourceNote: "Source Citation", sourceUrl: "Source URL", imageUrl: "Image URL", region: "Region" };
 
   const handleSubmit = async () => {
     if (!validate()) {
@@ -555,6 +569,49 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
               placeholder="Where did you learn about this?"
               style={fieldStyle("sourceNote")}
             />
+          </div>
+          )}
+
+          {/* Source URL */}
+          {fc.sourceUrl !== "hidden" && (
+          <div>
+            <label style={labelStyle}>Source URL{fc.sourceUrl === "optional" ? " (optional)" : fc.sourceUrl === "mandatory" ? " *" : ""}</label>
+            <input
+              value={form.sourceUrl}
+              onChange={(e) => update("sourceUrl", e.target.value)}
+              placeholder="https://..."
+              type="url"
+              style={fieldStyle("sourceUrl")}
+            />
+          </div>
+          )}
+
+          {/* Image URL */}
+          {fc.imageUrl !== "hidden" && (
+          <div>
+            <label style={labelStyle}>Image URL{fc.imageUrl === "optional" ? " (optional)" : fc.imageUrl === "mandatory" ? " *" : ""}</label>
+            <input
+              value={form.imageUrl}
+              onChange={(e) => update("imageUrl", e.target.value)}
+              placeholder="https://upload.wikimedia.org/..."
+              type="url"
+              style={fieldStyle("imageUrl")}
+            />
+            {form.imageUrl && !errors.imageUrl && (
+              <img
+                src={form.imageUrl}
+                alt="Preview"
+                style={{
+                  maxWidth: "100%",
+                  maxHeight: 150,
+                  borderRadius: 6,
+                  objectFit: "contain",
+                  marginTop: 6,
+                  background: theme.subtleBg,
+                }}
+                onError={(e) => { e.currentTarget.style.display = "none"; }}
+              />
+            )}
           </div>
           )}
 

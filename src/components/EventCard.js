@@ -11,6 +11,7 @@ import closeCircleOutline from "@iconify-icons/mdi/close-circle-outline";
 import bookOpenPageVariantOutline from "@iconify-icons/mdi/book-open-page-variant-outline";
 import fileDocumentOutline from "@iconify-icons/mdi/file-document-outline";
 import linkVariant from "@iconify-icons/mdi/link-variant";
+import imageOutline from "@iconify-icons/mdi/image-outline";
 import accountOutline from "@iconify-icons/mdi/account-outline";
 import mapMarkerOutline from "@iconify-icons/mdi/map-marker-outline";
 import schoolOutline from "@iconify-icons/mdi/school-outline";
@@ -24,7 +25,7 @@ export default function EventCard({ event, isExpanded, isRead, onToggle, isTeach
   const editHistory = event.editHistory || [];
   const periodLabel = period?.label || event.period;
 
-  const FIELD_LABELS = { title: "Title", year: "Year", month: "Month", day: "Day", endYear: "End Year", endMonth: "End Month", endDay: "End Day", period: "Period", tags: "Tags", sourceType: "Source Type", description: "Description", sourceNote: "Source", region: "Region" };
+  const FIELD_LABELS = { title: "Title", year: "Year", month: "Month", day: "Day", endYear: "End Year", endMonth: "End Month", endDay: "End Day", period: "Period", tags: "Tags", sourceType: "Source Type", description: "Description", sourceNote: "Source", sourceUrl: "Source URL", imageUrl: "Image URL", region: "Region" };
   const TEXT_FIELDS = new Set(["title", "description", "sourceNote"]);
 
   const computeWordDiff = (oldStr, newStr) => {
@@ -208,17 +209,40 @@ export default function EventCard({ event, isExpanded, isRead, onToggle, isTeach
               {"\u2191"} Return to timeline
             </div>
           )}
-          <p
-            style={{
-              fontSize: 14,
-              lineHeight: 1.7,
-              color: theme.textDescription,
-              margin: "0 0 14px 0",
-              fontFamily: "'Newsreader', 'Georgia', serif",
-            }}
-          >
-            {event.description}
-          </p>
+          <div style={{ display: "flex", gap: 14, marginBottom: 14 }}>
+            <p
+              style={{
+                fontSize: 14,
+                lineHeight: 1.7,
+                color: theme.textDescription,
+                margin: 0,
+                fontFamily: "'Newsreader', 'Georgia', serif",
+                flex: 1,
+              }}
+            >
+              {event.description}
+            </p>
+
+            {/* Image */}
+            {event.imageUrl && (
+              <div style={{ flexShrink: 0, maxWidth: "40%" }}>
+                <img
+                  src={event.imageUrl}
+                  alt={event.title}
+                  onClick={(e) => e.stopPropagation()}
+                  style={{
+                    maxWidth: "100%",
+                    maxHeight: 250,
+                    borderRadius: 8,
+                    objectFit: "contain",
+                    background: theme.subtleBg,
+                    display: "block",
+                  }}
+                  onError={(e) => { e.currentTarget.parentElement.style.display = "none"; }}
+                />
+              </div>
+            )}
+          </div>
 
           {/* Tags */}
           <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginBottom: 12 }}>
@@ -290,13 +314,68 @@ export default function EventCard({ event, isExpanded, isRead, onToggle, isTeach
                 </div>
               </div>
             )}
-            {event.sourceNote && (
+            {(event.sourceNote || event.sourceUrl) && (
               <div>
                 <span style={{ color: theme.textSecondary, fontWeight: 500, display: "inline-flex", alignItems: "center", gap: 3 }}>
                   <Icon icon={linkVariant} width={11} />
                   Source
                 </span>
-                <div style={{ color: theme.textDescription, marginTop: 2 }}>{event.sourceNote}</div>
+                {event.sourceNote && (
+                  <div style={{ color: theme.textDescription, marginTop: 2 }}>{event.sourceNote}</div>
+                )}
+                {event.sourceUrl && (
+                  <a
+                    href={event.sourceUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    style={{
+                      color: "#2563EB",
+                      fontSize: 10,
+                      fontFamily: "'Overpass Mono', monospace",
+                      textDecoration: "none",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 3,
+                      marginTop: 3,
+                      wordBreak: "break-all",
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.textDecoration = "underline"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.textDecoration = "none"; }}
+                  >
+                    <Icon icon={linkVariant} width={10} />
+                    {(() => { try { return new URL(event.sourceUrl).hostname.replace("www.", ""); } catch { return event.sourceUrl; } })()}
+                  </a>
+                )}
+              </div>
+            )}
+            {event.imageUrl && (
+              <div>
+                <span style={{ color: theme.textSecondary, fontWeight: 500, display: "inline-flex", alignItems: "center", gap: 3 }}>
+                  <Icon icon={imageOutline} width={11} />
+                  Image Source
+                </span>
+                <a
+                  href={event.imageUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  style={{
+                    color: "#2563EB",
+                    fontSize: 10,
+                    fontFamily: "'Overpass Mono', monospace",
+                    textDecoration: "none",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 3,
+                    marginTop: 2,
+                    wordBreak: "break-all",
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.textDecoration = "underline"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.textDecoration = "none"; }}
+                >
+                  {(() => { try { return new URL(event.imageUrl).hostname.replace("www.", ""); } catch { return event.imageUrl; } })()}
+                </a>
               </div>
             )}
             <div>

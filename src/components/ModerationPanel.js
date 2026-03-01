@@ -32,7 +32,7 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
         // Compute which fields changed for edit history
         const changes = {};
         if (original) {
-          const changeFields = ["title", "year", "month", "day", "endYear", "endMonth", "endDay", "period", "tags", "sourceType", "description", "sourceNote", "region"];
+          const changeFields = ["title", "year", "month", "day", "endYear", "endMonth", "endDay", "period", "tags", "sourceType", "description", "sourceNote", "sourceUrl", "imageUrl", "region"];
           for (const key of changeFields) {
             const oldVal = original[key];
             const newVal = event[key];
@@ -88,6 +88,8 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
       sourceType: event.sourceType || "Primary",
       description: event.description,
       sourceNote: event.sourceNote,
+      sourceUrl: event.sourceUrl || "",
+      imageUrl: event.imageUrl || "",
       region: event.region || "",
     });
   };
@@ -185,6 +187,8 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
     { key: "sourceType", label: "Source Type" },
     { key: "description", label: "Description", inline: true },
     { key: "sourceNote", label: "Source", inline: true },
+    { key: "sourceUrl", label: "Source URL" },
+    { key: "imageUrl", label: "Image URL" },
     { key: "region", label: "Region" },
   ];
 
@@ -492,6 +496,30 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                         style={inputStyle}
                         placeholder="Source citation"
                       />
+                      <input
+                        value={editForm.sourceUrl}
+                        onChange={(e) =>
+                          setEditForm((f) => ({
+                            ...f,
+                            sourceUrl: e.target.value,
+                          }))
+                        }
+                        style={inputStyle}
+                        placeholder="Source URL (optional)"
+                        type="url"
+                      />
+                      <input
+                        value={editForm.imageUrl}
+                        onChange={(e) =>
+                          setEditForm((f) => ({
+                            ...f,
+                            imageUrl: e.target.value,
+                          }))
+                        }
+                        style={inputStyle}
+                        placeholder="Image URL (optional)"
+                        type="url"
+                      />
                       <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
                         <button
                           onClick={() => setEditingId(null)}
@@ -701,6 +729,23 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                         {event.description}
                       </p>
 
+                      {event.imageUrl && (
+                        <div style={{ marginBottom: 8 }}>
+                          <img
+                            src={event.imageUrl}
+                            alt={event.title}
+                            style={{
+                              maxWidth: "100%",
+                              maxHeight: 200,
+                              borderRadius: 6,
+                              objectFit: "contain",
+                              background: theme.subtleBg,
+                            }}
+                            onError={(e) => { e.currentTarget.style.display = "none"; }}
+                          />
+                        </div>
+                      )}
+
                       <div
                         style={{
                           fontSize: 10,
@@ -709,9 +754,22 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                           marginBottom: 10,
                         }}
                       >
-                        <strong>Source:</strong> {event.sourceNote} &middot;{" "}
+                        <strong>Source:</strong> {event.sourceNote}
+                        {event.sourceUrl && (
+                          <>
+                            {" "}&middot;{" "}
+                            <a href={event.sourceUrl} target="_blank" rel="noopener noreferrer" style={{ color: "#2563EB", textDecoration: "underline" }} onClick={(e) => e.stopPropagation()}>Link</a>
+                          </>
+                        )}
+                        {" "}&middot;{" "}
                         <strong>Type:</strong> {event.sourceType} &middot;{" "}
                         <strong>Tags:</strong> {(event.tags || []).join(", ")}
+                        {event.imageUrl && (
+                          <>
+                            {" "}&middot;{" "}
+                            <a href={event.imageUrl} target="_blank" rel="noopener noreferrer" style={{ color: "#2563EB", textDecoration: "underline" }} onClick={(e) => e.stopPropagation()}>Image</a>
+                          </>
+                        )}
                       </div>
                       </>
                       )}

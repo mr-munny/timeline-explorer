@@ -151,7 +151,7 @@ export default function AdminSectionSettings({
   };
 
   const handleDeleteSection = () => {
-    if (!window.confirm(`Delete "${sectionName}"? Events in this section will only be visible in the All Sections view.`)) return;
+    if (!window.confirm(`Delete "${sectionName}"? Events in this section will no longer be visible.`)) return;
     onDeleteSection(sectionId);
   };
 

@@ -153,7 +153,7 @@ export default function TimelineHeader({
             {/* View switcher (teacher only, hidden in admin) */}
             {isTeacher && !showAdminView && (
               <div style={{ display: "flex", gap: 4, marginTop: 10 }}>
-                {[{ id: "all", name: "All Sections" }, ...activeSections].map((s) => {
+                {activeSections.map((s) => {
                   const isActive = section === s.id;
                   return (
                     <button

@@ -52,7 +52,7 @@ export default function App() {
   const [modal, dispatchModal] = useReducer(modalReducer, { type: null, payload: null });
   const [showContributors, setShowContributors] = useState(false);
   const [showAdminView, setShowAdminView] = useState(false);
-  const [sectionFilter, setSectionFilter] = useState("all");
+
 
   // Derived modal state (backward-compatible with child components)
   const showAddPanel = modal.type === 'addEvent';
@@ -91,7 +91,6 @@ export default function App() {
     setSections,
     activeSections,
     periods,
-    allSectionPeriods,
     compellingQuestion,
     timelineStart,
     setTimelineStart,
@@ -100,7 +99,7 @@ export default function App() {
     fieldConfig,
     allStudentAssignments,
   } = useFirebaseSubscriptions({ user, isTeacher, section, showAdminView, effectiveTeacherUid });
-  const defaultSection = section === "all" ? (activeSections[0]?.id || "Period1") : section;
+  const defaultSection = section;
 
   const getSectionName = useCallback(
     (id) => activeSections.find((s) => s.id === id)?.name || id,
@@ -153,7 +152,7 @@ export default function App() {
     saveSections(updated);
     if (section === id) {
       const remaining = activeSections.filter((s) => s.id !== id);
-      switchSection(remaining.length > 0 ? remaining[0].id : "all");
+      switchSection(remaining.length > 0 ? remaining[0].id : "Period1");
     }
   }, [allSectionsRaw, activeSections, section, setSections, switchSection]);
 
@@ -242,7 +241,6 @@ export default function App() {
     setSelectedTags([]);
     setTagMatchMode("or");
     setSearchTerm("");
-    setSectionFilter("all");
   }, []);
 
   // Filtered + sorted events for display
@@ -265,9 +263,6 @@ export default function App() {
         });
       }
     }
-    if (isTeacher && sectionFilter !== "all") {
-      evts = evts.filter((e) => e.section === sectionFilter);
-    }
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       evts = evts.filter(
@@ -283,40 +278,21 @@ export default function App() {
       return sortOrder === "chrono" ? cmp : -cmp;
     });
     return evts;
-  }, [approvedEvents, selectedPeriods, selectedTags, tagMatchMode, searchTerm, sortOrder, isTeacher, sectionFilter]);
+  }, [approvedEvents, selectedPeriods, selectedTags, tagMatchMode, searchTerm, sortOrder]);
 
   const filteredEventIds = useMemo(
     () => new Set(filteredEvents.map((e) => e.id)),
     [filteredEvents]
   );
 
-  // Merge periods from all sections for "all" view
-  const mergedPeriods = useMemo(() => {
-    if (section !== "all" || Object.keys(allSectionPeriods).length === 0) return periods;
-    const seen = new Set();
-    const result = [];
-    for (const sec of activeSections) {
-      for (const p of (allSectionPeriods[sec.id] || [])) {
-        if (!seen.has(p.id)) {
-          seen.add(p.id);
-          result.push(p);
-        }
-      }
-    }
-    return result;
-  }, [section, allSectionPeriods, periods, activeSections]);
-
-  const displayPeriods = section === "all" ? mergedPeriods : periods;
-
   // Compute union of selected period era ranges for auto-zoom
   const selectedEraRange = useMemo(() => {
     if (selectedPeriods.length === 0) return null;
-    const selected = selectedPeriods.map((id) => displayPeriods.find((p) => p.id === id)).filter(Boolean);
+    const selected = selectedPeriods.map((id) => periods.find((p) => p.id === id)).filter(Boolean);
     if (selected.length === 0) return null;
     return { start: Math.min(...selected.map((p) => p.era[0])), end: Math.max(...selected.map((p) => p.era[1])) };
-  }, [selectedPeriods, displayPeriods]);
-  const findPeriod = useCallback((id) => getPeriod(displayPeriods, id), [displayPeriods]);
-  const displayCQ = section === "all" ? null : compellingQuestion;
+  }, [selectedPeriods, periods]);
+  const findPeriod = useCallback((id) => getPeriod(periods, id), [periods]);
 
   const {
     handleEventApproved,
@@ -499,7 +475,7 @@ export default function App() {
           onDeleteSection={handleDeleteSection}
           onRenameSection={handleRenameSection}
           onEventApproved={handleEventApproved}
-          displayPeriods={displayPeriods}
+          displayPeriods={periods}
           reassignStudentSection={reassignStudentSection}
           removeStudentSection={removeStudentSection}
           user={user}
@@ -513,7 +489,7 @@ export default function App() {
       {/* Timeline Content (hidden when admin view is open) */}
       {!showAdminView && (
         <>
-      <CompellingQuestionHero compellingQuestion={displayCQ} />
+      <CompellingQuestionHero compellingQuestion={compellingQuestion} />
 
       {/* Visual Timeline */}
       <div data-timeline-section style={{ background: theme.cardBg, borderBottom: `1px solid ${theme.cardBorder}` }}>
@@ -527,7 +503,7 @@ export default function App() {
             timelineStart={timelineStart}
             timelineEnd={timelineEnd}
             currentYear={new Date().getFullYear()}
-            periods={displayPeriods}
+            periods={periods}
             expandedEventId={expandedEvent}
             connectionsByEvent={connectionsByEvent}
           />
@@ -546,18 +522,12 @@ export default function App() {
           tagMatchMode={tagMatchMode}
           setTagMatchMode={setTagMatchMode}
           clearAllFilters={clearAllFilters}
-          sectionFilter={sectionFilter}
-          setSectionFilter={setSectionFilter}
           sortOrder={sortOrder}
           setSortOrder={setSortOrder}
           showContributors={showContributors}
           setShowContributors={setShowContributors}
-          isTeacher={isTeacher}
-          section={section}
-          displayPeriods={displayPeriods}
-          activeSections={activeSections}
+          displayPeriods={periods}
           findPeriod={findPeriod}
-          getSectionName={getSectionName}
           filteredCount={filteredEvents.length}
           totalCount={approvedEvents.length}
         />
@@ -571,7 +541,7 @@ export default function App() {
           approvedEvents={approvedEvents}
           approvedConnections={approvedConnections}
           filteredEventIds={filteredEventIds}
-          displayPeriods={displayPeriods}
+          displayPeriods={periods}
           isTeacher={isTeacher}
           showContributors={showContributors}
           handleEditEvent={handleEditEvent}
@@ -601,7 +571,7 @@ export default function App() {
               lineHeight: 1.6,
             }}
           >
-            Historian's Workshop Timeline Explorer &middot; {section !== "all" ? section : "All Sections"}
+            Historian's Workshop Timeline Explorer &middot; {section}
             <br />
             Signed in as {user.displayName || user.email}
           </p>
@@ -618,7 +588,7 @@ export default function App() {
           userName={userName}
           timelineStart={timelineStart}
           timelineEnd={timelineEnd}
-          periods={displayPeriods}
+          periods={periods}
           fieldConfig={activeFieldConfig}
           isTeacher={isTeacher}
         />
@@ -632,7 +602,7 @@ export default function App() {
           userName={userName}
           timelineStart={timelineStart}
           timelineEnd={timelineEnd}
-          periods={displayPeriods}
+          periods={periods}
           fieldConfig={activeFieldConfig}
           editingEvent={editingEvent}
           isTeacher={isTeacher}
@@ -646,7 +616,7 @@ export default function App() {
           onClose={closeModal}
           userName={userName}
           approvedEvents={approvedEvents}
-          periods={displayPeriods}
+          periods={periods}
           isTeacher={isTeacher}
         />
       )}
@@ -662,7 +632,7 @@ export default function App() {
               pendingConnections={pendingConnections}
               allEvents={allEvents}
               allConnections={allConnections}
-              periods={displayPeriods}
+              periods={periods}
               getSectionName={getSectionName}
               onEditPendingEvent={setEditingEvent}
               onEditPendingConnection={setEditingConnection}
@@ -681,7 +651,7 @@ export default function App() {
           onClose={closeModal}
           userName={userName}
           approvedEvents={approvedEvents}
-          periods={displayPeriods}
+          periods={periods}
           editingConnection={editingConnection}
           isTeacher={isTeacher}
         />
@@ -693,7 +663,7 @@ export default function App() {
           revisionEvents={myRevisionEvents}
           revisionConnections={myRevisionConnections}
           allEvents={allEvents}
-          periods={displayPeriods}
+          periods={periods}
           onReviseEvent={setRevisingEvent}
           onReviseConnection={setRevisingConnection}
           onClose={closeModal}
@@ -708,7 +678,7 @@ export default function App() {
           userName={userName}
           timelineStart={timelineStart}
           timelineEnd={timelineEnd}
-          periods={displayPeriods}
+          periods={periods}
           fieldConfig={activeFieldConfig}
           editingEvent={revisingEvent}
           isTeacher={isTeacher}
@@ -724,7 +694,7 @@ export default function App() {
           onClose={closeModal}
           userName={userName}
           approvedEvents={approvedEvents}
-          periods={displayPeriods}
+          periods={periods}
           editingConnection={revisingConnection}
           isTeacher={isTeacher}
           revisionMode

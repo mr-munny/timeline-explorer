@@ -7,10 +7,8 @@ import {
   subscribeToSections,
   subscribeToAllStudentSections,
   subscribeToPeriods,
-  subscribeToAllSectionPeriods,
   subscribeToCompellingQuestion,
   subscribeToTimelineRange,
-  subscribeToAllSectionTimelineRanges,
   subscribeToFieldConfig,
 } from "../services/database";
 
@@ -25,7 +23,6 @@ export default function useFirebaseSubscriptions({
   const [allConnections, setAllConnections] = useState([]);
   const [sections, setSections] = useState(null);
   const [periods, setPeriods] = useState([]);
-  const [allSectionPeriods, setAllSectionPeriods] = useState({});
   const [compellingQuestion, setCompellingQuestion] = useState({ text: "", enabled: false });
   const [timelineStart, setTimelineStart] = useState(1910);
   const [timelineEnd, setTimelineEnd] = useState(2000);
@@ -41,7 +38,7 @@ export default function useFirebaseSubscriptions({
     return all.filter((s) => s.teacherUid === effectiveTeacherUid || !s.teacherUid);
   }, [sections, effectiveTeacherUid]);
 
-  // Get section IDs for the effective teacher (used for "all" view subscriptions)
+  // Get section IDs for the effective teacher (used for admin view subscriptions)
   const teacherSectionIds = useMemo(
     () => activeSections.map((s) => s.id),
     [activeSections]
@@ -51,14 +48,11 @@ export default function useFirebaseSubscriptions({
   useEffect(() => {
     if (!user) return;
 
-    const wantsAll = isTeacher && (section === "all" || showAdminView);
-
-    if (wantsAll) {
-      // Teacher "all" view: subscribe to events for each of their sections
+    if (isTeacher && showAdminView) {
+      // Admin view: subscribe to events for each of their sections
       const unsub = subscribeToEventsForSections(teacherSectionIds, setAllEvents);
       return () => unsub();
     } else {
-      // Single section view
       const unsub = subscribeToEvents(section, setAllEvents);
       return () => unsub();
     }
@@ -68,9 +62,7 @@ export default function useFirebaseSubscriptions({
   useEffect(() => {
     if (!user) return;
 
-    const wantsAll = isTeacher && (section === "all" || showAdminView);
-
-    if (wantsAll) {
+    if (isTeacher && showAdminView) {
       const unsub = subscribeToConnectionsForSections(teacherSectionIds, setAllConnections);
       return () => unsub();
     } else {
@@ -107,81 +99,41 @@ export default function useFirebaseSubscriptions({
   // Subscribe to section-specific periods
   useEffect(() => {
     if (!user) return;
-    const effectiveSection = isTeacher && section === "all" ? "all" : section;
-    if (effectiveSection === "all") {
-      const unsub = subscribeToAllSectionPeriods(teacherSectionIds, (periodsMap) => {
-        setAllSectionPeriods(periodsMap);
-      });
-      return () => unsub();
-    } else {
-      const unsub = subscribeToPeriods(effectiveSection, (data) => {
-        setPeriods(data || []);
-      });
-      return () => unsub();
-    }
-  }, [user, section, isTeacher, teacherSectionIds]);
+    const unsub = subscribeToPeriods(section, (data) => {
+      setPeriods(data || []);
+    });
+    return () => unsub();
+  }, [user, section]);
 
   // Subscribe to section-specific compelling question
   useEffect(() => {
     if (!user) return;
-    const effectiveSection = isTeacher && section === "all" ? "all" : section;
-    if (effectiveSection === "all") {
-      // CQ not displayed for "all" view — no subscription needed
-      return;
-    } else {
-      const unsub = subscribeToCompellingQuestion(effectiveSection, (data) => {
-        setCompellingQuestion(data || { text: "", enabled: false });
-      });
-      return () => unsub();
-    }
-  }, [user, section, isTeacher, teacherSectionIds]);
+    const unsub = subscribeToCompellingQuestion(section, (data) => {
+      setCompellingQuestion(data || { text: "", enabled: false });
+    });
+    return () => unsub();
+  }, [user, section]);
 
   // Subscribe to section-specific timeline range
   useEffect(() => {
     if (!user) return;
-    const effectiveSection = isTeacher && section === "all" ? "all" : section;
-    if (effectiveSection === "all") {
-      const unsub = subscribeToAllSectionTimelineRanges(teacherSectionIds, (rangeMap) => {
-        let minStart = 1910, maxEnd = 2000;
-        let hasAny = false;
-        for (const sec of Object.keys(rangeMap)) {
-          if (rangeMap[sec]) {
-            hasAny = true;
-            minStart = Math.min(minStart, rangeMap[sec].start);
-            maxEnd = Math.max(maxEnd, rangeMap[sec].end);
-          }
-        }
-        if (hasAny) {
-          setTimelineStart(minStart);
-          setTimelineEnd(maxEnd);
-        }
-      });
-      return () => unsub();
-    } else {
-      const unsub = subscribeToTimelineRange(effectiveSection, (data) => {
-        if (data) {
-          setTimelineStart(data.start);
-          setTimelineEnd(data.end);
-        }
-      });
-      return () => unsub();
-    }
-  }, [user, section, isTeacher, teacherSectionIds]);
+    const unsub = subscribeToTimelineRange(section, (data) => {
+      if (data) {
+        setTimelineStart(data.start);
+        setTimelineEnd(data.end);
+      }
+    });
+    return () => unsub();
+  }, [user, section]);
 
   // Subscribe to section-specific field config
   useEffect(() => {
     if (!user) return;
-    const effectiveSection = isTeacher && section === "all" ? "all" : section;
-    if (effectiveSection === "all") {
-      // Field config not needed for "all" view on timeline
-      return;
-    } else {
-      const unsub = subscribeToFieldConfig(effectiveSection, (data) => {
-        setFieldConfig(data);
-      });
-      return () => unsub();
-    }
-  }, [user, section, isTeacher]);
+    const unsub = subscribeToFieldConfig(section, (data) => {
+      setFieldConfig(data);
+    });
+    return () => unsub();
+  }, [user, section]);
 
   return {
     allEvents,
@@ -190,7 +142,6 @@ export default function useFirebaseSubscriptions({
     setSections,
     activeSections,
     periods,
-    allSectionPeriods,
     compellingQuestion,
     timelineStart,
     setTimelineStart,

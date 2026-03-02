@@ -9,6 +9,7 @@ import vectorLink from "@iconify-icons/mdi/vector-link";
 import cogOutline from "@iconify-icons/mdi/cog-outline";
 import arrowLeft from "@iconify-icons/mdi/arrow-left";
 import bellRingOutline from "@iconify-icons/mdi/bell-ring-outline";
+import IconButton from "./IconButton";
 
 export default function TimelineHeader({
   theme,
@@ -68,71 +69,43 @@ export default function TimelineHeader({
                 </span>
               )}
               {isTeacher && !showAdminView && (
-                <button
+                <IconButton
+                  icon={cogOutline}
                   onClick={() => setShowAdminView(true)}
+                  size={12}
+                  color={theme.teacherGreen}
+                  hoverBg={theme.teacherGreen + "35"}
                   style={{
-                    fontSize: 10,
-                    fontWeight: 700,
-                    color: theme.teacherGreen,
-                    fontFamily: FONT_MONO,
-                    letterSpacing: "0.1em",
-                    textTransform: "uppercase",
-                    background: theme.teacherGreenSubtle,
-                    padding: "3px 8px",
-                    borderRadius: 4,
-                    border: "none",
-                    cursor: "pointer",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 4,
-                    transition: "all 0.15s",
+                    background: theme.teacherGreenSubtle, fontSize: 10, fontWeight: 700, fontFamily: FONT_MONO,
+                    letterSpacing: "0.1em", textTransform: "uppercase", padding: "3px 8px", borderRadius: 4, gap: 4,
                   }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = theme.teacherGreen + "35"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = theme.teacherGreenSubtle; }}
                 >
-                  <Icon icon={cogOutline} width={12} />
                   Admin
                   {(pendingEvents.length + pendingConnections.length) > 0 && (
                     <span style={{
-                      background: theme.errorRed,
-                      color: "#fff",
-                      fontSize: 8,
-                      fontWeight: 700,
-                      padding: "1px 4px",
-                      borderRadius: 8,
-                      marginLeft: 2,
+                      background: theme.errorRed, color: "#fff", fontSize: 8, fontWeight: 700,
+                      padding: "1px 4px", borderRadius: 8, marginLeft: 2,
                     }}>
                       {pendingEvents.length + pendingConnections.length}
                     </span>
                   )}
-                </button>
+                </IconButton>
               )}
               {showAdminView && (
-                <button
+                <IconButton
+                  icon={arrowLeft}
                   onClick={() => setShowAdminView(false)}
+                  size={12}
+                  color={theme.headerSubtext}
+                  hoverColor={theme.headerText}
+                  hoverBg={theme.headerBorder + "60"}
                   style={{
-                    fontSize: 10,
-                    fontWeight: 700,
-                    color: theme.headerSubtext,
-                    fontFamily: FONT_MONO,
-                    letterSpacing: "0.1em",
-                    textTransform: "uppercase",
-                    background: theme.headerButtonBg,
-                    padding: "3px 8px",
-                    borderRadius: 4,
-                    border: "none",
-                    cursor: "pointer",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 4,
-                    transition: "all 0.15s",
+                    background: theme.headerButtonBg, fontSize: 10, fontWeight: 700, fontFamily: FONT_MONO,
+                    letterSpacing: "0.1em", textTransform: "uppercase", padding: "3px 8px", borderRadius: 4, gap: 4,
                   }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = theme.headerBorder + "60"; e.currentTarget.style.color = theme.headerText; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = theme.headerButtonBg; e.currentTarget.style.color = theme.headerSubtext; }}
                 >
-                  <Icon icon={arrowLeft} width={12} />
                   Back to Timeline
-                </button>
+                </IconButton>
               )}
             </div>
             <h1
@@ -235,48 +208,34 @@ export default function TimelineHeader({
                   </button>
                 )}
                 {revisionCount > 0 && (
-                  <button
+                  <IconButton
+                    icon={bellRingOutline}
                     onClick={() => setShowRevisionPanel(true)}
+                    size={14}
+                    color={theme.feedbackAmber}
+                    hoverBg={theme.feedbackAmber + "15"}
                     style={{
-                      padding: "10px 18px",
-                      background: "transparent",
-                      color: theme.feedbackAmber,
-                      border: `1.5px solid ${theme.feedbackAmber}`,
-                      borderRadius: 8,
-                      fontSize: 12,
-                      fontFamily: FONT_MONO,
-                      fontWeight: 700,
-                      cursor: "pointer",
-                      transition: "all 0.15s",
+                      background: "transparent", padding: "10px 18px", border: `1.5px solid ${theme.feedbackAmber}`,
+                      borderRadius: 8, fontSize: 12, fontFamily: FONT_MONO, fontWeight: 700, gap: 4,
                     }}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = theme.feedbackAmber + "15"; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
                   >
-                    <Icon icon={bellRingOutline} width={14} style={{ verticalAlign: "middle", marginRight: 4 }} />
                     Revisions ({revisionCount})
-                  </button>
+                  </IconButton>
                 )}
                 {!isTeacher && (pendingEvents.length + pendingConnections.length) > 0 && (
-                  <button
+                  <IconButton
+                    icon={inboxArrowDown}
                     onClick={() => setShowPendingQueue(true)}
+                    size={14}
+                    color={theme.accentGold}
+                    hoverBg={theme.accentGold + "15"}
                     style={{
-                      padding: "10px 18px",
-                      background: "transparent",
-                      color: theme.accentGold,
-                      border: `1.5px solid ${theme.accentGold}`,
-                      borderRadius: 8,
-                      fontSize: 12,
-                      fontFamily: FONT_MONO,
-                      fontWeight: 700,
-                      cursor: "pointer",
-                      transition: "all 0.15s",
+                      background: "transparent", padding: "10px 18px", border: `1.5px solid ${theme.accentGold}`,
+                      borderRadius: 8, fontSize: 12, fontFamily: FONT_MONO, fontWeight: 700, gap: 4,
                     }}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = theme.accentGold + "15"; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
                   >
-                    <Icon icon={inboxArrowDown} width={14} style={{ verticalAlign: "middle", marginRight: 4 }} />
                     Pending ({pendingEvents.length + pendingConnections.length})
-                  </button>
+                  </IconButton>
                 )}
                 <button
                   onClick={() => setShowAddPanel(true)}
@@ -299,27 +258,19 @@ export default function TimelineHeader({
                   <Icon icon={plusIcon} width={14} style={{ verticalAlign: "middle", marginRight: 2 }} />
                   Add Event
                 </button>
-                <button
+                <IconButton
+                  icon={vectorLink}
                   onClick={() => setShowAddConnectionPanel(true)}
+                  size={14}
+                  color={theme.accentGold}
+                  hoverBg={theme.accentGold + "15"}
                   style={{
-                    padding: "10px 18px",
-                    background: "transparent",
-                    color: theme.accentGold,
-                    border: `1.5px solid ${theme.accentGold}`,
-                    borderRadius: 8,
-                    fontSize: 12,
-                    fontFamily: FONT_MONO,
-                    fontWeight: 700,
-                    cursor: "pointer",
-                    letterSpacing: "0.02em",
-                    transition: "all 0.15s",
+                    background: "transparent", padding: "10px 18px", border: `1.5px solid ${theme.accentGold}`,
+                    borderRadius: 8, fontSize: 12, fontFamily: FONT_MONO, fontWeight: 700, letterSpacing: "0.02em", gap: 4,
                   }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = theme.accentGold + "15"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
                 >
-                  <Icon icon={vectorLink} width={14} style={{ verticalAlign: "middle", marginRight: 4 }} />
                   Add Connection
-                </button>
+                </IconButton>
               </>
             )}
             <button
@@ -342,26 +293,20 @@ export default function TimelineHeader({
             >
               {mode === "dark" ? "\u2600" : "\u263E"}
             </button>
-            <button
+            <IconButton
+              icon={logoutIcon}
               onClick={logout}
+              size={13}
+              color={theme.headerSubtext}
+              hoverColor={theme.headerText}
+              hoverBg={theme.headerBorder + "40"}
               style={{
-                padding: "10px 14px",
-                background: "transparent",
-                color: theme.headerSubtext,
-                border: `1px solid ${theme.headerBorder}`,
-                borderRadius: 8,
-                fontSize: 11,
-                fontFamily: FONT_MONO,
-                fontWeight: 600,
-                cursor: "pointer",
-                transition: "all 0.15s",
+                background: "transparent", padding: "10px 14px", border: `1px solid ${theme.headerBorder}`,
+                borderRadius: 8, fontSize: 11, fontFamily: FONT_MONO, fontWeight: 600, gap: 4,
               }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = theme.headerBorder + "40"; e.currentTarget.style.color = theme.headerText; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = theme.headerSubtext; }}
             >
-              <Icon icon={logoutIcon} width={13} style={{ verticalAlign: "middle", marginRight: 4 }} />
               Sign Out
-            </button>
+            </IconButton>
           </div>
       </div>
     </div>

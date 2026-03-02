@@ -17,6 +17,7 @@ import accountOutline from "@iconify-icons/mdi/account-outline";
 import mapMarkerOutline from "@iconify-icons/mdi/map-marker-outline";
 import schoolOutline from "@iconify-icons/mdi/school-outline";
 import { useTheme, FONT_MONO, FONT_SERIF } from "../contexts/ThemeContext";
+import IconButton from "./IconButton";
 
 export default function EventCard({ event, isExpanded, isRead, onToggle, isTeacher, onEdit, onDelete, periods = [], onReturnToTimeline, connections, allEvents = [], onScrollToEvent, onDeleteConnection, onEditConnection, onSuggestDeleteConnection }) {
   const { theme } = useTheme();
@@ -546,55 +547,13 @@ export default function EventCard({ event, isExpanded, isRead, onToggle, isTeach
                       </div>
                       <div style={{ display: "flex", gap: 2, flexShrink: 0 }}>
                         {onEditConnection && (
-                          <button
-                            onClick={(e) => { e.stopPropagation(); onEditConnection(conn); }}
-                            style={{
-                              background: "none", border: "none", cursor: "pointer",
-                              color: theme.textMuted, padding: 2,
-                              display: "flex", alignItems: "center",
-                              borderRadius: 3, transition: "all 0.15s",
-                            }}
-                            onMouseEnter={(e) => { e.currentTarget.style.color = theme.textPrimary; e.currentTarget.style.background = theme.subtleBg; }}
-                            onMouseLeave={(e) => { e.currentTarget.style.color = theme.textMuted; e.currentTarget.style.background = "none"; }}
-                          >
-                            <Icon icon={pencilOutline} width={14} />
-                          </button>
+                          <IconButton icon={pencilOutline} onClick={(e) => { e.stopPropagation(); onEditConnection(conn); }} size={14} color={theme.textMuted} hoverColor={theme.textPrimary} hoverBg={theme.subtleBg} padding={2} borderRadius={3} />
                         )}
                         {isTeacher && onDeleteConnection && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (window.confirm("Delete this connection?")) onDeleteConnection(conn.id);
-                            }}
-                            style={{
-                              background: "none", border: "none", cursor: "pointer",
-                              color: theme.textMuted, padding: 2,
-                              display: "flex", alignItems: "center",
-                              borderRadius: 3, transition: "all 0.15s",
-                            }}
-                            onMouseEnter={(e) => { e.currentTarget.style.color = theme.errorRed || "#DC2626"; e.currentTarget.style.background = (theme.errorRed || "#DC2626") + "10"; }}
-                            onMouseLeave={(e) => { e.currentTarget.style.color = theme.textMuted; e.currentTarget.style.background = "none"; }}
-                          >
-                            <Icon icon={closeCircleOutline} width={14} />
-                          </button>
+                          <IconButton icon={closeCircleOutline} onClick={(e) => { e.stopPropagation(); if (window.confirm("Delete this connection?")) onDeleteConnection(conn.id); }} size={14} color={theme.textMuted} hoverColor={theme.errorRed || "#DC2626"} hoverBg={(theme.errorRed || "#DC2626") + "10"} padding={2} borderRadius={3} />
                         )}
                         {!isTeacher && onSuggestDeleteConnection && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onSuggestDeleteConnection(conn);
-                            }}
-                            style={{
-                              background: "none", border: "none", cursor: "pointer",
-                              color: theme.textMuted, padding: 2,
-                              display: "flex", alignItems: "center",
-                              borderRadius: 3, transition: "all 0.15s",
-                            }}
-                            onMouseEnter={(e) => { e.currentTarget.style.color = theme.errorRed || "#DC2626"; e.currentTarget.style.background = (theme.errorRed || "#DC2626") + "10"; }}
-                            onMouseLeave={(e) => { e.currentTarget.style.color = theme.textMuted; e.currentTarget.style.background = "none"; }}
-                          >
-                            <Icon icon={deleteOutline} width={14} />
-                          </button>
+                          <IconButton icon={deleteOutline} onClick={(e) => { e.stopPropagation(); onSuggestDeleteConnection(conn); }} size={14} color={theme.textMuted} hoverColor={theme.errorRed || "#DC2626"} hoverBg={(theme.errorRed || "#DC2626") + "10"} padding={2} borderRadius={3} />
                         )}
                       </div>
                     </div>
@@ -733,55 +692,13 @@ export default function EventCard({ event, isExpanded, isRead, onToggle, isTeach
                       </div>
                       <div style={{ display: "flex", gap: 2, flexShrink: 0 }}>
                         {onEditConnection && (
-                          <button
-                            onClick={(e) => { e.stopPropagation(); onEditConnection(conn); }}
-                            style={{
-                              background: "none", border: "none", cursor: "pointer",
-                              color: theme.textMuted, padding: 2,
-                              display: "flex", alignItems: "center",
-                              borderRadius: 3, transition: "all 0.15s",
-                            }}
-                            onMouseEnter={(e) => { e.currentTarget.style.color = theme.textPrimary; e.currentTarget.style.background = theme.subtleBg; }}
-                            onMouseLeave={(e) => { e.currentTarget.style.color = theme.textMuted; e.currentTarget.style.background = "none"; }}
-                          >
-                            <Icon icon={pencilOutline} width={14} />
-                          </button>
+                          <IconButton icon={pencilOutline} onClick={(e) => { e.stopPropagation(); onEditConnection(conn); }} size={14} color={theme.textMuted} hoverColor={theme.textPrimary} hoverBg={theme.subtleBg} padding={2} borderRadius={3} />
                         )}
                         {isTeacher && onDeleteConnection && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (window.confirm("Delete this connection?")) onDeleteConnection(conn.id);
-                            }}
-                            style={{
-                              background: "none", border: "none", cursor: "pointer",
-                              color: theme.textMuted, padding: 2,
-                              display: "flex", alignItems: "center",
-                              borderRadius: 3, transition: "all 0.15s",
-                            }}
-                            onMouseEnter={(e) => { e.currentTarget.style.color = theme.errorRed || "#DC2626"; e.currentTarget.style.background = (theme.errorRed || "#DC2626") + "10"; }}
-                            onMouseLeave={(e) => { e.currentTarget.style.color = theme.textMuted; e.currentTarget.style.background = "none"; }}
-                          >
-                            <Icon icon={closeCircleOutline} width={14} />
-                          </button>
+                          <IconButton icon={closeCircleOutline} onClick={(e) => { e.stopPropagation(); if (window.confirm("Delete this connection?")) onDeleteConnection(conn.id); }} size={14} color={theme.textMuted} hoverColor={theme.errorRed || "#DC2626"} hoverBg={(theme.errorRed || "#DC2626") + "10"} padding={2} borderRadius={3} />
                         )}
                         {!isTeacher && onSuggestDeleteConnection && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onSuggestDeleteConnection(conn);
-                            }}
-                            style={{
-                              background: "none", border: "none", cursor: "pointer",
-                              color: theme.textMuted, padding: 2,
-                              display: "flex", alignItems: "center",
-                              borderRadius: 3, transition: "all 0.15s",
-                            }}
-                            onMouseEnter={(e) => { e.currentTarget.style.color = theme.errorRed || "#DC2626"; e.currentTarget.style.background = (theme.errorRed || "#DC2626") + "10"; }}
-                            onMouseLeave={(e) => { e.currentTarget.style.color = theme.textMuted; e.currentTarget.style.background = "none"; }}
-                          >
-                            <Icon icon={deleteOutline} width={14} />
-                          </button>
+                          <IconButton icon={deleteOutline} onClick={(e) => { e.stopPropagation(); onSuggestDeleteConnection(conn); }} size={14} color={theme.textMuted} hoverColor={theme.errorRed || "#DC2626"} hoverBg={(theme.errorRed || "#DC2626") + "10"} padding={2} borderRadius={3} />
                         )}
                       </div>
                     </div>
@@ -890,56 +807,28 @@ export default function EventCard({ event, isExpanded, isRead, onToggle, isTeach
           {/* Action buttons */}
           <div style={{ marginTop: 10, display: "flex", justifyContent: "flex-end", gap: 6 }}>
             {onEdit && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onEdit(event);
-                }}
-                style={{
-                  padding: "5px 12px",
-                  background: "none",
-                  border: `1.5px solid ${theme.inputBorder}`,
-                  borderRadius: 6,
-                  color: theme.textDescription,
-                  fontSize: 11,
-                  fontFamily: FONT_MONO,
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  transition: "all 0.15s",
-                }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = theme.subtleBg; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = "none"; }}
+              <IconButton
+                icon={pencilOutline}
+                onClick={(e) => { e.stopPropagation(); onEdit(event); }}
+                size={13}
+                color={theme.textDescription}
+                hoverBg={theme.subtleBg}
+                style={{ padding: "5px 12px", border: `1.5px solid ${theme.inputBorder}`, borderRadius: 6, fontSize: 11, fontFamily: FONT_MONO, fontWeight: 600 }}
               >
-                <Icon icon={pencilOutline} width={13} style={{ verticalAlign: "middle", marginRight: 3 }} />
                 {isTeacher ? "Edit" : "Suggest Edit"}
-              </button>
+              </IconButton>
             )}
             {isTeacher && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (window.confirm("Delete this event? This cannot be undone.")) {
-                    onDelete(event.id);
-                  }
-                }}
-                style={{
-                  padding: "5px 12px",
-                  background: "none",
-                  border: `1.5px solid ${theme.errorRed}`,
-                  borderRadius: 6,
-                  color: theme.errorRed,
-                  fontSize: 11,
-                  fontFamily: FONT_MONO,
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  transition: "all 0.15s",
-                }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = (theme.errorRed || "#DC2626") + "10"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = "none"; }}
+              <IconButton
+                icon={deleteOutline}
+                onClick={(e) => { e.stopPropagation(); if (window.confirm("Delete this event? This cannot be undone.")) onDelete(event.id); }}
+                size={13}
+                color={theme.errorRed}
+                hoverBg={(theme.errorRed || "#DC2626") + "10"}
+                style={{ padding: "5px 12px", border: `1.5px solid ${theme.errorRed}`, borderRadius: 6, fontSize: 11, fontFamily: FONT_MONO, fontWeight: 600 }}
               >
-                <Icon icon={deleteOutline} width={13} style={{ verticalAlign: "middle", marginRight: 3 }} />
                 Delete Event
-              </button>
+              </IconButton>
             )}
           </div>
         </div>

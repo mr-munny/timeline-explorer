@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useTheme, FONT_MONO, FONT_SERIF } from "../contexts/ThemeContext";
 import { PERIOD_COLORS, DEFAULT_FIELD_CONFIG } from "../data/constants";
-import { subscribeToPeriods, subscribeToCompellingQuestion, subscribeToTimelineRange, subscribeToFieldConfig, savePeriods, saveCompellingQuestion, saveTimelineRange, saveFieldConfig } from "../services/database";
+import { subscribeToPeriods, subscribeToCompellingQuestion, subscribeToTimelineRange, subscribeToFieldConfig, savePeriods, saveCompellingQuestion, saveTimelineRange, saveFieldConfig, seedDemoData, wipeSectionData } from "../services/database";
 import { Icon } from "@iconify/react";
 import pencilOutline from "@iconify-icons/mdi/pencil-outline";
 import closeCircleOutline from "@iconify-icons/mdi/close-circle-outline";
@@ -14,8 +14,11 @@ import contentSave from "@iconify-icons/mdi/content-save";
 import undoIcon from "@iconify-icons/mdi/undo";
 import contentCopy from "@iconify-icons/mdi/content-copy";
 import deleteOutline from "@iconify-icons/mdi/delete-outline";
+import databaseImportOutline from "@iconify-icons/mdi/database-import-outline";
+import deleteSweepOutline from "@iconify-icons/mdi/delete-sweep-outline";
 import StudentRoster from "./StudentRoster";
 import CopySettingsDialog from "./CopySettingsDialog";
+import IconButton from "./IconButton";
 import { floorToDecade, ceilToDecade } from "../utils/dateUtils";
 
 const FIELD_DEFINITIONS = [
@@ -77,6 +80,9 @@ export default function AdminSectionSettings({
 
   // Saving state
   const [saving, setSaving] = useState(false);
+  const [seeding, setSeeding] = useState(false);
+  const [wiping, setWiping] = useState(false);
+  const [demoMessage, setDemoMessage] = useState(null);
 
   // Track if dirty ref for subscription updates
   const isDirtyRef = useRef(false);
@@ -285,41 +291,8 @@ export default function AdminSectionSettings({
                 {sectionName}
               </h2>
             )}
-            <button
-              onClick={() => { setEditingName(true); setDraftSectionName(sectionName); }}
-              title="Rename section"
-              style={{
-                background: "none",
-                border: "none",
-                padding: 4,
-                cursor: "pointer",
-                color: theme.textMuted,
-                display: "inline-flex",
-                transition: "color 0.15s",
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.color = theme.textPrimary; }}
-              onMouseLeave={(e) => { e.currentTarget.style.color = theme.textMuted; }}
-            >
-              <Icon icon={pencilOutline} width={16} />
-            </button>
-            <button
-              onClick={handleDeleteSection}
-              title="Delete section"
-              style={{
-                background: "none",
-                border: "none",
-                padding: 4,
-                cursor: "pointer",
-                color: theme.textMuted,
-                display: "inline-flex",
-                transition: "color 0.15s",
-                marginLeft: "auto",
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.color = theme.errorRed; }}
-              onMouseLeave={(e) => { e.currentTarget.style.color = theme.textMuted; }}
-            >
-              <Icon icon={deleteOutline} width={16} />
-            </button>
+            <IconButton icon={pencilOutline} onClick={() => { setEditingName(true); setDraftSectionName(sectionName); }} title="Rename section" size={16} color={theme.textMuted} hoverColor={theme.textPrimary} />
+            <IconButton icon={deleteOutline} onClick={handleDeleteSection} title="Delete section" size={16} color={theme.textMuted} hoverColor={theme.errorRed} style={{ marginLeft: "auto" }} />
           </div>
           <div style={{ fontSize: 10, color: theme.textMuted, letterSpacing: "0.05em" }}>
             ID: {sectionId}
@@ -444,24 +417,17 @@ export default function AdminSectionSettings({
                   }}>
                     {p.era[0]}&ndash;{p.era[1]}
                   </span>
-                  <button
+                  <IconButton
+                    icon={pencilOutline}
                     onClick={() => isEditing ? setEditingPeriodId(null) : openPeriodEdit(p)}
                     title="Edit time period"
-                    style={{
-                      background: "none",
-                      border: "none",
-                      padding: 0,
-                      cursor: "pointer",
-                      color: isEditing ? theme.teacherGreen : theme.textMuted,
-                      display: "inline-flex",
-                      transition: "color 0.15s",
-                    }}
-                    onMouseEnter={(e) => { if (!isEditing) e.currentTarget.style.color = theme.textPrimary; }}
-                    onMouseLeave={(e) => { if (!isEditing) e.currentTarget.style.color = theme.textMuted; }}
-                  >
-                    <Icon icon={pencilOutline} width={11} />
-                  </button>
-                  <button
+                    size={11}
+                    color={isEditing ? theme.teacherGreen : theme.textMuted}
+                    hoverColor={isEditing ? theme.teacherGreen : theme.textPrimary}
+                    padding={0}
+                  />
+                  <IconButton
+                    icon={closeCircleOutline}
                     onClick={() => {
                       if (!window.confirm(`Delete "${p.label}"? Events assigned to this time period will lose their time period.`)) return;
                       setDraftPeriods((prev) => prev.filter((x) => x.id !== p.id));
@@ -469,20 +435,11 @@ export default function AdminSectionSettings({
                       markDirty();
                     }}
                     title="Delete time period"
-                    style={{
-                      background: "none",
-                      border: "none",
-                      padding: 0,
-                      cursor: "pointer",
-                      color: theme.textMuted,
-                      display: "inline-flex",
-                      transition: "color 0.15s",
-                    }}
-                    onMouseEnter={(e) => { e.currentTarget.style.color = theme.errorRed; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.color = theme.textMuted; }}
-                  >
-                    <Icon icon={closeCircleOutline} width={11} />
-                  </button>
+                    size={11}
+                    color={theme.textMuted}
+                    hoverColor={theme.errorRed}
+                    padding={0}
+                  />
                 </div>
 
                 {/* Inline edit form */}
@@ -649,33 +606,16 @@ export default function AdminSectionSettings({
           Compelling Question
         </div>
 
-        <button
-          onClick={() => {
-            setDraftCQ((prev) => ({ ...prev, enabled: !prev.enabled }));
-            markDirty();
-          }}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
-            padding: "4px 6px",
-            borderRadius: 4,
-            border: "none",
-            background: "transparent",
-            cursor: "pointer",
-            fontSize: 10,
-            fontFamily: FONT_MONO,
-            color: draftCQ.enabled ? theme.teacherGreen : theme.textMuted,
-            fontWeight: 600,
-            transition: "all 0.15s",
-            marginBottom: 6,
-          }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = theme.subtleBg; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+        <IconButton
+          icon={draftCQ.enabled ? eyeOutline : eyeOffOutline}
+          onClick={() => { setDraftCQ((prev) => ({ ...prev, enabled: !prev.enabled })); markDirty(); }}
+          size={13}
+          color={draftCQ.enabled ? theme.teacherGreen : theme.textMuted}
+          hoverBg={theme.subtleBg}
+          style={{ background: "transparent", padding: "4px 6px", gap: 6, fontSize: 10, fontFamily: FONT_MONO, fontWeight: 600, marginBottom: 6 }}
         >
-          <Icon icon={draftCQ.enabled ? eyeOutline : eyeOffOutline} width={13} />
           {draftCQ.enabled ? "Visible to students" : "Hidden from students"}
-        </button>
+        </IconButton>
 
         <textarea
           value={draftCQ.text}
@@ -779,6 +719,115 @@ export default function AdminSectionSettings({
           onReassign={reassignStudentSection}
           onRemove={removeStudentSection}
         />
+
+        <div style={dividerStyle} />
+
+        {/* Demo Data */}
+        <div style={sectionHeaderStyle}>
+          <Icon icon={databaseImportOutline} width={12} />
+          Demo Data
+        </div>
+        <div style={{
+          fontSize: 10,
+          color: theme.textSecondary,
+          marginBottom: 12,
+          lineHeight: 1.5,
+        }}>
+          Seed this section with sample events, connections, and settings for demos and training. Wipe removes all events and connections from this section.
+        </div>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button
+            onClick={async () => {
+              if (!window.confirm(
+                `Seed "${sectionName}" with demo data?\n\nThis will add ~36 sample events, ~13 connections, and configure time periods, compelling question, and timeline range for this section.\n\nExisting data in this section will NOT be removed.`
+              )) return;
+              setSeeding(true);
+              setDemoMessage(null);
+              try {
+                const result = await seedDemoData(sectionId);
+                setDemoMessage(`Seeded ${result.events} events and ${result.connections} connections.`);
+              } catch (err) {
+                console.error("Seed failed:", err);
+                setDemoMessage("Seed failed — check console for details.");
+              }
+              setSeeding(false);
+            }}
+            disabled={seeding || wiping}
+            style={{
+              padding: "8px 16px",
+              borderRadius: 6,
+              border: "none",
+              background: seeding ? "#6366F180" : "#6366F1",
+              color: "#fff",
+              fontSize: 10,
+              fontFamily: FONT_MONO,
+              fontWeight: 700,
+              cursor: seeding || wiping ? "not-allowed" : "pointer",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              textTransform: "uppercase",
+              letterSpacing: "0.05em",
+              transition: "all 0.15s",
+            }}
+            onMouseEnter={(e) => { if (!seeding && !wiping) e.currentTarget.style.filter = "brightness(1.15)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.filter = "none"; }}
+          >
+            <Icon icon={databaseImportOutline} width={13} />
+            {seeding ? "Seeding..." : "Seed Demo Data"}
+          </button>
+          <button
+            onClick={async () => {
+              if (!window.confirm(
+                `Wipe ALL events and connections from "${sectionName}"?\n\nThis cannot be undone.`
+              )) return;
+              setWiping(true);
+              setDemoMessage(null);
+              try {
+                const result = await wipeSectionData(sectionId);
+                setDemoMessage(`Wiped ${result.events} events and ${result.connections} connections.`);
+              } catch (err) {
+                console.error("Wipe failed:", err);
+                setDemoMessage("Wipe failed — check console for details.");
+              }
+              setWiping(false);
+            }}
+            disabled={seeding || wiping}
+            style={{
+              padding: "8px 16px",
+              borderRadius: 6,
+              border: `1px solid ${theme.errorRed}`,
+              background: "transparent",
+              color: theme.errorRed,
+              fontSize: 10,
+              fontFamily: FONT_MONO,
+              fontWeight: 700,
+              cursor: seeding || wiping ? "not-allowed" : "pointer",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              textTransform: "uppercase",
+              letterSpacing: "0.05em",
+              transition: "all 0.15s",
+            }}
+            onMouseEnter={(e) => { if (!seeding && !wiping) { e.currentTarget.style.background = theme.errorRed + "15"; } }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+          >
+            <Icon icon={deleteSweepOutline} width={13} />
+            {wiping ? "Wiping..." : "Wipe Section Data"}
+          </button>
+        </div>
+        {demoMessage && (
+          <div style={{
+            marginTop: 8,
+            fontSize: 10,
+            fontFamily: FONT_MONO,
+            color: demoMessage.includes("failed") ? theme.errorRed : theme.teacherGreen,
+            fontWeight: 600,
+          }}>
+            {demoMessage}
+          </div>
+        )}
       </div>
 
       {/* Sticky bottom action bar */}
@@ -822,55 +871,48 @@ export default function AdminSectionSettings({
           <Icon icon={contentSave} width={14} />
           {saving ? "Saving..." : "Save Changes"}
         </button>
-        <button
+        <IconButton
+          icon={undoIcon}
           onClick={handleDiscard}
           disabled={!isDirty}
+          size={14}
+          color={isDirty ? theme.textSecondary : theme.textMuted}
+          hoverBg={theme.subtleBg}
           style={{
+            background: "transparent",
             padding: "8px 16px",
             borderRadius: 6,
             border: `1px solid ${isDirty ? theme.inputBorder : "transparent"}`,
-            background: "transparent",
-            color: isDirty ? theme.textSecondary : theme.textMuted,
             fontSize: 11,
             fontFamily: FONT_MONO,
             fontWeight: 600,
-            cursor: isDirty ? "pointer" : "not-allowed",
-            display: "inline-flex",
-            alignItems: "center",
             gap: 6,
-            transition: "all 0.15s",
             opacity: isDirty ? 1 : 0.4,
           }}
-          onMouseEnter={(e) => { if (isDirty) e.currentTarget.style.background = theme.subtleBg; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
         >
-          <Icon icon={undoIcon} width={14} />
           Discard
-        </button>
+        </IconButton>
         <div style={{ flex: 1 }} />
-        <button
+        <IconButton
+          icon={contentCopy}
           onClick={() => setShowCopyDialog(true)}
+          size={14}
+          color={theme.textSecondary}
+          hoverColor={theme.textPrimary}
+          hoverBg={theme.subtleBg}
           style={{
+            background: "transparent",
             padding: "8px 16px",
             borderRadius: 6,
             border: `1px solid ${theme.inputBorder}`,
-            background: "transparent",
-            color: theme.textSecondary,
             fontSize: 11,
             fontFamily: FONT_MONO,
             fontWeight: 600,
-            cursor: "pointer",
-            display: "inline-flex",
-            alignItems: "center",
             gap: 6,
-            transition: "all 0.15s",
           }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = theme.subtleBg; e.currentTarget.style.color = theme.textPrimary; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = theme.textSecondary; }}
         >
-          <Icon icon={contentCopy} width={14} />
           Copy to...
-        </button>
+        </IconButton>
       </div>
 
       {/* Copy Settings Dialog */}

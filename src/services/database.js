@@ -594,6 +594,87 @@ export async function seedDatabase(seedEvents) {
   }
 }
 
+// Seed a section with full demo data (events, connections, and settings).
+// Returns { events: number, connections: number } counts.
+export async function seedDemoData(section) {
+  const {
+    DEMO_EVENTS,
+    DEMO_CONNECTIONS,
+    DEMO_PERIODS,
+    DEMO_COMPELLING_QUESTION,
+    DEMO_TIMELINE_RANGE,
+  } = await import("../data/seedEvents");
+  const { DEFAULT_FIELD_CONFIG } = await import("../data/constants");
+
+  const now = new Date().toISOString();
+  const localIdToFirebaseId = {};
+
+  // 1. Push events (strip _localId, inject section + dateAdded)
+  for (const event of DEMO_EVENTS) {
+    const { _localId, ...eventData } = event;
+    const newRef = push(eventsRef);
+    await set(newRef, { ...eventData, section, dateAdded: now });
+    if (_localId) localIdToFirebaseId[_localId] = newRef.key;
+  }
+
+  // 2. Push connections (resolve local IDs → Firebase IDs)
+  let connCount = 0;
+  for (const conn of DEMO_CONNECTIONS) {
+    const { _causeLocalId, _effectLocalId, ...connData } = conn;
+    const causeEventId = localIdToFirebaseId[_causeLocalId];
+    const effectEventId = localIdToFirebaseId[_effectLocalId];
+    if (causeEventId && effectEventId) {
+      const newRef = push(connectionsRef);
+      await set(newRef, {
+        ...connData,
+        causeEventId,
+        effectEventId,
+        section,
+        dateAdded: now,
+      });
+      connCount++;
+    }
+  }
+
+  // 3. Save section settings (periods, compelling question, timeline range, field config)
+  await Promise.all([
+    set(ref(db, `sectionSettings/${section}/periods`), DEMO_PERIODS),
+    set(ref(db, `sectionSettings/${section}/compellingQuestion`), DEMO_COMPELLING_QUESTION),
+    set(ref(db, `sectionSettings/${section}/timelineRange`), DEMO_TIMELINE_RANGE),
+    set(ref(db, `sectionSettings/${section}/fieldConfig`), DEFAULT_FIELD_CONFIG),
+  ]);
+
+  return { events: DEMO_EVENTS.length, connections: connCount };
+}
+
+// Wipe all events and connections for a given section.
+// Returns { events: number, connections: number } counts.
+export async function wipeSectionData(section) {
+  // Query and delete events
+  const eventsQuery = query(eventsRef, orderByChild("section"), equalTo(section));
+  const eventsSnap = await get(eventsQuery);
+  let eventCount = 0;
+  const eventDeletes = [];
+  eventsSnap.forEach((child) => {
+    eventDeletes.push(remove(ref(db, `events/${child.key}`)));
+    eventCount++;
+  });
+  await Promise.all(eventDeletes);
+
+  // Query and delete connections
+  const connsQuery = query(connectionsRef, orderByChild("section"), equalTo(section));
+  const connsSnap = await get(connsQuery);
+  let connCount = 0;
+  const connDeletes = [];
+  connsSnap.forEach((child) => {
+    connDeletes.push(remove(ref(db, `connections/${child.key}`)));
+    connCount++;
+  });
+  await Promise.all(connDeletes);
+
+  return { events: eventCount, connections: connCount };
+}
+
 // Listen to a student's section assignment in real-time
 export function subscribeToStudentSection(uid, callback) {
   const studentRef = ref(db, `studentSections/${uid}`);

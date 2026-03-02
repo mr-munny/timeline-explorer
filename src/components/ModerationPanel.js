@@ -13,6 +13,7 @@ import arrowRightBold from "@iconify-icons/mdi/arrow-right-bold";
 import commentAlertOutline from "@iconify-icons/mdi/comment-alert-outline";
 import { useTheme, FONT_MONO, FONT_SERIF } from "../contexts/ThemeContext";
 import FeedbackBanner from "./FeedbackBanner";
+import IconButton from "./IconButton";
 
 export default function ModerationPanel({ pendingEvents, pendingConnections = [], needsRevisionEvents = [], needsRevisionConnections = [], allEvents = [], allConnections = [], periods = [], getSectionName = (id) => id, onEventApproved, readOnly = false, user, userName, onEditPendingEvent, onEditPendingConnection, onWithdraw }) {
   const { theme } = useTheme();
@@ -780,49 +781,29 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                       {/* Student self-service buttons (readOnly mode, own submissions only) */}
                       {readOnly && user && event.addedByUid === user.uid && (
                         <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
-                          <button
+                          <IconButton
+                            icon={cancelIcon}
                             onClick={() => {
                               if (!window.confirm("Withdraw this submission? It will be removed from the review queue.")) return;
                               onWithdraw("event", event.id);
                             }}
-                            style={{
-                              padding: "6px 14px",
-                              background: "none",
-                              border: `1.5px solid ${theme.errorRed}`,
-                              borderRadius: 6,
-                              color: theme.errorRed,
-                              fontSize: 11,
-                              fontFamily: FONT_MONO,
-                              fontWeight: 600,
-                              cursor: "pointer",
-                              transition: "all 0.15s",
-                            }}
-                            onMouseEnter={(e) => { e.currentTarget.style.background = (theme.errorRed || "#DC2626") + "10"; }}
-                            onMouseLeave={(e) => { e.currentTarget.style.background = "none"; }}
+                            size={13}
+                            color={theme.errorRed}
+                            hoverBg={(theme.errorRed || "#DC2626") + "10"}
+                            style={{ padding: "6px 14px", border: `1.5px solid ${theme.errorRed}`, borderRadius: 6, fontSize: 11, fontFamily: FONT_MONO, fontWeight: 600 }}
                           >
-                            <Icon icon={cancelIcon} width={13} style={{ verticalAlign: "middle", marginRight: 3 }} />
                             Withdraw
-                          </button>
-                          <button
+                          </IconButton>
+                          <IconButton
+                            icon={pencilIcon}
                             onClick={() => onEditPendingEvent(event)}
-                            style={{
-                              padding: "6px 14px",
-                              background: "none",
-                              border: `1.5px solid ${theme.inputBorder}`,
-                              borderRadius: 6,
-                              color: theme.textDescription,
-                              fontSize: 11,
-                              fontFamily: FONT_MONO,
-                              fontWeight: 600,
-                              cursor: "pointer",
-                              transition: "all 0.15s",
-                            }}
-                            onMouseEnter={(e) => { e.currentTarget.style.background = theme.subtleBg; }}
-                            onMouseLeave={(e) => { e.currentTarget.style.background = "none"; }}
+                            size={13}
+                            color={theme.textDescription}
+                            hoverBg={theme.subtleBg}
+                            style={{ padding: "6px 14px", border: `1.5px solid ${theme.inputBorder}`, borderRadius: 6, fontSize: 11, fontFamily: FONT_MONO, fontWeight: 600 }}
                           >
-                            <Icon icon={pencilIcon} width={13} style={{ verticalAlign: "middle", marginRight: 3 }} />
                             Edit
-                          </button>
+                          </IconButton>
                         </div>
                       )}
 
@@ -830,69 +811,39 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                       {!readOnly && (
                       <>
                       <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
-                        <button
+                        <IconButton
+                          icon={cancelIcon}
                           onClick={() => handleReject(event.id)}
                           disabled={isProcessing}
-                          style={{
-                            padding: "6px 14px",
-                            background: "none",
-                            border: `1.5px solid ${theme.errorRed}`,
-                            borderRadius: 6,
-                            color: theme.errorRed,
-                            fontSize: 11,
-                            fontFamily: FONT_MONO,
-                            fontWeight: 600,
-                            cursor: "pointer",
-                            transition: "all 0.15s",
-                          }}
-                          onMouseEnter={(e) => { e.currentTarget.style.background = (theme.errorRed || "#DC2626") + "10"; }}
-                          onMouseLeave={(e) => { e.currentTarget.style.background = "none"; }}
+                          size={13}
+                          color={theme.errorRed}
+                          hoverBg={(theme.errorRed || "#DC2626") + "10"}
+                          style={{ padding: "6px 14px", border: `1.5px solid ${theme.errorRed}`, borderRadius: 6, fontSize: 11, fontFamily: FONT_MONO, fontWeight: 600 }}
                         >
-                          <Icon icon={cancelIcon} width={13} style={{ verticalAlign: "middle", marginRight: 3 }} />
                           Reject
-                        </button>
-                        <button
+                        </IconButton>
+                        <IconButton
+                          icon={commentAlertOutline}
                           onClick={() => { setFeedbackId(event.id); setFeedbackType("event"); setFeedbackText(""); }}
                           disabled={isProcessing}
-                          style={{
-                            padding: "6px 14px",
-                            background: "none",
-                            border: `1.5px solid ${theme.feedbackAmber}`,
-                            borderRadius: 6,
-                            color: theme.feedbackAmber,
-                            fontSize: 11,
-                            fontFamily: FONT_MONO,
-                            fontWeight: 600,
-                            cursor: "pointer",
-                            transition: "all 0.15s",
-                          }}
-                          onMouseEnter={(e) => { e.currentTarget.style.background = theme.feedbackAmber + "10"; }}
-                          onMouseLeave={(e) => { e.currentTarget.style.background = "none"; }}
+                          size={13}
+                          color={theme.feedbackAmber}
+                          hoverBg={theme.feedbackAmber + "10"}
+                          style={{ padding: "6px 14px", border: `1.5px solid ${theme.feedbackAmber}`, borderRadius: 6, fontSize: 11, fontFamily: FONT_MONO, fontWeight: 600 }}
                         >
-                          <Icon icon={commentAlertOutline} width={13} style={{ verticalAlign: "middle", marginRight: 3 }} />
                           Revise
-                        </button>
-                        <button
+                        </IconButton>
+                        <IconButton
+                          icon={pencilIcon}
                           onClick={() => startEdit(event)}
                           disabled={isProcessing}
-                          style={{
-                            padding: "6px 14px",
-                            background: "none",
-                            border: `1.5px solid ${theme.inputBorder}`,
-                            borderRadius: 6,
-                            color: theme.textDescription,
-                            fontSize: 11,
-                            fontFamily: FONT_MONO,
-                            fontWeight: 600,
-                            cursor: "pointer",
-                            transition: "all 0.15s",
-                          }}
-                          onMouseEnter={(e) => { e.currentTarget.style.background = theme.subtleBg; }}
-                          onMouseLeave={(e) => { e.currentTarget.style.background = "none"; }}
+                          size={13}
+                          color={theme.textDescription}
+                          hoverBg={theme.subtleBg}
+                          style={{ padding: "6px 14px", border: `1.5px solid ${theme.inputBorder}`, borderRadius: 6, fontSize: 11, fontFamily: FONT_MONO, fontWeight: 600 }}
                         >
-                          <Icon icon={pencilIcon} width={13} style={{ verticalAlign: "middle", marginRight: 3 }} />
                           Edit
-                        </button>
+                        </IconButton>
                         <button
                           onClick={() => handleApprove(event)}
                           disabled={isProcessing}
@@ -1059,22 +1010,17 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                     </div>
                     <FeedbackBanner feedback={event.feedback} title="Your Feedback" compact />
                     <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
-                      <button
+                      <IconButton
+                        icon={cancelIcon}
                         onClick={() => handleReject(event.id)}
                         disabled={isProcessing}
-                        style={{
-                          padding: "6px 14px", background: "none",
-                          border: `1.5px solid ${theme.errorRed}`, borderRadius: 6,
-                          color: theme.errorRed, fontSize: 11,
-                          fontFamily: FONT_MONO, fontWeight: 600,
-                          cursor: "pointer", transition: "all 0.15s",
-                        }}
-                        onMouseEnter={(e) => { e.currentTarget.style.background = (theme.errorRed || "#DC2626") + "10"; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.background = "none"; }}
+                        size={13}
+                        color={theme.errorRed}
+                        hoverBg={(theme.errorRed || "#DC2626") + "10"}
+                        style={{ padding: "6px 14px", border: `1.5px solid ${theme.errorRed}`, borderRadius: 6, fontSize: 11, fontFamily: FONT_MONO, fontWeight: 600 }}
                       >
-                        <Icon icon={cancelIcon} width={13} style={{ verticalAlign: "middle", marginRight: 3 }} />
                         Reject
-                      </button>
+                      </IconButton>
                     </div>
                   </div>
                 );
@@ -1337,40 +1283,30 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                       {/* Student self-service buttons (readOnly mode, own submissions only) */}
                       {readOnly && user && conn.addedByUid === user.uid && (
                         <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
-                          <button
+                          <IconButton
+                            icon={cancelIcon}
                             onClick={() => {
                               if (!window.confirm("Withdraw this connection? It will be removed from the review queue.")) return;
                               onWithdraw("connection", conn.id);
                             }}
-                            style={{
-                              padding: "6px 14px", background: "none",
-                              border: `1.5px solid ${theme.errorRed}`, borderRadius: 6,
-                              color: theme.errorRed, fontSize: 11,
-                              fontFamily: FONT_MONO, fontWeight: 600, cursor: "pointer",
-                              transition: "all 0.15s",
-                            }}
-                            onMouseEnter={(e) => { e.currentTarget.style.background = (theme.errorRed || "#DC2626") + "10"; }}
-                            onMouseLeave={(e) => { e.currentTarget.style.background = "none"; }}
+                            size={13}
+                            color={theme.errorRed}
+                            hoverBg={(theme.errorRed || "#DC2626") + "10"}
+                            style={{ padding: "6px 14px", border: `1.5px solid ${theme.errorRed}`, borderRadius: 6, fontSize: 11, fontFamily: FONT_MONO, fontWeight: 600 }}
                           >
-                            <Icon icon={cancelIcon} width={13} style={{ verticalAlign: "middle", marginRight: 3 }} />
                             Withdraw
-                          </button>
+                          </IconButton>
                           {!conn.deleteOf && (
-                            <button
+                            <IconButton
+                              icon={pencilIcon}
                               onClick={() => onEditPendingConnection(conn)}
-                              style={{
-                                padding: "6px 14px", background: "none",
-                                border: `1.5px solid ${theme.inputBorder}`, borderRadius: 6,
-                                color: theme.textDescription, fontSize: 11,
-                                fontFamily: FONT_MONO, fontWeight: 600, cursor: "pointer",
-                                transition: "all 0.15s",
-                              }}
-                              onMouseEnter={(e) => { e.currentTarget.style.background = theme.subtleBg; }}
-                              onMouseLeave={(e) => { e.currentTarget.style.background = "none"; }}
+                              size={13}
+                              color={theme.textDescription}
+                              hoverBg={theme.subtleBg}
+                              style={{ padding: "6px 14px", border: `1.5px solid ${theme.inputBorder}`, borderRadius: 6, fontSize: 11, fontFamily: FONT_MONO, fontWeight: 600 }}
                             >
-                              <Icon icon={pencilIcon} width={13} style={{ verticalAlign: "middle", marginRight: 3 }} />
                               Edit
-                            </button>
+                            </IconButton>
                           )}
                         </div>
                       )}
@@ -1378,57 +1314,42 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                       {!readOnly && (
                       <>
                       <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
-                        <button
+                        <IconButton
+                          icon={cancelIcon}
                           onClick={() => handleRejectConnection(conn.id)}
                           disabled={isProcessing}
-                          style={{
-                            padding: "6px 14px", background: "none",
-                            border: `1.5px solid ${theme.errorRed}`, borderRadius: 6,
-                            color: theme.errorRed, fontSize: 11,
-                            fontFamily: FONT_MONO, fontWeight: 600, cursor: "pointer",
-                            transition: "all 0.15s",
-                          }}
-                          onMouseEnter={(e) => { e.currentTarget.style.background = (theme.errorRed || "#DC2626") + "10"; }}
-                          onMouseLeave={(e) => { e.currentTarget.style.background = "none"; }}
+                          size={13}
+                          color={theme.errorRed}
+                          hoverBg={(theme.errorRed || "#DC2626") + "10"}
+                          style={{ padding: "6px 14px", border: `1.5px solid ${theme.errorRed}`, borderRadius: 6, fontSize: 11, fontFamily: FONT_MONO, fontWeight: 600 }}
                         >
-                          <Icon icon={cancelIcon} width={13} style={{ verticalAlign: "middle", marginRight: 3 }} />
                           Reject
-                        </button>
+                        </IconButton>
                         {!conn.deleteOf && (
-                          <button
+                          <IconButton
+                            icon={commentAlertOutline}
                             onClick={() => { setFeedbackId(conn.id); setFeedbackType("connection"); setFeedbackText(""); }}
                             disabled={isProcessing}
-                            style={{
-                              padding: "6px 14px", background: "none",
-                              border: `1.5px solid ${theme.feedbackAmber}`, borderRadius: 6,
-                              color: theme.feedbackAmber, fontSize: 11,
-                              fontFamily: FONT_MONO, fontWeight: 600, cursor: "pointer",
-                              transition: "all 0.15s",
-                            }}
-                            onMouseEnter={(e) => { e.currentTarget.style.background = theme.feedbackAmber + "10"; }}
-                            onMouseLeave={(e) => { e.currentTarget.style.background = "none"; }}
+                            size={13}
+                            color={theme.feedbackAmber}
+                            hoverBg={theme.feedbackAmber + "10"}
+                            style={{ padding: "6px 14px", border: `1.5px solid ${theme.feedbackAmber}`, borderRadius: 6, fontSize: 11, fontFamily: FONT_MONO, fontWeight: 600 }}
                           >
-                            <Icon icon={commentAlertOutline} width={13} style={{ verticalAlign: "middle", marginRight: 3 }} />
                             Revise
-                          </button>
+                          </IconButton>
                         )}
                         {!conn.editOf && !conn.deleteOf && (
-                          <button
+                          <IconButton
+                            icon={pencilIcon}
                             onClick={() => { setEditingConnId(conn.id); setEditConnDesc(conn.description); }}
                             disabled={isProcessing}
-                            style={{
-                              padding: "6px 14px", background: "none",
-                              border: `1.5px solid ${theme.inputBorder}`, borderRadius: 6,
-                              color: theme.textDescription, fontSize: 11,
-                              fontFamily: FONT_MONO, fontWeight: 600, cursor: "pointer",
-                              transition: "all 0.15s",
-                            }}
-                            onMouseEnter={(e) => { e.currentTarget.style.background = theme.subtleBg; }}
-                            onMouseLeave={(e) => { e.currentTarget.style.background = "none"; }}
+                            size={13}
+                            color={theme.textDescription}
+                            hoverBg={theme.subtleBg}
+                            style={{ padding: "6px 14px", border: `1.5px solid ${theme.inputBorder}`, borderRadius: 6, fontSize: 11, fontFamily: FONT_MONO, fontWeight: 600 }}
                           >
-                            <Icon icon={pencilIcon} width={13} style={{ verticalAlign: "middle", marginRight: 3 }} />
                             Edit
-                          </button>
+                          </IconButton>
                         )}
                         <button
                           onClick={() => handleApproveConnection(conn)}
@@ -1581,22 +1502,17 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                     </p>
                     <FeedbackBanner feedback={conn.feedback} title="Your Feedback" compact />
                     <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
-                      <button
+                      <IconButton
+                        icon={cancelIcon}
                         onClick={() => handleRejectConnection(conn.id)}
                         disabled={isProcessing}
-                        style={{
-                          padding: "6px 14px", background: "none",
-                          border: `1.5px solid ${theme.errorRed}`, borderRadius: 6,
-                          color: theme.errorRed, fontSize: 11,
-                          fontFamily: FONT_MONO, fontWeight: 600,
-                          cursor: "pointer", transition: "all 0.15s",
-                        }}
-                        onMouseEnter={(e) => { e.currentTarget.style.background = (theme.errorRed || "#DC2626") + "10"; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.background = "none"; }}
+                        size={13}
+                        color={theme.errorRed}
+                        hoverBg={(theme.errorRed || "#DC2626") + "10"}
+                        style={{ padding: "6px 14px", border: `1.5px solid ${theme.errorRed}`, borderRadius: 6, fontSize: 11, fontFamily: FONT_MONO, fontWeight: 600 }}
                       >
-                        <Icon icon={cancelIcon} width={13} style={{ verticalAlign: "middle", marginRight: 3 }} />
                         Reject
-                      </button>
+                      </IconButton>
                     </div>
                   </div>
                 );

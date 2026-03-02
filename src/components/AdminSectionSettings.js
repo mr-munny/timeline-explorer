@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useTheme, FONT_MONO, FONT_SERIF } from "../contexts/ThemeContext";
 import { PERIOD_COLORS, DEFAULT_FIELD_CONFIG } from "../data/constants";
-import { subscribeToPeriods, subscribeToCompellingQuestion, subscribeToTimelineRange, subscribeToFieldConfig, savePeriods, saveCompellingQuestion, saveTimelineRange, saveFieldConfig } from "../services/database";
+import { subscribeToPeriods, subscribeToCompellingQuestion, subscribeToTimelineRange, subscribeToFieldConfig, savePeriods, saveCompellingQuestion, saveTimelineRange, saveFieldConfig, seedDemoData, wipeSectionData } from "../services/database";
 import { Icon } from "@iconify/react";
 import pencilOutline from "@iconify-icons/mdi/pencil-outline";
 import closeCircleOutline from "@iconify-icons/mdi/close-circle-outline";
@@ -14,6 +14,8 @@ import contentSave from "@iconify-icons/mdi/content-save";
 import undoIcon from "@iconify-icons/mdi/undo";
 import contentCopy from "@iconify-icons/mdi/content-copy";
 import deleteOutline from "@iconify-icons/mdi/delete-outline";
+import databaseImportOutline from "@iconify-icons/mdi/database-import-outline";
+import deleteSweepOutline from "@iconify-icons/mdi/delete-sweep-outline";
 import StudentRoster from "./StudentRoster";
 import CopySettingsDialog from "./CopySettingsDialog";
 import { floorToDecade, ceilToDecade } from "../utils/dateUtils";
@@ -77,6 +79,11 @@ export default function AdminSectionSettings({
 
   // Saving state
   const [saving, setSaving] = useState(false);
+
+  // Demo seed/wipe state
+  const [seeding, setSeeding] = useState(false);
+  const [wiping, setWiping] = useState(false);
+  const [demoMessage, setDemoMessage] = useState(null);
 
   // Track if dirty ref for subscription updates
   const isDirtyRef = useRef(false);
@@ -779,6 +786,115 @@ export default function AdminSectionSettings({
           onReassign={reassignStudentSection}
           onRemove={removeStudentSection}
         />
+
+        <div style={dividerStyle} />
+
+        {/* Demo Data */}
+        <div style={sectionHeaderStyle}>
+          <Icon icon={databaseImportOutline} width={12} />
+          Demo Data
+        </div>
+        <div style={{
+          fontSize: 10,
+          color: theme.textSecondary,
+          marginBottom: 12,
+          lineHeight: 1.5,
+        }}>
+          Seed this section with sample events, connections, and settings for demos and training. Wipe removes all events and connections from this section.
+        </div>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button
+            onClick={async () => {
+              if (!window.confirm(
+                `Seed "${sectionName}" with demo data?\n\nThis will add ~36 sample events, ~13 connections, and configure time periods, compelling question, and timeline range for this section.\n\nExisting data in this section will NOT be removed.`
+              )) return;
+              setSeeding(true);
+              setDemoMessage(null);
+              try {
+                const result = await seedDemoData(sectionId);
+                setDemoMessage(`Seeded ${result.events} events and ${result.connections} connections.`);
+              } catch (err) {
+                console.error("Seed failed:", err);
+                setDemoMessage("Seed failed — check console for details.");
+              }
+              setSeeding(false);
+            }}
+            disabled={seeding || wiping}
+            style={{
+              padding: "8px 16px",
+              borderRadius: 6,
+              border: "none",
+              background: seeding ? "#6366F1" + "80" : "#6366F1",
+              color: "#fff",
+              fontSize: 10,
+              fontFamily: FONT_MONO,
+              fontWeight: 700,
+              cursor: seeding || wiping ? "not-allowed" : "pointer",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              textTransform: "uppercase",
+              letterSpacing: "0.05em",
+              transition: "all 0.15s",
+            }}
+            onMouseEnter={(e) => { if (!seeding && !wiping) e.currentTarget.style.filter = "brightness(1.15)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.filter = "none"; }}
+          >
+            <Icon icon={databaseImportOutline} width={13} />
+            {seeding ? "Seeding..." : "Seed Demo Data"}
+          </button>
+          <button
+            onClick={async () => {
+              if (!window.confirm(
+                `Wipe ALL events and connections from "${sectionName}"?\n\nThis cannot be undone.`
+              )) return;
+              setWiping(true);
+              setDemoMessage(null);
+              try {
+                const result = await wipeSectionData(sectionId);
+                setDemoMessage(`Wiped ${result.events} events and ${result.connections} connections.`);
+              } catch (err) {
+                console.error("Wipe failed:", err);
+                setDemoMessage("Wipe failed — check console for details.");
+              }
+              setWiping(false);
+            }}
+            disabled={seeding || wiping}
+            style={{
+              padding: "8px 16px",
+              borderRadius: 6,
+              border: `1px solid ${theme.errorRed}`,
+              background: "transparent",
+              color: theme.errorRed,
+              fontSize: 10,
+              fontFamily: FONT_MONO,
+              fontWeight: 700,
+              cursor: seeding || wiping ? "not-allowed" : "pointer",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              textTransform: "uppercase",
+              letterSpacing: "0.05em",
+              transition: "all 0.15s",
+            }}
+            onMouseEnter={(e) => { if (!seeding && !wiping) { e.currentTarget.style.background = theme.errorRed + "15"; } }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+          >
+            <Icon icon={deleteSweepOutline} width={13} />
+            {wiping ? "Wiping..." : "Wipe Section Data"}
+          </button>
+        </div>
+        {demoMessage && (
+          <div style={{
+            marginTop: 8,
+            fontSize: 10,
+            fontFamily: FONT_MONO,
+            color: demoMessage.includes("failed") ? theme.errorRed : theme.teacherGreen,
+            fontWeight: 600,
+          }}>
+            {demoMessage}
+          </div>
+        )}
       </div>
 
       {/* Sticky bottom action bar */}

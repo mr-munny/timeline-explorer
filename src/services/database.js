@@ -441,6 +441,13 @@ export async function saveDefaultCompellingQuestion(data) {
   await set(defaultCQRef, data);
 }
 
+// One-time read of sections
+export async function getSections() {
+  const snapshot = await get(ref(db, "sections"));
+  const data = snapshot.val();
+  return Array.isArray(data) ? data.filter(Boolean) : [];
+}
+
 // Listen to sections in real-time
 export function subscribeToSections(callback) {
   const sectionsRef = ref(db, "sections");

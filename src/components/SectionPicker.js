@@ -3,8 +3,7 @@ import { Icon } from "@iconify/react";
 import chartTimelineVariantShimmer from "@iconify-icons/mdi/chart-timeline-variant-shimmer";
 import arrowLeft from "@iconify-icons/mdi/arrow-left";
 import { useTheme } from "../contexts/ThemeContext";
-import { lookupTeacherByJoinCode } from "../services/database";
-import { subscribeToSections } from "../services/database";
+import { lookupTeacherByJoinCode, getSections } from "../services/database";
 
 export default function SectionPicker({ sections, onSelect, userName }) {
   const { theme } = useTheme();
@@ -29,12 +28,10 @@ export default function SectionPicker({ sections, onSelect, userName }) {
         return;
       }
       setTeacher(found);
-      // Load this teacher's sections
-      const unsub = subscribeToSections((allSections) => {
-        const filtered = (allSections || []).filter((s) => s.teacherUid === found.uid);
-        setTeacherSections(filtered);
-        unsub(); // One-time read
-      });
+      // Load this teacher's sections (one-time read)
+      const allSections = await getSections();
+      const filtered = allSections.filter((s) => s.teacherUid === found.uid);
+      setTeacherSections(filtered);
       setStep("section");
     } catch (err) {
       console.error("Join code lookup failed:", err);

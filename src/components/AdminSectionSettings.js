@@ -52,6 +52,9 @@ export default function AdminSectionSettings({
   // Copy dialog
   const [showCopyDialog, setShowCopyDialog] = useState(false);
 
+  // Discard signal (incremented on discard to reset child editors)
+  const [discardSignal, setDiscardSignal] = useState(0);
+
   // Saving state
   const [saving, setSaving] = useState(false);
 
@@ -148,6 +151,7 @@ export default function AdminSectionSettings({
     setDraftFieldConfig(liveFieldConfig);
     setIsDirty(false);
     isDirtyRef.current = false;
+    setDiscardSignal((s) => s + 1);
   };
 
   const handleDeleteSection = () => {
@@ -269,6 +273,7 @@ export default function AdminSectionSettings({
           draftPeriods={draftPeriods}
           draftTimelineRange={draftTimelineRange}
           onPeriodsChange={(newPeriods) => { setDraftPeriods(newPeriods); markDirty(); }}
+          discardSignal={discardSignal}
           inputStyle={inputStyle}
         />
 

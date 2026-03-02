@@ -1,19 +1,10 @@
 import { useState } from "react";
-import { getPeriod, TAGS } from "../data/constants";
-import { formatEventDate, MONTHS } from "../utils/dateUtils";
-import { computeWordDiff } from "../utils/diffUtils";
 import { approveEvent, rejectEvent, updateEvent, approveEdit, approveConnection, rejectConnection, updateConnection, approveConnectionEdit, approveConnectionDeletion, requestRevision } from "../services/database";
 import { writeToSheet } from "../services/sheets";
-import { Icon } from "@iconify/react";
-import checkIcon from "@iconify-icons/mdi/check";
-import pencilIcon from "@iconify-icons/mdi/pencil";
-import cancelIcon from "@iconify-icons/mdi/cancel";
-import contentSave from "@iconify-icons/mdi/content-save";
-import arrowRightBold from "@iconify-icons/mdi/arrow-right-bold";
-import commentAlertOutline from "@iconify-icons/mdi/comment-alert-outline";
 import { useTheme, FONT_MONO, FONT_SERIF } from "../contexts/ThemeContext";
-import FeedbackBanner from "./FeedbackBanner";
-import IconButton from "./IconButton";
+import PendingEventCard from "./PendingEventCard";
+import PendingConnectionCard from "./PendingConnectionCard";
+import AwaitingRevisionSection from "./AwaitingRevisionSection";
 
 export default function ModerationPanel({ pendingEvents, pendingConnections = [], needsRevisionEvents = [], needsRevisionConnections = [], allEvents = [], allConnections = [], periods = [], getSectionName = (id) => id, onEventApproved, readOnly = false, user, userName, onEditPendingEvent, onEditPendingConnection, onWithdraw }) {
   const { theme } = useTheme();
@@ -200,36 +191,21 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
   const findEvent = (id) => allEvents.find((e) => e.id === id);
   const findConnection = (id) => allConnections.find((c) => c.id === id);
 
+  const handleFeedbackOpen = (id, type) => {
+    setFeedbackId(id);
+    setFeedbackType(type);
+    setFeedbackText("");
+  };
 
-  const DIFF_FIELDS = [
-    { key: "title", label: "Title", inline: true },
-    { key: "year", label: "Year" },
-    { key: "month", label: "Month", format: (v) => v ? MONTHS[v - 1] : "None" },
-    { key: "day", label: "Day" },
-    { key: "endYear", label: "End Year" },
-    { key: "endMonth", label: "End Month", format: (v) => v ? MONTHS[v - 1] : "None" },
-    { key: "endDay", label: "End Day" },
-    { key: "period", label: "Period", format: (v) => { const p = getPeriod(periods, v); return p?.label || v; } },
-    { key: "tags", label: "Tags", format: (v) => (v || []).join(", "), compare: (a, b) => JSON.stringify(a) === JSON.stringify(b) },
-    { key: "sourceType", label: "Source Type" },
-    { key: "description", label: "Description", inline: true },
-    { key: "sourceNote", label: "Source", inline: true },
-    { key: "sourceUrl", label: "Source URL" },
-    { key: "imageUrl", label: "Image URL" },
-    { key: "region", label: "Region" },
-  ];
+  const handleFeedbackCancel = () => {
+    setFeedbackId(null);
+    setFeedbackText("");
+    setFeedbackType(null);
+  };
 
-  const inputStyle = {
-    width: "100%",
-    padding: "7px 10px",
-    border: `1.5px solid ${theme.inputBorder}`,
-    borderRadius: 6,
-    fontSize: 12,
-    fontFamily: FONT_MONO,
-    background: theme.inputBg,
-    color: theme.textPrimary,
-    outline: "none",
-    boxSizing: "border-box",
+  const handleStartConnEdit = (connId, description) => {
+    setEditingConnId(connId);
+    setEditConnDesc(description);
   };
 
   return (
@@ -319,714 +295,51 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
           </div>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            {pendingEvents.map((event) => {
-              const unit = getPeriod(periods, event.period);
-              const isEditing = editingId === event.id;
-              const isProcessing = processing === event.id;
-
-              return (
-                <div
-                  key={event.id}
-                  style={{
-                    border: `1.5px solid ${theme.inputBorder}`,
-                    borderRadius: 10,
-                    padding: "16px 18px",
-                    borderLeft: `4px solid ${unit?.color || theme.textSecondary}`,
-                  }}
-                >
-                  {!readOnly && isEditing ? (
-                    /* Edit mode */
-                    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                      <div
-                        style={{
-                          display: "grid",
-                          gridTemplateColumns: "1fr 80px",
-                          gap: 8,
-                        }}
-                      >
-                        <input
-                          value={editForm.title}
-                          onChange={(e) =>
-                            setEditForm((f) => ({ ...f, title: e.target.value }))
-                          }
-                          style={inputStyle}
-                          placeholder="Title"
-                        />
-                        <input
-                          value={editForm.year}
-                          onChange={(e) =>
-                            setEditForm((f) => ({
-                              ...f,
-                              year: parseInt(e.target.value) || "",
-                            }))
-                          }
-                          style={inputStyle}
-                          type="number"
-                          placeholder="Year"
-                        />
-                      </div>
-                      <div style={{ display: "flex", gap: 8 }}>
-                        <div style={{ flex: 1 }}>
-                          <select
-                            value={editForm.month}
-                            onChange={(e) =>
-                              setEditForm((f) => ({ ...f, month: e.target.value ? parseInt(e.target.value) : "" }))
-                            }
-                            style={inputStyle}
-                          >
-                            <option value="">Month —</option>
-                            {MONTHS.map((m, i) => (
-                              <option key={i} value={i + 1}>{m}</option>
-                            ))}
-                          </select>
-                        </div>
-                        <div style={{ width: 70 }}>
-                          <input
-                            value={editForm.day}
-                            onChange={(e) =>
-                              setEditForm((f) => ({ ...f, day: e.target.value ? parseInt(e.target.value) : "" }))
-                            }
-                            style={inputStyle}
-                            type="number"
-                            placeholder="Day"
-                            min={1}
-                            max={31}
-                          />
-                        </div>
-                      </div>
-                      <div style={{ display: "flex", gap: 8 }}>
-                        <div style={{ width: 80 }}>
-                          <input
-                            value={editForm.endYear}
-                            onChange={(e) =>
-                              setEditForm((f) => ({ ...f, endYear: e.target.value ? parseInt(e.target.value) : "" }))
-                            }
-                            style={inputStyle}
-                            type="number"
-                            placeholder="End yr"
-                          />
-                        </div>
-                        <div style={{ flex: 1 }}>
-                          <select
-                            value={editForm.endMonth}
-                            onChange={(e) =>
-                              setEditForm((f) => ({ ...f, endMonth: e.target.value ? parseInt(e.target.value) : "" }))
-                            }
-                            style={inputStyle}
-                          >
-                            <option value="">End mo —</option>
-                            {MONTHS.map((m, i) => (
-                              <option key={i} value={i + 1}>{m}</option>
-                            ))}
-                          </select>
-                        </div>
-                        <div style={{ width: 70 }}>
-                          <input
-                            value={editForm.endDay}
-                            onChange={(e) =>
-                              setEditForm((f) => ({ ...f, endDay: e.target.value ? parseInt(e.target.value) : "" }))
-                            }
-                            style={inputStyle}
-                            type="number"
-                            placeholder="End day"
-                            min={1}
-                            max={31}
-                          />
-                        </div>
-                      </div>
-                      <select
-                        value={editForm.period}
-                        onChange={(e) =>
-                          setEditForm((f) => ({ ...f, period: e.target.value }))
-                        }
-                        style={inputStyle}
-                      >
-                        {periods.map((p) => (
-                          <option key={p.id} value={p.id}>
-                            {p.label}
-                          </option>
-                        ))}
-                      </select>
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
-                        {TAGS.map((tag) => (
-                          <button
-                            key={tag}
-                            type="button"
-                            onClick={() => toggleEditTag(tag)}
-                            style={{
-                              padding: "3px 8px",
-                              borderRadius: 4,
-                              border: `1px solid ${
-                                editForm.tags.includes(tag) ? theme.activeToggleBg : theme.inputBorder
-                              }`,
-                              background: editForm.tags.includes(tag)
-                                ? theme.activeToggleBg
-                                : theme.inputBg,
-                              color: editForm.tags.includes(tag) ? theme.activeToggleText : theme.textSecondary,
-                              fontSize: 10,
-                              fontFamily: FONT_MONO,
-                              cursor: "pointer",
-                            }}
-                          >
-                            {tag}
-                          </button>
-                        ))}
-                      </div>
-                      <textarea
-                        value={editForm.description}
-                        onChange={(e) =>
-                          setEditForm((f) => ({
-                            ...f,
-                            description: e.target.value,
-                          }))
-                        }
-                        style={{ ...inputStyle, resize: "vertical" }}
-                        rows={3}
-                      />
-                      <input
-                        value={editForm.sourceNote}
-                        onChange={(e) =>
-                          setEditForm((f) => ({
-                            ...f,
-                            sourceNote: e.target.value,
-                          }))
-                        }
-                        style={inputStyle}
-                        placeholder="Source citation"
-                      />
-                      <input
-                        value={editForm.sourceUrl}
-                        onChange={(e) =>
-                          setEditForm((f) => ({
-                            ...f,
-                            sourceUrl: e.target.value,
-                          }))
-                        }
-                        style={inputStyle}
-                        placeholder="Source URL (optional)"
-                        type="url"
-                      />
-                      <input
-                        value={editForm.imageUrl}
-                        onChange={(e) =>
-                          setEditForm((f) => ({
-                            ...f,
-                            imageUrl: e.target.value,
-                          }))
-                        }
-                        style={inputStyle}
-                        placeholder="Image URL (optional)"
-                        type="url"
-                      />
-                      <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
-                        <button
-                          onClick={() => setEditingId(null)}
-                          style={{
-                            padding: "6px 14px",
-                            background: "none",
-                            border: `1.5px solid ${theme.inputBorder}`,
-                            borderRadius: 6,
-                            fontSize: 11,
-                            fontFamily: FONT_MONO,
-                            cursor: "pointer",
-                            color: theme.textTertiary,
-                            transition: "all 0.15s",
-                          }}
-                          onMouseEnter={(e) => { e.currentTarget.style.background = theme.subtleBg; }}
-                          onMouseLeave={(e) => { e.currentTarget.style.background = "none"; }}
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          onClick={() => saveEdit(event.id)}
-                          disabled={isProcessing}
-                          style={{
-                            padding: "6px 14px",
-                            background: theme.activeToggleBg,
-                            color: theme.activeToggleText,
-                            border: "none",
-                            borderRadius: 6,
-                            fontSize: 11,
-                            fontFamily: FONT_MONO,
-                            fontWeight: 700,
-                            cursor: "pointer",
-                            transition: "filter 0.15s",
-                          }}
-                          onMouseEnter={(e) => { e.currentTarget.style.filter = "brightness(1.1)"; }}
-                          onMouseLeave={(e) => { e.currentTarget.style.filter = "none"; }}
-                        >
-                          <Icon icon={contentSave} width={13} style={{ verticalAlign: "middle", marginRight: 3 }} />
-                          Save Edits
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    /* View mode */
-                    <>
-                      {event.editOf ? (() => {
-                        const original = findEvent(event.editOf);
-                        return (
-                          <>
-                            <div
-                              style={{
-                                fontSize: 10,
-                                fontWeight: 700,
-                                fontFamily: FONT_MONO,
-                                color: theme.feedbackAmber,
-                                background: theme.feedbackAmberBg,
-                                padding: "3px 8px",
-                                borderRadius: 4,
-                                display: "inline-block",
-                                marginBottom: 6,
-                                textTransform: "uppercase",
-                                letterSpacing: "0.05em",
-                              }}
-                            >
-                              Suggested Edit
-                            </div>
-                            <div
-                              style={{
-                                fontSize: 10,
-                                color: theme.textSecondary,
-                                fontFamily: FONT_MONO,
-                                marginBottom: 10,
-                              }}
-                            >
-                              by {event.addedBy} &middot; {getSectionName(event.section)}
-                              {!original && <> &middot; <span style={{ color: theme.errorRed }}>Original event not found</span></>}
-                            </div>
-                            {original && (
-                              <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 10 }}>
-                                {DIFF_FIELDS.map(({ key, label, format, compare, inline }) => {
-                                  const oldVal = original[key];
-                                  const newVal = event[key];
-                                  const isEqual = compare ? compare(oldVal, newVal) : String(oldVal ?? "") === String(newVal ?? "");
-                                  if (isEqual) return null;
-                                  const fmt = format || ((v) => String(v ?? ""));
-                                  const isTextField = inline && !format;
-                                  return (
-                                    <div key={key} style={{
-                                      padding: "6px 10px",
-                                      background: theme.warmSubtleBg,
-                                      borderRadius: 6,
-                                      borderLeft: `3px solid ${theme.feedbackAmber}`,
-                                    }}>
-                                      <div style={{
-                                        fontSize: 9,
-                                        fontWeight: 700,
-                                        fontFamily: FONT_MONO,
-                                        color: theme.textTertiary,
-                                        textTransform: "uppercase",
-                                        letterSpacing: "0.05em",
-                                        marginBottom: 3,
-                                      }}>
-                                        {label}
-                                      </div>
-                                      <div style={{
-                                        fontSize: key === "description" ? 11 : 12,
-                                        fontFamily: (key === "description" || key === "title") ? FONT_SERIF : FONT_MONO,
-                                        lineHeight: 1.5,
-                                      }}>
-                                        {isTextField ? (
-                                          computeWordDiff(oldVal, newVal).map((part, i) =>
-                                            part.type === "same" ? (
-                                              <span key={i} style={{ color: theme.textDescription }}>{part.text}</span>
-                                            ) : part.type === "del" ? (
-                                              <span key={i} style={{
-                                                color: theme.errorRed,
-                                                textDecoration: "line-through",
-                                                opacity: 0.7,
-                                              }}>{part.text}</span>
-                                            ) : (
-                                              <span key={i} style={{
-                                                color: theme.successGreen || "#16A34A",
-                                                fontWeight: 600,
-                                                background: (theme.successGreen || "#16A34A") + "15",
-                                                borderRadius: 2,
-                                              }}>{part.text}</span>
-                                            )
-                                          )
-                                        ) : (
-                                          <>
-                                            <span style={{
-                                              color: theme.errorRed,
-                                              textDecoration: "line-through",
-                                              opacity: 0.7,
-                                            }}>
-                                              {fmt(oldVal)}
-                                            </span>
-                                            <span style={{ color: theme.textTertiary, margin: "0 6px" }}>{"\u2192"}</span>
-                                            <span style={{
-                                              color: theme.successGreen || "#16A34A",
-                                              fontWeight: 600,
-                                            }}>
-                                              {fmt(newVal)}
-                                            </span>
-                                          </>
-                                        )}
-                                      </div>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            )}
-                          </>
-                        );
-                      })() : (
-                      <>
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "flex-start",
-                          gap: 10,
-                          marginBottom: 8,
-                        }}
-                      >
-                        <div
-                          style={{
-                            background: unit?.color || theme.textTertiary,
-                            color: "#fff",
-                            fontSize: 11,
-                            fontWeight: 700,
-                            padding: "3px 7px",
-                            borderRadius: 4,
-                            fontFamily: FONT_MONO,
-                            flexShrink: 0,
-                          }}
-                        >
-                          {formatEventDate(event)}
-                        </div>
-                        <div style={{ flex: 1 }}>
-                          <div
-                            style={{
-                              fontSize: 14,
-                              fontWeight: 700,
-                              color: theme.textPrimary,
-                              fontFamily: FONT_SERIF,
-                            }}
-                          >
-                            {event.title}
-                          </div>
-                          <div
-                            style={{
-                              fontSize: 10,
-                              color: theme.textSecondary,
-                              fontFamily: FONT_MONO,
-                              marginTop: 2,
-                            }}
-                          >
-                            by {event.addedBy} &middot; {getSectionName(event.section)} &middot;{" "}
-                            {unit?.label?.slice(0, 12) || event.period}
-                          </div>
-                        </div>
-                      </div>
-
-                      <p
-                        style={{
-                          fontSize: 12,
-                          lineHeight: 1.6,
-                          color: theme.textDescription,
-                          margin: "0 0 8px 0",
-                          fontFamily: FONT_SERIF,
-                        }}
-                      >
-                        {event.description}
-                      </p>
-
-                      {event.imageUrl && (
-                        <div style={{ marginBottom: 8 }}>
-                          <img
-                            src={event.imageUrl}
-                            alt={event.title}
-                            style={{
-                              maxWidth: "100%",
-                              maxHeight: 200,
-                              borderRadius: 6,
-                              objectFit: "contain",
-                              background: theme.subtleBg,
-                            }}
-                            onError={(e) => { e.currentTarget.style.display = "none"; }}
-                          />
-                        </div>
-                      )}
-
-                      <div
-                        style={{
-                          fontSize: 10,
-                          color: theme.textTertiary,
-                          fontFamily: FONT_MONO,
-                          marginBottom: 10,
-                        }}
-                      >
-                        <strong>Source:</strong> {event.sourceNote}
-                        {event.sourceUrl && (
-                          <>
-                            {" "}&middot;{" "}
-                            <a href={event.sourceUrl} target="_blank" rel="noopener noreferrer" style={{ color: "#2563EB", textDecoration: "underline" }} onClick={(e) => e.stopPropagation()}>Link</a>
-                          </>
-                        )}
-                        {" "}&middot;{" "}
-                        <strong>Type:</strong> {event.sourceType} &middot;{" "}
-                        <strong>Tags:</strong> {(event.tags || []).join(", ")}
-                        {event.imageUrl && (
-                          <>
-                            {" "}&middot;{" "}
-                            <a href={event.imageUrl} target="_blank" rel="noopener noreferrer" style={{ color: "#2563EB", textDecoration: "underline" }} onClick={(e) => e.stopPropagation()}>Image</a>
-                          </>
-                        )}
-                      </div>
-                      </>
-                      )}
-
-                      {/* Student self-service buttons (readOnly mode, own submissions only) */}
-                      {readOnly && user && event.addedByUid === user.uid && (
-                        <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
-                          <IconButton
-                            icon={cancelIcon}
-                            onClick={() => {
-                              if (!window.confirm("Withdraw this submission? It will be removed from the review queue.")) return;
-                              onWithdraw("event", event.id);
-                            }}
-                            size={13}
-                            color={theme.errorRed}
-                            hoverBg={(theme.errorRed || "#DC2626") + "10"}
-                            style={{ padding: "6px 14px", border: `1.5px solid ${theme.errorRed}`, borderRadius: 6, fontSize: 11, fontFamily: FONT_MONO, fontWeight: 600 }}
-                          >
-                            Withdraw
-                          </IconButton>
-                          <IconButton
-                            icon={pencilIcon}
-                            onClick={() => onEditPendingEvent(event)}
-                            size={13}
-                            color={theme.textDescription}
-                            hoverBg={theme.subtleBg}
-                            style={{ padding: "6px 14px", border: `1.5px solid ${theme.inputBorder}`, borderRadius: 6, fontSize: 11, fontFamily: FONT_MONO, fontWeight: 600 }}
-                          >
-                            Edit
-                          </IconButton>
-                        </div>
-                      )}
-
-                      {/* Teacher action buttons */}
-                      {!readOnly && (
-                      <>
-                      <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
-                        <IconButton
-                          icon={cancelIcon}
-                          onClick={() => handleReject(event.id)}
-                          disabled={isProcessing}
-                          size={13}
-                          color={theme.errorRed}
-                          hoverBg={(theme.errorRed || "#DC2626") + "10"}
-                          style={{ padding: "6px 14px", border: `1.5px solid ${theme.errorRed}`, borderRadius: 6, fontSize: 11, fontFamily: FONT_MONO, fontWeight: 600 }}
-                        >
-                          Reject
-                        </IconButton>
-                        <IconButton
-                          icon={commentAlertOutline}
-                          onClick={() => { setFeedbackId(event.id); setFeedbackType("event"); setFeedbackText(""); }}
-                          disabled={isProcessing}
-                          size={13}
-                          color={theme.feedbackAmber}
-                          hoverBg={theme.feedbackAmber + "10"}
-                          style={{ padding: "6px 14px", border: `1.5px solid ${theme.feedbackAmber}`, borderRadius: 6, fontSize: 11, fontFamily: FONT_MONO, fontWeight: 600 }}
-                        >
-                          Revise
-                        </IconButton>
-                        <IconButton
-                          icon={pencilIcon}
-                          onClick={() => startEdit(event)}
-                          disabled={isProcessing}
-                          size={13}
-                          color={theme.textDescription}
-                          hoverBg={theme.subtleBg}
-                          style={{ padding: "6px 14px", border: `1.5px solid ${theme.inputBorder}`, borderRadius: 6, fontSize: 11, fontFamily: FONT_MONO, fontWeight: 600 }}
-                        >
-                          Edit
-                        </IconButton>
-                        <button
-                          onClick={() => handleApprove(event)}
-                          disabled={isProcessing}
-                          style={{
-                            padding: "6px 14px",
-                            background: theme.successGreen,
-                            color: "#fff",
-                            border: "none",
-                            borderRadius: 6,
-                            fontSize: 11,
-                            fontFamily: FONT_MONO,
-                            fontWeight: 700,
-                            cursor: "pointer",
-                            transition: "filter 0.15s",
-                          }}
-                          onMouseEnter={(e) => { e.currentTarget.style.filter = "brightness(1.15)"; }}
-                          onMouseLeave={(e) => { e.currentTarget.style.filter = "none"; }}
-                        >
-                          {isProcessing ? "..." : <><Icon icon={checkIcon} width={14} style={{ verticalAlign: "middle", marginRight: 3 }} />Approve</>}
-                        </button>
-                      </div>
-                      {/* Inline feedback textarea */}
-                      {feedbackId === event.id && feedbackType === "event" && (
-                        <div style={{
-                          marginTop: 10,
-                          padding: "12px 14px",
-                          background: theme.feedbackAmberBg,
-                          borderRadius: 8,
-                          border: `1.5px solid ${theme.feedbackAmber}`,
-                        }}>
-                          <label style={{
-                            fontSize: 10,
-                            fontWeight: 700,
-                            fontFamily: FONT_MONO,
-                            color: theme.feedbackAmberText,
-                            textTransform: "uppercase",
-                            letterSpacing: "0.05em",
-                            marginBottom: 6,
-                            display: "block",
-                          }}>
-                            Feedback for Student
-                          </label>
-                          <textarea
-                            autoFocus
-                            value={feedbackText}
-                            onChange={(e) => setFeedbackText(e.target.value)}
-                            placeholder="What should the student fix or improve?"
-                            rows={3}
-                            style={{ ...inputStyle, borderColor: theme.feedbackAmber }}
-                          />
-                          <div style={{ display: "flex", gap: 6, justifyContent: "flex-end", marginTop: 8 }}>
-                            <button
-                              onClick={() => { setFeedbackId(null); setFeedbackText(""); setFeedbackType(null); }}
-                              style={{
-                                padding: "6px 14px",
-                                background: "none",
-                                border: `1.5px solid ${theme.inputBorder}`,
-                                borderRadius: 6,
-                                fontSize: 11,
-                                fontFamily: FONT_MONO,
-                                cursor: "pointer",
-                                color: theme.textTertiary,
-                                transition: "all 0.15s",
-                              }}
-                              onMouseEnter={(e) => { e.currentTarget.style.background = theme.subtleBg; }}
-                              onMouseLeave={(e) => { e.currentTarget.style.background = "none"; }}
-                            >
-                              Cancel
-                            </button>
-                            <button
-                              onClick={() => handleRequestRevision("event", event.id)}
-                              disabled={!feedbackText.trim() || isProcessing}
-                              style={{
-                                padding: "6px 14px",
-                                background: feedbackText.trim() ? theme.feedbackAmber : theme.inputBorder,
-                                color: "#fff",
-                                border: "none",
-                                borderRadius: 6,
-                                fontSize: 11,
-                                fontFamily: FONT_MONO,
-                                fontWeight: 700,
-                                cursor: feedbackText.trim() ? "pointer" : "default",
-                                transition: "filter 0.15s",
-                              }}
-                              onMouseEnter={(e) => { if (feedbackText.trim()) e.currentTarget.style.filter = "brightness(1.15)"; }}
-                              onMouseLeave={(e) => { e.currentTarget.style.filter = "none"; }}
-                            >
-                              Send Feedback
-                            </button>
-                          </div>
-                        </div>
-                      )}
-                      </>
-                      )}
-                    </>
-                  )}
-                </div>
-              );
-            })}
+            {pendingEvents.map((event) => (
+              <PendingEventCard
+                key={event.id}
+                event={event}
+                periods={periods}
+                getSectionName={getSectionName}
+                findEvent={findEvent}
+                readOnly={readOnly}
+                user={user}
+                editingId={editingId}
+                editForm={editForm}
+                processing={processing}
+                onStartEdit={startEdit}
+                onSaveEdit={saveEdit}
+                onSetEditForm={setEditForm}
+                onToggleEditTag={toggleEditTag}
+                onCancelEdit={() => setEditingId(null)}
+                onApprove={handleApprove}
+                onReject={handleReject}
+                onEditPendingEvent={onEditPendingEvent}
+                onWithdraw={onWithdraw}
+                feedbackId={feedbackId}
+                feedbackText={feedbackText}
+                feedbackType={feedbackType}
+                onFeedbackOpen={handleFeedbackOpen}
+                onFeedbackChange={setFeedbackText}
+                onFeedbackSubmit={handleRequestRevision}
+                onFeedbackCancel={handleFeedbackCancel}
+              />
+            ))}
           </div>
         ))}
 
         {/* Awaiting revision events */}
-        {activeTab === "events" && !readOnly && needsRevisionEvents.length > 0 && (
-          <>
-            <div style={{
-              padding: "10px 0 6px",
-              marginTop: pendingEvents.length > 0 ? 12 : 0,
-              borderTop: pendingEvents.length > 0 ? `1px solid ${theme.inputBorder}` : "none",
-              fontSize: 10,
-              fontWeight: 700,
-              fontFamily: FONT_MONO,
-              color: theme.feedbackAmber,
-              textTransform: "uppercase",
-              letterSpacing: "0.08em",
-            }}>
-              Awaiting Student Revision ({needsRevisionEvents.length})
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              {needsRevisionEvents.map((event) => {
-                const unit = getPeriod(periods, event.period);
-                const isProcessing = processing === event.id;
-                return (
-                  <div
-                    key={event.id}
-                    style={{
-                      border: `1.5px solid ${theme.feedbackAmber}40`,
-                      borderRadius: 10,
-                      padding: "16px 18px",
-                      borderLeft: `4px solid ${theme.feedbackAmber}`,
-                      opacity: 0.85,
-                    }}
-                  >
-                    <div style={{
-                      fontSize: 10, fontWeight: 700, fontFamily: FONT_MONO,
-                      color: theme.feedbackAmber, background: theme.feedbackAmberBg,
-                      padding: "3px 8px", borderRadius: 4, display: "inline-block",
-                      marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em",
-                    }}>
-                      Awaiting Revision
-                    </div>
-                    <div style={{ display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 8 }}>
-                      <div style={{
-                        background: unit?.color || theme.textTertiary, color: "#fff",
-                        fontSize: 11, fontWeight: 700, padding: "3px 7px", borderRadius: 4,
-                        fontFamily: FONT_MONO, flexShrink: 0,
-                      }}>
-                        {formatEventDate(event)}
-                      </div>
-                      <div style={{ flex: 1 }}>
-                        <div style={{
-                          fontSize: 14, fontWeight: 700, color: theme.textPrimary,
-                          fontFamily: FONT_SERIF,
-                        }}>
-                          {event.title}
-                        </div>
-                        <div style={{
-                          fontSize: 10, color: theme.textSecondary,
-                          fontFamily: FONT_MONO, marginTop: 2,
-                        }}>
-                          by {event.addedBy} &middot; {getSectionName(event.section)}
-                        </div>
-                      </div>
-                    </div>
-                    <FeedbackBanner feedback={event.feedback} title="Your Feedback" compact />
-                    <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
-                      <IconButton
-                        icon={cancelIcon}
-                        onClick={() => handleReject(event.id)}
-                        disabled={isProcessing}
-                        size={13}
-                        color={theme.errorRed}
-                        hoverBg={(theme.errorRed || "#DC2626") + "10"}
-                        style={{ padding: "6px 14px", border: `1.5px solid ${theme.errorRed}`, borderRadius: 6, fontSize: 11, fontFamily: FONT_MONO, fontWeight: 600 }}
-                      >
-                        Reject
-                      </IconButton>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </>
+        {activeTab === "events" && !readOnly && (
+          <AwaitingRevisionSection
+            items={needsRevisionEvents}
+            type="event"
+            periods={periods}
+            getSectionName={getSectionName}
+            findEvent={findEvent}
+            processing={processing}
+            onReject={handleReject}
+            hasPendingItems={pendingEvents.length > 0}
+          />
         )}
 
         {activeTab === "connections" && ((pendingConnections.length === 0 && needsRevisionConnections.length === 0) ? (
@@ -1043,482 +356,51 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
           </div>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            {pendingConnections.map((conn) => {
-              const causeEvent = findEvent(conn.causeEventId);
-              const effectEvent = findEvent(conn.effectEventId);
-              const causeUnit = causeEvent ? getPeriod(periods, causeEvent.period) : null;
-              const effectUnit = effectEvent ? getPeriod(periods, effectEvent.period) : null;
-              const isProcessing = processing === conn.id;
-              const isEditing = editingConnId === conn.id;
-
-              return (
-                <div
-                  key={conn.id}
-                  style={{
-                    border: `1.5px solid ${theme.inputBorder}`,
-                    borderRadius: 10,
-                    padding: "16px 18px",
-                    borderLeft: `4px solid ${theme.accentGold || "#F59E0B"}`,
-                  }}
-                >
-                  {/* Cause → Effect display */}
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
-                    <div style={{
-                      display: "flex", alignItems: "center", gap: 6,
-                      padding: "4px 10px", background: theme.warmSubtleBg, borderRadius: 6,
-                      borderLeft: `3px solid ${causeUnit?.color || theme.textSecondary}`,
-                    }}>
-                      <span style={{
-                        fontSize: 10, fontWeight: 700, fontFamily: FONT_MONO,
-                        color: causeUnit?.color || theme.textSecondary,
-                      }}>
-                        {causeEvent?.year || "?"}
-                      </span>
-                      <span style={{
-                        fontSize: 12, fontFamily: FONT_SERIF, fontWeight: 600,
-                        color: theme.textPrimary,
-                      }}>
-                        {causeEvent?.title || "Unknown event"}
-                      </span>
-                    </div>
-                    <Icon icon={arrowRightBold} width={18} style={{ color: theme.accentGold || "#F59E0B", flexShrink: 0 }} />
-                    <div style={{
-                      display: "flex", alignItems: "center", gap: 6,
-                      padding: "4px 10px", background: theme.warmSubtleBg, borderRadius: 6,
-                      borderLeft: `3px solid ${effectUnit?.color || theme.textSecondary}`,
-                    }}>
-                      <span style={{
-                        fontSize: 10, fontWeight: 700, fontFamily: FONT_MONO,
-                        color: effectUnit?.color || theme.textSecondary,
-                      }}>
-                        {effectEvent?.year || "?"}
-                      </span>
-                      <span style={{
-                        fontSize: 12, fontFamily: FONT_SERIF, fontWeight: 600,
-                        color: theme.textPrimary,
-                      }}>
-                        {effectEvent?.title || "Unknown event"}
-                      </span>
-                    </div>
-                  </div>
-
-                  {!readOnly && isEditing ? (
-                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                      <textarea
-                        value={editConnDesc}
-                        onChange={(e) => setEditConnDesc(e.target.value)}
-                        style={{ ...inputStyle, resize: "vertical" }}
-                        rows={3}
-                      />
-                      <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
-                        <button
-                          onClick={() => setEditingConnId(null)}
-                          style={{
-                            padding: "6px 14px", background: "none",
-                            border: `1.5px solid ${theme.inputBorder}`, borderRadius: 6,
-                            fontSize: 11, fontFamily: FONT_MONO,
-                            cursor: "pointer", color: theme.textTertiary,
-                            transition: "all 0.15s",
-                          }}
-                          onMouseEnter={(e) => { e.currentTarget.style.background = theme.subtleBg; }}
-                          onMouseLeave={(e) => { e.currentTarget.style.background = "none"; }}
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          onClick={() => saveConnEdit(conn.id)}
-                          disabled={isProcessing}
-                          style={{
-                            padding: "6px 14px", background: theme.activeToggleBg,
-                            color: theme.activeToggleText, border: "none", borderRadius: 6,
-                            fontSize: 11, fontFamily: FONT_MONO,
-                            fontWeight: 700, cursor: "pointer",
-                            transition: "filter 0.15s",
-                          }}
-                          onMouseEnter={(e) => { e.currentTarget.style.filter = "brightness(1.1)"; }}
-                          onMouseLeave={(e) => { e.currentTarget.style.filter = "none"; }}
-                        >
-                          <Icon icon={contentSave} width={13} style={{ verticalAlign: "middle", marginRight: 3 }} />
-                          Save
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <>
-                      {conn.deleteOf ? (
-                        <>
-                          <div style={{
-                            display: "inline-block", padding: "2px 8px", borderRadius: 4,
-                            background: "#FEE2E2", color: "#991B1B", fontSize: 10,
-                            fontFamily: FONT_MONO, fontWeight: 700,
-                            marginBottom: 8,
-                          }}>
-                            Suggested Deletion
-                          </div>
-                          <p style={{
-                            fontSize: 12, lineHeight: 1.6, color: theme.textDescription,
-                            margin: "0 0 8px 0", fontFamily: FONT_SERIF,
-                          }}>
-                            {conn.description}
-                          </p>
-                          <div style={{
-                            fontSize: 10, color: theme.textTertiary,
-                            fontFamily: FONT_MONO, marginBottom: 10,
-                          }}>
-                            by {conn.addedBy} &middot; {getSectionName(conn.section)}
-                            {!findConnection(conn.deleteOf) && <> &middot; <span style={{ color: theme.errorRed }}>Original connection already deleted</span></>}
-                          </div>
-                        </>
-                      ) : conn.editOf ? (() => {
-                        const originalConn = findConnection(conn.editOf);
-                        return (
-                          <>
-                            <div style={{
-                              display: "inline-block", padding: "2px 8px", borderRadius: 4,
-                              background: theme.feedbackAmberBg, color: theme.feedbackAmberText, fontSize: 10,
-                              fontFamily: FONT_MONO, fontWeight: 700,
-                              marginBottom: 8,
-                            }}>
-                              Suggested Edit
-                            </div>
-                            <div style={{
-                              fontSize: 10, color: theme.textTertiary,
-                              fontFamily: FONT_MONO, marginBottom: 10,
-                            }}>
-                              by {conn.addedBy} &middot; {getSectionName(conn.section)}
-                              {!originalConn && <> &middot; <span style={{ color: theme.errorRed }}>Original connection not found</span></>}
-                            </div>
-                            {originalConn && (
-                              <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 10 }}>
-                                {String(originalConn.description ?? "") !== String(conn.description ?? "") && (
-                                  <div style={{
-                                    padding: "6px 10px", background: theme.warmSubtleBg,
-                                    borderRadius: 6, borderLeft: `3px solid ${theme.feedbackAmber}`,
-                                  }}>
-                                    <div style={{
-                                      fontSize: 9, fontWeight: 700, fontFamily: FONT_MONO,
-                                      color: theme.textTertiary, textTransform: "uppercase", marginBottom: 4,
-                                    }}>
-                                      Description
-                                    </div>
-                                    <div style={{ fontSize: 11, fontFamily: FONT_SERIF, lineHeight: 1.5 }}>
-                                      {computeWordDiff(originalConn.description, conn.description).map((part, i) => (
-                                        <span key={i} style={{
-                                          color: part.type === "del" ? (theme.errorRed || "#DC2626") : part.type === "add" ? "#16A34A" : theme.textDescription,
-                                          textDecoration: part.type === "del" ? "line-through" : "none",
-                                          fontWeight: part.type === "add" ? 600 : "normal",
-                                          opacity: part.type === "del" ? 0.7 : 1,
-                                          background: part.type === "add" ? "#DCFCE7" : part.type === "del" ? "#FEE2E2" : "transparent",
-                                          borderRadius: part.type !== "same" ? 2 : 0,
-                                          padding: part.type !== "same" ? "0 2px" : 0,
-                                        }}>{part.text}</span>
-                                      ))}
-                                    </div>
-                                  </div>
-                                )}
-                                {originalConn.causeEventId !== conn.causeEventId && (
-                                  <div style={{
-                                    padding: "6px 10px", background: theme.warmSubtleBg,
-                                    borderRadius: 6, borderLeft: `3px solid ${theme.feedbackAmber}`,
-                                  }}>
-                                    <div style={{
-                                      fontSize: 9, fontWeight: 700, fontFamily: FONT_MONO,
-                                      color: theme.textTertiary, textTransform: "uppercase", marginBottom: 4,
-                                    }}>
-                                      Cause Event
-                                    </div>
-                                    <div style={{ fontSize: 11, fontFamily: FONT_SERIF }}>
-                                      <span style={{ color: theme.errorRed || "#DC2626", textDecoration: "line-through", opacity: 0.7 }}>
-                                        {findEvent(originalConn.causeEventId)?.title || "Unknown"}
-                                      </span>
-                                      <span style={{ margin: "0 6px", color: theme.textTertiary }}>{"\u2192"}</span>
-                                      <span style={{ color: "#16A34A", fontWeight: 600 }}>
-                                        {findEvent(conn.causeEventId)?.title || "Unknown"}
-                                      </span>
-                                    </div>
-                                  </div>
-                                )}
-                                {originalConn.effectEventId !== conn.effectEventId && (
-                                  <div style={{
-                                    padding: "6px 10px", background: theme.warmSubtleBg,
-                                    borderRadius: 6, borderLeft: `3px solid ${theme.feedbackAmber}`,
-                                  }}>
-                                    <div style={{
-                                      fontSize: 9, fontWeight: 700, fontFamily: FONT_MONO,
-                                      color: theme.textTertiary, textTransform: "uppercase", marginBottom: 4,
-                                    }}>
-                                      Effect Event
-                                    </div>
-                                    <div style={{ fontSize: 11, fontFamily: FONT_SERIF }}>
-                                      <span style={{ color: theme.errorRed || "#DC2626", textDecoration: "line-through", opacity: 0.7 }}>
-                                        {findEvent(originalConn.effectEventId)?.title || "Unknown"}
-                                      </span>
-                                      <span style={{ margin: "0 6px", color: theme.textTertiary }}>{"\u2192"}</span>
-                                      <span style={{ color: "#16A34A", fontWeight: 600 }}>
-                                        {findEvent(conn.effectEventId)?.title || "Unknown"}
-                                      </span>
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-                            )}
-                          </>
-                        );
-                      })() : (
-                        <>
-                          <p style={{
-                            fontSize: 12, lineHeight: 1.6, color: theme.textDescription,
-                            margin: "0 0 8px 0", fontFamily: FONT_SERIF,
-                          }}>
-                            {conn.description}
-                          </p>
-                          <div style={{
-                            fontSize: 10, color: theme.textTertiary,
-                            fontFamily: FONT_MONO, marginBottom: 10,
-                          }}>
-                            by {conn.addedBy} &middot; {getSectionName(conn.section)}
-                          </div>
-                        </>
-                      )}
-                      {/* Student self-service buttons (readOnly mode, own submissions only) */}
-                      {readOnly && user && conn.addedByUid === user.uid && (
-                        <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
-                          <IconButton
-                            icon={cancelIcon}
-                            onClick={() => {
-                              if (!window.confirm("Withdraw this connection? It will be removed from the review queue.")) return;
-                              onWithdraw("connection", conn.id);
-                            }}
-                            size={13}
-                            color={theme.errorRed}
-                            hoverBg={(theme.errorRed || "#DC2626") + "10"}
-                            style={{ padding: "6px 14px", border: `1.5px solid ${theme.errorRed}`, borderRadius: 6, fontSize: 11, fontFamily: FONT_MONO, fontWeight: 600 }}
-                          >
-                            Withdraw
-                          </IconButton>
-                          {!conn.deleteOf && (
-                            <IconButton
-                              icon={pencilIcon}
-                              onClick={() => onEditPendingConnection(conn)}
-                              size={13}
-                              color={theme.textDescription}
-                              hoverBg={theme.subtleBg}
-                              style={{ padding: "6px 14px", border: `1.5px solid ${theme.inputBorder}`, borderRadius: 6, fontSize: 11, fontFamily: FONT_MONO, fontWeight: 600 }}
-                            >
-                              Edit
-                            </IconButton>
-                          )}
-                        </div>
-                      )}
-
-                      {!readOnly && (
-                      <>
-                      <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
-                        <IconButton
-                          icon={cancelIcon}
-                          onClick={() => handleRejectConnection(conn.id)}
-                          disabled={isProcessing}
-                          size={13}
-                          color={theme.errorRed}
-                          hoverBg={(theme.errorRed || "#DC2626") + "10"}
-                          style={{ padding: "6px 14px", border: `1.5px solid ${theme.errorRed}`, borderRadius: 6, fontSize: 11, fontFamily: FONT_MONO, fontWeight: 600 }}
-                        >
-                          Reject
-                        </IconButton>
-                        {!conn.deleteOf && (
-                          <IconButton
-                            icon={commentAlertOutline}
-                            onClick={() => { setFeedbackId(conn.id); setFeedbackType("connection"); setFeedbackText(""); }}
-                            disabled={isProcessing}
-                            size={13}
-                            color={theme.feedbackAmber}
-                            hoverBg={theme.feedbackAmber + "10"}
-                            style={{ padding: "6px 14px", border: `1.5px solid ${theme.feedbackAmber}`, borderRadius: 6, fontSize: 11, fontFamily: FONT_MONO, fontWeight: 600 }}
-                          >
-                            Revise
-                          </IconButton>
-                        )}
-                        {!conn.editOf && !conn.deleteOf && (
-                          <IconButton
-                            icon={pencilIcon}
-                            onClick={() => { setEditingConnId(conn.id); setEditConnDesc(conn.description); }}
-                            disabled={isProcessing}
-                            size={13}
-                            color={theme.textDescription}
-                            hoverBg={theme.subtleBg}
-                            style={{ padding: "6px 14px", border: `1.5px solid ${theme.inputBorder}`, borderRadius: 6, fontSize: 11, fontFamily: FONT_MONO, fontWeight: 600 }}
-                          >
-                            Edit
-                          </IconButton>
-                        )}
-                        <button
-                          onClick={() => handleApproveConnection(conn)}
-                          disabled={isProcessing}
-                          style={{
-                            padding: "6px 14px", background: conn.deleteOf ? (theme.errorRed || "#DC2626") : theme.successGreen,
-                            color: "#fff", border: "none", borderRadius: 6,
-                            fontSize: 11, fontFamily: FONT_MONO,
-                            fontWeight: 700, cursor: "pointer",
-                            transition: "filter 0.15s",
-                          }}
-                          onMouseEnter={(e) => { e.currentTarget.style.filter = "brightness(1.15)"; }}
-                          onMouseLeave={(e) => { e.currentTarget.style.filter = "none"; }}
-                        >
-                          {isProcessing ? "..." : <><Icon icon={checkIcon} width={14} style={{ verticalAlign: "middle", marginRight: 3 }} />{conn.deleteOf ? "Delete" : "Approve"}</>}
-                        </button>
-                      </div>
-                      {/* Inline feedback textarea for connections */}
-                      {feedbackId === conn.id && feedbackType === "connection" && (
-                        <div style={{
-                          marginTop: 10, padding: "12px 14px",
-                          background: theme.feedbackAmberBg,
-                          borderRadius: 8, border: `1.5px solid ${theme.feedbackAmber}`,
-                        }}>
-                          <label style={{
-                            fontSize: 10, fontWeight: 700, fontFamily: FONT_MONO,
-                            color: theme.feedbackAmberText, textTransform: "uppercase", letterSpacing: "0.05em",
-                            marginBottom: 6, display: "block",
-                          }}>
-                            Feedback for Student
-                          </label>
-                          <textarea
-                            autoFocus
-                            value={feedbackText}
-                            onChange={(e) => setFeedbackText(e.target.value)}
-                            placeholder="What should the student fix or improve?"
-                            rows={3}
-                            style={{ ...inputStyle, borderColor: theme.feedbackAmber }}
-                          />
-                          <div style={{ display: "flex", gap: 6, justifyContent: "flex-end", marginTop: 8 }}>
-                            <button
-                              onClick={() => { setFeedbackId(null); setFeedbackText(""); setFeedbackType(null); }}
-                              style={{
-                                padding: "6px 14px", background: "none",
-                                border: `1.5px solid ${theme.inputBorder}`, borderRadius: 6,
-                                fontSize: 11, fontFamily: FONT_MONO,
-                                cursor: "pointer", color: theme.textTertiary, transition: "all 0.15s",
-                              }}
-                              onMouseEnter={(e) => { e.currentTarget.style.background = theme.subtleBg; }}
-                              onMouseLeave={(e) => { e.currentTarget.style.background = "none"; }}
-                            >
-                              Cancel
-                            </button>
-                            <button
-                              onClick={() => handleRequestRevision("connection", conn.id)}
-                              disabled={!feedbackText.trim() || isProcessing}
-                              style={{
-                                padding: "6px 14px",
-                                background: feedbackText.trim() ? theme.feedbackAmber : theme.inputBorder,
-                                color: "#fff", border: "none", borderRadius: 6,
-                                fontSize: 11, fontFamily: FONT_MONO,
-                                fontWeight: 700, cursor: feedbackText.trim() ? "pointer" : "default",
-                                transition: "filter 0.15s",
-                              }}
-                              onMouseEnter={(e) => { if (feedbackText.trim()) e.currentTarget.style.filter = "brightness(1.15)"; }}
-                              onMouseLeave={(e) => { e.currentTarget.style.filter = "none"; }}
-                            >
-                              Send Feedback
-                            </button>
-                          </div>
-                        </div>
-                      )}
-                      </>
-                      )}
-                    </>
-                  )}
-                </div>
-              );
-            })}
+            {pendingConnections.map((conn) => (
+              <PendingConnectionCard
+                key={conn.id}
+                conn={conn}
+                periods={periods}
+                getSectionName={getSectionName}
+                findEvent={findEvent}
+                findConnection={findConnection}
+                readOnly={readOnly}
+                user={user}
+                editingConnId={editingConnId}
+                editConnDesc={editConnDesc}
+                processing={processing}
+                onStartConnEdit={handleStartConnEdit}
+                onSaveConnEdit={saveConnEdit}
+                onSetEditConnDesc={setEditConnDesc}
+                onCancelConnEdit={() => setEditingConnId(null)}
+                onApprove={handleApproveConnection}
+                onReject={handleRejectConnection}
+                onEditPendingConnection={onEditPendingConnection}
+                onWithdraw={onWithdraw}
+                feedbackId={feedbackId}
+                feedbackText={feedbackText}
+                feedbackType={feedbackType}
+                onFeedbackOpen={handleFeedbackOpen}
+                onFeedbackChange={setFeedbackText}
+                onFeedbackSubmit={handleRequestRevision}
+                onFeedbackCancel={handleFeedbackCancel}
+              />
+            ))}
           </div>
         ))}
 
         {/* Awaiting revision connections */}
-        {activeTab === "connections" && !readOnly && needsRevisionConnections.length > 0 && (
-          <>
-            <div style={{
-              padding: "10px 0 6px",
-              marginTop: pendingConnections.length > 0 ? 12 : 0,
-              borderTop: pendingConnections.length > 0 ? `1px solid ${theme.inputBorder}` : "none",
-              fontSize: 10, fontWeight: 700, fontFamily: FONT_MONO,
-              color: theme.feedbackAmber, textTransform: "uppercase", letterSpacing: "0.08em",
-            }}>
-              Awaiting Student Revision ({needsRevisionConnections.length})
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              {needsRevisionConnections.map((conn) => {
-                const causeEvent = findEvent(conn.causeEventId);
-                const effectEvent = findEvent(conn.effectEventId);
-                const causeUnit = causeEvent ? getPeriod(periods, causeEvent.period) : null;
-                const effectUnit = effectEvent ? getPeriod(periods, effectEvent.period) : null;
-                const isProcessing = processing === conn.id;
-                return (
-                  <div
-                    key={conn.id}
-                    style={{
-                      border: `1.5px solid ${theme.feedbackAmber}40`, borderRadius: 10,
-                      padding: "16px 18px", borderLeft: `4px solid ${theme.feedbackAmber}`, opacity: 0.85,
-                    }}
-                  >
-                    <div style={{
-                      fontSize: 10, fontWeight: 700, fontFamily: FONT_MONO,
-                      color: theme.feedbackAmber, background: theme.feedbackAmberBg,
-                      padding: "3px 8px", borderRadius: 4, display: "inline-block",
-                      marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em",
-                    }}>
-                      Awaiting Revision
-                    </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
-                      <div style={{
-                        display: "flex", alignItems: "center", gap: 6,
-                        padding: "4px 10px", background: theme.warmSubtleBg, borderRadius: 6,
-                        borderLeft: `3px solid ${causeUnit?.color || theme.textSecondary}`,
-                      }}>
-                        <span style={{ fontSize: 10, fontWeight: 700, fontFamily: FONT_MONO, color: causeUnit?.color || theme.textSecondary }}>
-                          {causeEvent?.year || "?"}
-                        </span>
-                        <span style={{ fontSize: 12, fontFamily: FONT_SERIF, fontWeight: 600, color: theme.textPrimary }}>
-                          {causeEvent?.title || "Unknown event"}
-                        </span>
-                      </div>
-                      <Icon icon={arrowRightBold} width={18} style={{ color: theme.feedbackAmber, flexShrink: 0 }} />
-                      <div style={{
-                        display: "flex", alignItems: "center", gap: 6,
-                        padding: "4px 10px", background: theme.warmSubtleBg, borderRadius: 6,
-                        borderLeft: `3px solid ${effectUnit?.color || theme.textSecondary}`,
-                      }}>
-                        <span style={{ fontSize: 10, fontWeight: 700, fontFamily: FONT_MONO, color: effectUnit?.color || theme.textSecondary }}>
-                          {effectEvent?.year || "?"}
-                        </span>
-                        <span style={{ fontSize: 12, fontFamily: FONT_SERIF, fontWeight: 600, color: theme.textPrimary }}>
-                          {effectEvent?.title || "Unknown event"}
-                        </span>
-                      </div>
-                    </div>
-                    <p style={{
-                      fontSize: 12, lineHeight: 1.6, color: theme.textDescription,
-                      margin: "0 0 8px 0", fontFamily: FONT_SERIF,
-                    }}>
-                      {conn.description}
-                    </p>
-                    <FeedbackBanner feedback={conn.feedback} title="Your Feedback" compact />
-                    <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
-                      <IconButton
-                        icon={cancelIcon}
-                        onClick={() => handleRejectConnection(conn.id)}
-                        disabled={isProcessing}
-                        size={13}
-                        color={theme.errorRed}
-                        hoverBg={(theme.errorRed || "#DC2626") + "10"}
-                        style={{ padding: "6px 14px", border: `1.5px solid ${theme.errorRed}`, borderRadius: 6, fontSize: 11, fontFamily: FONT_MONO, fontWeight: 600 }}
-                      >
-                        Reject
-                      </IconButton>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </>
+        {activeTab === "connections" && !readOnly && (
+          <AwaitingRevisionSection
+            items={needsRevisionConnections}
+            type="connection"
+            periods={periods}
+            getSectionName={getSectionName}
+            findEvent={findEvent}
+            processing={processing}
+            onReject={handleRejectConnection}
+            hasPendingItems={pendingConnections.length > 0}
+          />
         )}
       </div>
   );

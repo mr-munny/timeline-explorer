@@ -3,6 +3,7 @@ import { useTheme } from "../contexts/ThemeContext";
 import AdminSidebar from "./AdminSidebar";
 import AdminSectionSettings from "./AdminSectionSettings";
 import ModerationPanel from "./ModerationPanel";
+import TeacherManagement from "./TeacherManagement";
 
 export default function AdminView({
   sections,
@@ -24,6 +25,9 @@ export default function AdminView({
   removeStudentSection,
   user,
   userName,
+  isSuperAdmin,
+  teacherData,
+  onImpersonate,
 }) {
   const { theme } = useTheme();
   const [selectedTab, setSelectedTab] = useState("moderation");
@@ -36,7 +40,7 @@ export default function AdminView({
   );
 
   // If the selected section was deleted, fall back to moderation
-  const effectiveTab = selectedSection || selectedTab === "moderation" ? selectedTab : "moderation";
+  const effectiveTab = (selectedSection || selectedTab === "moderation" || selectedTab === "teachers") ? selectedTab : "moderation";
 
   return (
     <div style={{
@@ -50,6 +54,7 @@ export default function AdminView({
         onSelectTab={setSelectedTab}
         pendingCount={pendingCount}
         onAddSection={onAddSection}
+        isSuperAdmin={isSuperAdmin}
       />
 
       <div style={{
@@ -71,6 +76,12 @@ export default function AdminView({
             onEventApproved={onEventApproved}
             user={user}
             userName={userName}
+          />
+        ) : effectiveTab === "teachers" && isSuperAdmin ? (
+          <TeacherManagement
+            user={user}
+            teacherData={teacherData}
+            onImpersonate={onImpersonate}
           />
         ) : selectedSection ? (
           <AdminSectionSettings

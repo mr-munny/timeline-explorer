@@ -3,7 +3,6 @@ import { useAuth } from "./contexts/AuthContext";
 import { useTheme } from "./contexts/ThemeContext";
 import { getPeriod, DEFAULT_PERIODS, DEFAULT_FIELD_CONFIG } from "./data/constants";
 import { compareEventDates } from "./utils/dateUtils";
-import { TEACHER_EMAIL } from "./firebase";
 import { savePeriods, saveSections, saveCompellingQuestion, saveTimelineRange, saveFieldConfig, assignStudentSection, reassignStudentSection, removeStudentSection } from "./services/database";
 import useFirebaseSubscriptions from "./hooks/useFirebaseSubscriptions";
 import useEventHandlers from "./hooks/useEventHandlers";
@@ -30,7 +29,7 @@ function getInitialSection() {
 }
 
 export default function App() {
-  const { user, loading, authError, login, logout, isTeacher, userSection, sectionLoading } = useAuth();
+  const { user, loading, authError, login, logout, isTeacher, isSuperAdmin, teacherData, effectiveTeacherUid, impersonatingTeacher, setImpersonating, userSection, sectionLoading } = useAuth();
   const { theme, mode, toggleTheme, getThemedPeriodBg } = useTheme();
   const userName = user ? (user.displayName || user.email.split("@")[0]) : "";
   const [section, setSection] = useState(getInitialSection);
@@ -56,6 +55,7 @@ export default function App() {
   const {
     allEvents,
     allConnections,
+    sections: allSectionsRaw,
     setSections,
     activeSections,
     periods,
@@ -67,7 +67,7 @@ export default function App() {
     setTimelineEnd,
     fieldConfig,
     allStudentAssignments,
-  } = useFirebaseSubscriptions({ user, isTeacher, section, showAdminView });
+  } = useFirebaseSubscriptions({ user, isTeacher, section, showAdminView, effectiveTeacherUid });
   const defaultSection = section === "all" ? (activeSections[0]?.id || "Period1") : section;
 
   const getSectionName = useCallback(
@@ -101,8 +101,11 @@ export default function App() {
   // Section mutation handlers
   const handleAddSection = useCallback((name) => {
     const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-    const id = activeSections.some((s) => s.id === slug) ? `${slug}-${Date.now()}` : slug;
-    const updated = [...activeSections, { id, name }];
+    const prefix = effectiveTeacherUid ? effectiveTeacherUid.slice(0, 6) + "_" : "";
+    const prefixedSlug = prefix + slug;
+    const allSections = allSectionsRaw || [];
+    const id = allSections.some((s) => s.id === prefixedSlug) ? `${prefixedSlug}-${Date.now()}` : prefixedSlug;
+    const updated = [...allSections, { id, name, teacherUid: effectiveTeacherUid || null }];
     setSections(updated);
     saveSections(updated);
     // Initialize new section with sensible defaults
@@ -110,22 +113,23 @@ export default function App() {
     saveCompellingQuestion(id, { text: "", enabled: false });
     saveTimelineRange(id, { start: 1900, end: 2000 });
     saveFieldConfig(id, DEFAULT_FIELD_CONFIG);
-  }, [activeSections]);
+  }, [allSectionsRaw, effectiveTeacherUid]);
 
   const handleDeleteSection = useCallback((id) => {
-    const updated = activeSections.filter((s) => s.id !== id);
+    const updated = (allSectionsRaw || []).filter((s) => s.id !== id);
     setSections(updated);
     saveSections(updated);
     if (section === id) {
-      switchSection(updated.length > 0 ? updated[0].id : "all");
+      const remaining = activeSections.filter((s) => s.id !== id);
+      switchSection(remaining.length > 0 ? remaining[0].id : "all");
     }
-  }, [activeSections, section]);
+  }, [allSectionsRaw, activeSections, section]);
 
   const handleRenameSection = useCallback((id, newName) => {
-    const updated = activeSections.map((s) => s.id === id ? { ...s, name: newName } : s);
+    const updated = (allSectionsRaw || []).map((s) => s.id === id ? { ...s, name: newName } : s);
     setSections(updated);
     saveSections(updated);
-  }, [activeSections]);
+  }, [allSectionsRaw]);
 
   // Active field config (merged with defaults)
   const activeFieldConfig = useMemo(() => ({
@@ -355,17 +359,19 @@ export default function App() {
     return (
       <SectionPicker
         sections={activeSections}
-        onSelect={async (sectionId) => {
-          await assignStudentSection(user.uid, sectionId, user.email, userName);
+        onSelect={async (sectionId, teacherUid) => {
+          await assignStudentSection(user.uid, sectionId, teacherUid, user.email, userName);
         }}
         userName={userName}
       />
     );
   }
 
+  // Count unique student contributors (exclude any teacher-created events)
+  const teacherEmail = teacherData?.email || user?.email;
   const studentCount = [
     ...new Set(
-      approvedEvents.filter((e) => e.addedByEmail !== TEACHER_EMAIL).map((e) => e.addedBy)
+      approvedEvents.filter((e) => e.addedByEmail !== teacherEmail).map((e) => e.addedBy)
     ),
   ].length;
 
@@ -384,6 +390,40 @@ export default function App() {
         rel="stylesheet"
       />
       <style>{`* { transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease; }`}</style>
+
+      {/* Impersonation Banner */}
+      {impersonatingTeacher && (
+        <div style={{
+          background: "#7C3AED",
+          color: "#fff",
+          padding: "8px 16px",
+          fontSize: 12,
+          fontFamily: "'Overpass Mono', monospace",
+          fontWeight: 600,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 12,
+        }}>
+          <span>Viewing as {impersonatingTeacher.displayName || impersonatingTeacher.email}</span>
+          <button
+            onClick={() => setImpersonating(null)}
+            style={{
+              background: "rgba(255,255,255,0.2)",
+              color: "#fff",
+              border: "none",
+              borderRadius: 4,
+              padding: "3px 10px",
+              fontSize: 11,
+              fontFamily: "'Overpass Mono', monospace",
+              fontWeight: 700,
+              cursor: "pointer",
+            }}
+          >
+            Stop
+          </button>
+        </div>
+      )}
 
       {/* Header */}
       <TimelineHeader
@@ -432,6 +472,9 @@ export default function App() {
           removeStudentSection={removeStudentSection}
           user={user}
           userName={userName}
+          isSuperAdmin={isSuperAdmin}
+          teacherData={teacherData}
+          onImpersonate={setImpersonating}
         />
       )}
 
@@ -507,6 +550,7 @@ export default function App() {
           handleDeleteConnection={handleDeleteConnection}
           handleEditConnection={handleEditConnection}
           handleSuggestDeleteConnection={handleSuggestDeleteConnection}
+          teacherEmail={teacherEmail}
         />
 
         {/* Footer */}

@@ -4,8 +4,9 @@ import { Icon } from "@iconify/react";
 import inboxArrowDown from "@iconify-icons/mdi/inbox-arrow-down";
 import plusIcon from "@iconify-icons/mdi/plus";
 import checkIcon from "@iconify-icons/mdi/check";
+import accountGroup from "@iconify-icons/mdi/account-group";
 
-export default function AdminSidebar({ sections, selectedTab, onSelectTab, pendingCount, onAddSection }) {
+export default function AdminSidebar({ sections, selectedTab, onSelectTab, pendingCount, onAddSection, isSuperAdmin }) {
   const { theme } = useTheme();
   const [addingNew, setAddingNew] = useState(false);
   const [newName, setNewName] = useState("");
@@ -72,6 +73,34 @@ export default function AdminSidebar({ sections, selectedTab, onSelectTab, pendi
             </span>
           )}
         </button>
+        {isSuperAdmin && (
+          <button
+            onClick={() => onSelectTab("teachers")}
+            style={{
+              width: "100%",
+              padding: "10px 12px",
+              borderRadius: 6,
+              border: selectedTab === "teachers" ? `1.5px solid ${theme.accentGold}` : `1.5px solid transparent`,
+              background: selectedTab === "teachers" ? theme.accentGold + "15" : "transparent",
+              color: selectedTab === "teachers" ? theme.accentGold : theme.textPrimary,
+              fontSize: 11,
+              fontFamily: "'Overpass Mono', monospace",
+              fontWeight: 700,
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              transition: "all 0.15s",
+              textAlign: "left",
+              marginTop: 4,
+            }}
+            onMouseEnter={(e) => { if (selectedTab !== "teachers") e.currentTarget.style.background = theme.subtleBg; }}
+            onMouseLeave={(e) => { if (selectedTab !== "teachers") e.currentTarget.style.background = "transparent"; }}
+          >
+            <Icon icon={accountGroup} width={16} />
+            Teachers
+          </button>
+        )}
       </div>
 
       {/* Divider */}

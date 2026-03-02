@@ -1,20 +1,67 @@
 import { useState } from "react";
 import { Icon } from "@iconify/react";
 import chartTimelineVariantShimmer from "@iconify-icons/mdi/chart-timeline-variant-shimmer";
+import arrowLeft from "@iconify-icons/mdi/arrow-left";
 import { useTheme } from "../contexts/ThemeContext";
+import { lookupTeacherByJoinCode } from "../services/database";
+import { subscribeToSections } from "../services/database";
 
 export default function SectionPicker({ sections, onSelect, userName }) {
   const { theme } = useTheme();
+  const [step, setStep] = useState("code"); // "code" or "section"
+  const [joinCode, setJoinCode] = useState("");
+  const [codeError, setCodeError] = useState(null);
+  const [lookingUp, setLookingUp] = useState(false);
+  const [teacher, setTeacher] = useState(null); // { uid, displayName, email, joinCode }
+  const [teacherSections, setTeacherSections] = useState([]);
   const [selecting, setSelecting] = useState(false);
+
+  const handleCodeSubmit = async () => {
+    const code = joinCode.trim().toUpperCase();
+    if (!code) return;
+    setLookingUp(true);
+    setCodeError(null);
+    try {
+      const found = await lookupTeacherByJoinCode(code);
+      if (!found) {
+        setCodeError("No teacher found with that code. Check with your teacher and try again.");
+        setLookingUp(false);
+        return;
+      }
+      setTeacher(found);
+      // Load this teacher's sections
+      const unsub = subscribeToSections((allSections) => {
+        const filtered = (allSections || []).filter((s) => s.teacherUid === found.uid);
+        setTeacherSections(filtered);
+        unsub(); // One-time read
+      });
+      setStep("section");
+    } catch (err) {
+      console.error("Join code lookup failed:", err);
+      setCodeError("Something went wrong. Please try again.");
+    }
+    setLookingUp(false);
+  };
 
   const handleSelect = async (sectionId) => {
     setSelecting(true);
     try {
-      await onSelect(sectionId);
+      await onSelect(sectionId, teacher.uid);
     } catch (err) {
       console.error("Section assignment failed:", err);
       setSelecting(false);
     }
+  };
+
+  const cardStyle = {
+    background: theme.cardBg,
+    borderRadius: 14,
+    padding: "40px 36px",
+    maxWidth: 400,
+    width: "100%",
+    textAlign: "center",
+    boxShadow: theme.cardShadow,
+    border: `1.5px solid ${theme.cardBorder}`,
   };
 
   return (
@@ -35,18 +82,7 @@ export default function SectionPicker({ sections, onSelect, userName }) {
         rel="stylesheet"
       />
 
-      <div
-        style={{
-          background: theme.cardBg,
-          borderRadius: 14,
-          padding: "40px 36px",
-          maxWidth: 400,
-          width: "100%",
-          textAlign: "center",
-          boxShadow: theme.cardShadow,
-          border: `1.5px solid ${theme.cardBorder}`,
-        }}
-      >
+      <div style={cardStyle}>
         <div
           style={{
             fontSize: 10,
@@ -93,54 +129,147 @@ export default function SectionPicker({ sections, onSelect, userName }) {
           Welcome, {userName}!
         </p>
 
-        <p
-          style={{
-            fontSize: 12,
-            color: theme.textMuted,
-            margin: "0 0 24px 0",
-            fontFamily: "'Overpass Mono', monospace",
-          }}
-        >
-          Select your class period to get started
-        </p>
-
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          {sections.map((s) => (
-            <button
-              key={s.id}
-              onClick={() => handleSelect(s.id)}
-              disabled={selecting}
+        {step === "code" ? (
+          <>
+            <p
               style={{
-                padding: "14px 20px",
-                background: theme.activeToggleBg,
-                color: theme.activeToggleText,
-                border: "none",
-                borderRadius: 8,
-                fontSize: 13,
+                fontSize: 12,
+                color: theme.textMuted,
+                margin: "0 0 20px 0",
                 fontFamily: "'Overpass Mono', monospace",
-                fontWeight: 700,
-                cursor: selecting ? "default" : "pointer",
-                letterSpacing: "0.02em",
-                transition: "all 0.15s",
-                opacity: selecting ? 0.6 : 1,
               }}
             >
-              {s.name}
-            </button>
-          ))}
-        </div>
+              Enter your teacher's class code to get started
+            </p>
 
-        {sections.length === 0 && (
-          <p
-            style={{
-              fontSize: 12,
-              color: theme.textMuted,
-              margin: "16px 0 0 0",
-              fontFamily: "'Overpass Mono', monospace",
-            }}
-          >
-            No sections available yet. Ask your teacher to set up class sections.
-          </p>
+            <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+              <input
+                autoFocus
+                value={joinCode}
+                onChange={(e) => { setJoinCode(e.target.value.toUpperCase()); setCodeError(null); }}
+                onKeyDown={(e) => { if (e.key === "Enter") handleCodeSubmit(); }}
+                placeholder="e.g. MUNNY"
+                maxLength={6}
+                style={{
+                  flex: 1,
+                  padding: "12px 14px",
+                  border: `1.5px solid ${codeError ? theme.errorRed : theme.inputBorder}`,
+                  borderRadius: 8,
+                  fontSize: 16,
+                  fontFamily: "'Overpass Mono', monospace",
+                  fontWeight: 700,
+                  letterSpacing: "0.15em",
+                  textAlign: "center",
+                  background: theme.inputBg,
+                  color: theme.textPrimary,
+                  outline: "none",
+                  textTransform: "uppercase",
+                }}
+              />
+              <button
+                onClick={handleCodeSubmit}
+                disabled={lookingUp || !joinCode.trim()}
+                style={{
+                  padding: "12px 20px",
+                  background: theme.activeToggleBg,
+                  color: theme.activeToggleText,
+                  border: "none",
+                  borderRadius: 8,
+                  fontSize: 13,
+                  fontFamily: "'Overpass Mono', monospace",
+                  fontWeight: 700,
+                  cursor: lookingUp || !joinCode.trim() ? "default" : "pointer",
+                  opacity: lookingUp || !joinCode.trim() ? 0.5 : 1,
+                  transition: "all 0.15s",
+                }}
+              >
+                {lookingUp ? "..." : "Join"}
+              </button>
+            </div>
+
+            {codeError && (
+              <p style={{
+                fontSize: 11,
+                color: theme.errorRed,
+                margin: "0 0 0 0",
+                fontFamily: "'Overpass Mono', monospace",
+              }}>
+                {codeError}
+              </p>
+            )}
+          </>
+        ) : (
+          <>
+            <button
+              onClick={() => { setStep("code"); setTeacher(null); setTeacherSections([]); }}
+              style={{
+                background: "none",
+                border: "none",
+                color: theme.textSecondary,
+                fontSize: 11,
+                fontFamily: "'Overpass Mono', monospace",
+                cursor: "pointer",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 4,
+                padding: "4px 0",
+                marginBottom: 12,
+              }}
+            >
+              <Icon icon={arrowLeft} width={14} />
+              Different teacher
+            </button>
+
+            <p
+              style={{
+                fontSize: 12,
+                color: theme.textMuted,
+                margin: "0 0 20px 0",
+                fontFamily: "'Overpass Mono', monospace",
+              }}
+            >
+              Select your period in {teacher?.displayName || "your teacher"}'s class
+            </p>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {teacherSections.map((s) => (
+                <button
+                  key={s.id}
+                  onClick={() => handleSelect(s.id)}
+                  disabled={selecting}
+                  style={{
+                    padding: "14px 20px",
+                    background: theme.activeToggleBg,
+                    color: theme.activeToggleText,
+                    border: "none",
+                    borderRadius: 8,
+                    fontSize: 13,
+                    fontFamily: "'Overpass Mono', monospace",
+                    fontWeight: 700,
+                    cursor: selecting ? "default" : "pointer",
+                    letterSpacing: "0.02em",
+                    transition: "all 0.15s",
+                    opacity: selecting ? 0.6 : 1,
+                  }}
+                >
+                  {s.name}
+                </button>
+              ))}
+            </div>
+
+            {teacherSections.length === 0 && (
+              <p
+                style={{
+                  fontSize: 12,
+                  color: theme.textMuted,
+                  margin: "16px 0 0 0",
+                  fontFamily: "'Overpass Mono', monospace",
+                }}
+              >
+                No sections available yet. Ask your teacher to set up class sections.
+              </p>
+            )}
+          </>
         )}
       </div>
     </div>

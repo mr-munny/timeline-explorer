@@ -22,6 +22,7 @@ export default function EventList({
   handleDeleteConnection,
   handleEditConnection,
   handleSuggestDeleteConnection,
+  teacherEmail,
 }) {
   const { theme } = useTheme();
   const eventListRef = useRef(null);
@@ -100,7 +101,7 @@ export default function EventList({
       {/* Contributors sidebar */}
       {showContributors && (
         <div style={{ width: 220, flexShrink: 0 }}>
-          <ContributorSidebar events={approvedEvents} />
+          <ContributorSidebar events={approvedEvents} teacherEmail={teacherEmail} />
         </div>
       )}
     </div>

@@ -1,11 +1,10 @@
 import { useMemo } from "react";
-import { TEACHER_EMAIL } from "../firebase";
 import { Icon } from "@iconify/react";
 import accountGroup from "@iconify-icons/mdi/account-group";
 import trophyOutline from "@iconify-icons/mdi/trophy-outline";
 import { useTheme } from "../contexts/ThemeContext";
 
-export default function ContributorSidebar({ events }) {
+export default function ContributorSidebar({ events, teacherEmail }) {
   const { theme } = useTheme();
 
   const contributors = useMemo(() => {
@@ -21,9 +20,9 @@ export default function ContributorSidebar({ events }) {
       .map(([name, { count, email }]) => ({
         name,
         count,
-        isTeacher: email === TEACHER_EMAIL,
+        isTeacher: email === teacherEmail,
       }));
-  }, [events]);
+  }, [events, teacherEmail]);
 
   return (
     <div

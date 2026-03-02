@@ -5,6 +5,7 @@ import {
   remove,
   update,
   onValue,
+  get,
   query,
   orderByChild,
   equalTo,
@@ -13,6 +14,164 @@ import { db } from "../firebase";
 
 const eventsRef = ref(db, "events");
 const connectionsRef = ref(db, "connections");
+
+// ── Teachers ────────────────────────────────────────────────
+
+// Listen to a single teacher record
+export function subscribeToTeacherRecord(uid, callback) {
+  const teacherRef = ref(db, `teachers/${uid}`);
+  return onValue(teacherRef, (snapshot) => {
+    callback(snapshot.val() || null);
+  });
+}
+
+// Create a teacher record
+export async function createTeacherRecord(uid, data) {
+  const teacherRef = ref(db, `teachers/${uid}`);
+  await set(teacherRef, {
+    ...data,
+    createdAt: new Date().toISOString(),
+  });
+}
+
+// Remove a teacher record (demote)
+export async function removeTeacherRecord(uid) {
+  const teacherRef = ref(db, `teachers/${uid}`);
+  await remove(teacherRef);
+}
+
+// Listen to all teacher records (for super admin)
+export function subscribeToAllTeachers(callback) {
+  const teachersRef = ref(db, "teachers");
+  return onValue(teachersRef, (snapshot) => {
+    const result = [];
+    snapshot.forEach((child) => {
+      result.push({ uid: child.key, ...child.val() });
+    });
+    callback(result);
+  });
+}
+
+// Update a teacher's join code
+export async function updateTeacherJoinCode(uid, joinCode) {
+  const teacherRef = ref(db, `teachers/${uid}`);
+  await update(teacherRef, { joinCode });
+}
+
+// Generate a unique 6-char alphanumeric join code
+export function generateJoinCode() {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no I/O/0/1 to avoid confusion
+  let code = "";
+  for (let i = 0; i < 6; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return code;
+}
+
+// Look up a teacher by join code (returns teacher data + uid or null)
+export async function lookupTeacherByJoinCode(code) {
+  const teachersRef = ref(db, "teachers");
+  const snapshot = await get(teachersRef);
+  if (!snapshot.exists()) return null;
+  let found = null;
+  snapshot.forEach((child) => {
+    if (child.val().joinCode === code.toUpperCase()) {
+      found = { uid: child.key, ...child.val() };
+    }
+  });
+  return found;
+}
+
+// ── Teacher Invites ─────────────────────────────────────────
+
+// Sanitize email for use as Firebase key (dots → commas)
+function sanitizeEmailKey(email) {
+  return email.toLowerCase().replace(/\./g, ",");
+}
+
+// Create a teacher invite (super admin pre-authorizes an email)
+export async function createTeacherInvite(email, invitedBy) {
+  const key = sanitizeEmailKey(email);
+  const inviteRef = ref(db, `teacherInvites/${key}`);
+  await set(inviteRef, {
+    email: email.toLowerCase(),
+    invitedBy,
+    invitedAt: new Date().toISOString(),
+  });
+}
+
+// Check if an email has a pending teacher invite
+export async function checkTeacherInvite(email) {
+  const key = sanitizeEmailKey(email);
+  const inviteRef = ref(db, `teacherInvites/${key}`);
+  const snapshot = await get(inviteRef);
+  return snapshot.exists() ? snapshot.val() : null;
+}
+
+// Remove a teacher invite (after it's been claimed)
+export async function removeTeacherInvite(email) {
+  const key = sanitizeEmailKey(email);
+  const inviteRef = ref(db, `teacherInvites/${key}`);
+  await remove(inviteRef);
+}
+
+// Subscribe to all teacher invites (for super admin UI)
+export function subscribeToTeacherInvites(callback) {
+  const invitesRef = ref(db, "teacherInvites");
+  return onValue(invitesRef, (snapshot) => {
+    const result = [];
+    snapshot.forEach((child) => {
+      result.push({ key: child.key, ...child.val() });
+    });
+    callback(result);
+  });
+}
+
+// ── Events/Connections for multiple sections ────────────────
+
+// Subscribe to events across multiple specific sections (teacher "all" view)
+export function subscribeToEventsForSections(sectionIds, callback) {
+  const eventsMap = {};
+  const unsubscribes = [];
+  for (const secId of sectionIds) {
+    const q = query(eventsRef, orderByChild("section"), equalTo(secId));
+    const unsub = onValue(q, (snapshot) => {
+      const events = [];
+      snapshot.forEach((child) => {
+        events.push({ id: child.key, ...child.val() });
+      });
+      eventsMap[secId] = events;
+      // Merge all sections into a flat array
+      const merged = Object.values(eventsMap).flat();
+      callback(merged);
+    });
+    unsubscribes.push(unsub);
+  }
+  // If no sections, immediately callback with empty
+  if (sectionIds.length === 0) callback([]);
+  return () => unsubscribes.forEach((fn) => fn());
+}
+
+// Subscribe to connections across multiple specific sections
+export function subscribeToConnectionsForSections(sectionIds, callback) {
+  const connectionsMap = {};
+  const unsubscribes = [];
+  for (const secId of sectionIds) {
+    const q = query(connectionsRef, orderByChild("section"), equalTo(secId));
+    const unsub = onValue(q, (snapshot) => {
+      const connections = [];
+      snapshot.forEach((child) => {
+        connections.push({ id: child.key, ...child.val() });
+      });
+      connectionsMap[secId] = connections;
+      const merged = Object.values(connectionsMap).flat();
+      callback(merged);
+    });
+    unsubscribes.push(unsub);
+  }
+  if (sectionIds.length === 0) callback([]);
+  return () => unsubscribes.forEach((fn) => fn());
+}
 
 // Listen to events in real-time, filtered by section
 export function subscribeToEvents(section, callback) {
@@ -386,6 +545,40 @@ export async function saveDefaultFieldConfig(config) {
   await set(defaultConfigRef, config);
 }
 
+// ── Migration ───────────────────────────────────────────────
+
+// One-time migration: stamp existing sections and student assignments with teacherUid
+export async function migrateDataToTeacher(teacherUid) {
+  // Stamp sections
+  const sectionsRef = ref(db, "sections");
+  const sectionsSnap = await get(sectionsRef);
+  if (sectionsSnap.exists()) {
+    const sections = sectionsSnap.val();
+    if (Array.isArray(sections)) {
+      const updated = sections.filter(Boolean).map((s) =>
+        s.teacherUid ? s : { ...s, teacherUid: teacherUid }
+      );
+      await set(sectionsRef, updated);
+    }
+  }
+
+  // Stamp student assignments
+  const studentsRef = ref(db, "studentSections");
+  const studentsSnap = await get(studentsRef);
+  if (studentsSnap.exists()) {
+    const updates = {};
+    studentsSnap.forEach((child) => {
+      const data = child.val();
+      if (!data.teacherUid) {
+        updates[`${child.key}/teacherUid`] = teacherUid;
+      }
+    });
+    if (Object.keys(updates).length > 0) {
+      await update(studentsRef, updates);
+    }
+  }
+}
+
 // One-time seed: push seed events into Firebase
 export async function seedDatabase(seedEvents) {
   for (const event of seedEvents) {
@@ -406,10 +599,11 @@ export function subscribeToStudentSection(uid, callback) {
 }
 
 // Student self-selects their section on first login
-export async function assignStudentSection(uid, sectionId, email, displayName) {
+export async function assignStudentSection(uid, sectionId, teacherUid, email, displayName) {
   const studentRef = ref(db, `studentSections/${uid}`);
   await set(studentRef, {
     section: sectionId,
+    teacherUid: teacherUid || null,
     email,
     displayName,
     assignedAt: new Date().toISOString(),

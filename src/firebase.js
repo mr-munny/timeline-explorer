@@ -18,6 +18,6 @@ export const db = getDatabase(app);
 export const googleProvider = new GoogleAuthProvider();
 
 export const SCHOOL_DOMAIN = process.env.REACT_APP_SCHOOL_DOMAIN;
-export const TEACHER_EMAIL = process.env.REACT_APP_TEACHER_EMAIL;
+export const INITIAL_TEACHER_EMAIL = process.env.REACT_APP_TEACHER_EMAIL;
 export const SECTIONS = (process.env.REACT_APP_SECTIONS || "").split(",");
 export const ALLOW_ALL_DOMAINS = process.env.REACT_APP_ALLOW_ALL_DOMAINS === "true";

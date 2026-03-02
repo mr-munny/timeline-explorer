@@ -1,7 +1,9 @@
 import { useState, useMemo, useEffect } from "react";
 import {
   subscribeToEvents,
+  subscribeToEventsForSections,
   subscribeToConnections,
+  subscribeToConnectionsForSections,
   subscribeToSections,
   subscribeToAllStudentSections,
   subscribeToPeriods,
@@ -17,6 +19,7 @@ export default function useFirebaseSubscriptions({
   isTeacher,
   section,
   showAdminView,
+  effectiveTeacherUid,
 }) {
   const [allEvents, setAllEvents] = useState([]);
   const [allConnections, setAllConnections] = useState([]);
@@ -29,31 +32,52 @@ export default function useFirebaseSubscriptions({
   const [fieldConfig, setFieldConfig] = useState(null);
   const [allStudentAssignments, setAllStudentAssignments] = useState([]);
 
-  const activeSections = useMemo(() => sections || [], [sections]);
+  // Filter sections by teacher ownership (client-side)
+  const activeSections = useMemo(() => {
+    const all = sections || [];
+    if (!effectiveTeacherUid) return all;
+    // Show only sections owned by the effective teacher
+    // Sections without teacherUid are legacy (pre-migration) — show them for the super admin bootstrap
+    return all.filter((s) => s.teacherUid === effectiveTeacherUid || !s.teacherUid);
+  }, [sections, effectiveTeacherUid]);
+
+  // Get section IDs for the effective teacher (used for "all" view subscriptions)
+  const teacherSectionIds = useMemo(
+    () => activeSections.map((s) => s.id),
+    [activeSections]
+  );
 
   // Subscribe to Firebase events in real-time
   useEffect(() => {
     if (!user) return;
 
-    // Teacher with ?section=all or admin view open sees everything; students see their section
-    const listenSection = isTeacher && (section === "all" || showAdminView) ? "all" : section;
+    const wantsAll = isTeacher && (section === "all" || showAdminView);
 
-    const unsubscribe = subscribeToEvents(listenSection, (events) => {
-      setAllEvents(events);
-    });
-
-    return () => unsubscribe();
-  }, [user, section, isTeacher, showAdminView]);
+    if (wantsAll) {
+      // Teacher "all" view: subscribe to events for each of their sections
+      const unsub = subscribeToEventsForSections(teacherSectionIds, setAllEvents);
+      return () => unsub();
+    } else {
+      // Single section view
+      const unsub = subscribeToEvents(section, setAllEvents);
+      return () => unsub();
+    }
+  }, [user, section, isTeacher, showAdminView, teacherSectionIds]);
 
   // Subscribe to Firebase connections in real-time
   useEffect(() => {
     if (!user) return;
-    const listenSection = isTeacher && (section === "all" || showAdminView) ? "all" : section;
-    const unsubscribe = subscribeToConnections(listenSection, (connections) => {
-      setAllConnections(connections);
-    });
-    return () => unsubscribe();
-  }, [user, section, isTeacher, showAdminView]);
+
+    const wantsAll = isTeacher && (section === "all" || showAdminView);
+
+    if (wantsAll) {
+      const unsub = subscribeToConnectionsForSections(teacherSectionIds, setAllConnections);
+      return () => unsub();
+    } else {
+      const unsub = subscribeToConnections(section, setAllConnections);
+      return () => unsub();
+    }
+  }, [user, section, isTeacher, showAdminView, teacherSectionIds]);
 
   // Subscribe to sections from Firebase
   useEffect(() => {
@@ -64,21 +88,28 @@ export default function useFirebaseSubscriptions({
     return () => unsub();
   }, [user]);
 
-  // Subscribe to all student assignments (teacher roster)
+  // Subscribe to all student assignments (teacher roster) — filtered to teacher's students
   useEffect(() => {
     if (!user || !isTeacher) return;
     const unsub = subscribeToAllStudentSections((assignments) => {
-      setAllStudentAssignments(assignments);
+      // Filter to only students belonging to this teacher
+      if (effectiveTeacherUid) {
+        setAllStudentAssignments(
+          assignments.filter((a) => a.teacherUid === effectiveTeacherUid || !a.teacherUid)
+        );
+      } else {
+        setAllStudentAssignments(assignments);
+      }
     });
     return () => unsub();
-  }, [user, isTeacher]);
+  }, [user, isTeacher, effectiveTeacherUid]);
 
   // Subscribe to section-specific periods
   useEffect(() => {
     if (!user) return;
     const effectiveSection = isTeacher && section === "all" ? "all" : section;
     if (effectiveSection === "all") {
-      const unsub = subscribeToAllSectionPeriods(activeSections.map((s) => s.id), (periodsMap) => {
+      const unsub = subscribeToAllSectionPeriods(teacherSectionIds, (periodsMap) => {
         setAllSectionPeriods(periodsMap);
       });
       return () => unsub();
@@ -88,7 +119,7 @@ export default function useFirebaseSubscriptions({
       });
       return () => unsub();
     }
-  }, [user, section, isTeacher, activeSections]);
+  }, [user, section, isTeacher, teacherSectionIds]);
 
   // Subscribe to section-specific compelling question
   useEffect(() => {
@@ -103,14 +134,14 @@ export default function useFirebaseSubscriptions({
       });
       return () => unsub();
     }
-  }, [user, section, isTeacher, activeSections]);
+  }, [user, section, isTeacher, teacherSectionIds]);
 
   // Subscribe to section-specific timeline range
   useEffect(() => {
     if (!user) return;
     const effectiveSection = isTeacher && section === "all" ? "all" : section;
     if (effectiveSection === "all") {
-      const unsub = subscribeToAllSectionTimelineRanges(activeSections.map((s) => s.id), (rangeMap) => {
+      const unsub = subscribeToAllSectionTimelineRanges(teacherSectionIds, (rangeMap) => {
         let minStart = 1910, maxEnd = 2000;
         let hasAny = false;
         for (const sec of Object.keys(rangeMap)) {
@@ -135,7 +166,7 @@ export default function useFirebaseSubscriptions({
       });
       return () => unsub();
     }
-  }, [user, section, isTeacher, activeSections]);
+  }, [user, section, isTeacher, teacherSectionIds]);
 
   // Subscribe to section-specific field config
   useEffect(() => {

@@ -57,18 +57,18 @@ export default function TeacherManagement({ user, teacherData, onImpersonate }) 
     }
     // Check if already invited
     if (invites.some((i) => i.email === email)) {
-      setInviteError("This person already has a pending invite.");
+      setInviteError("This email is already pending.");
       return;
     }
     try {
       await createTeacherInvite(email, user.uid);
       setInviteEmail("");
       setInviteError(null);
-      setInviteSuccess(`Invite sent to ${email}`);
+      setInviteSuccess(`${email} added — awaiting their first login`);
       setTimeout(() => setInviteSuccess(null), 3000);
     } catch (err) {
       console.error("Invite failed:", err);
-      setInviteError("Failed to send invite. Try again.");
+      setInviteError("Failed to add teacher. Try again.");
     }
   };
 
@@ -198,18 +198,18 @@ export default function TeacherManagement({ user, teacherData, onImpersonate }) 
         </p>
       </div>
 
-      {/* Invite Teacher */}
+      {/* Add Teacher Account */}
       <div style={cardStyle}>
         <div style={labelStyle}>
           <Icon icon={accountPlus} width={12} style={{ verticalAlign: "middle", marginRight: 4 }} />
-          Invite a Teacher
+          Add Teacher Account
         </div>
         <div style={{ display: "flex", gap: 8 }}>
           <input
             value={inviteEmail}
             onChange={(e) => { setInviteEmail(e.target.value); setInviteError(null); }}
             onKeyDown={(e) => { if (e.key === "Enter") handleInvite(); }}
-            placeholder="colleague@school.edu"
+            placeholder="teacher@school.edu"
             style={{
               flex: 1,
               padding: "8px 12px",
@@ -238,7 +238,7 @@ export default function TeacherManagement({ user, teacherData, onImpersonate }) 
               opacity: inviteEmail.trim() ? 1 : 0.5,
             }}
           >
-            Invite
+            Add
           </button>
         </div>
         {inviteError && (
@@ -253,10 +253,10 @@ export default function TeacherManagement({ user, teacherData, onImpersonate }) 
         )}
       </div>
 
-      {/* Pending Invites */}
+      {/* Awaiting Login */}
       {invites.length > 0 && (
         <div style={cardStyle}>
-          <div style={labelStyle}>Pending Invites</div>
+          <div style={labelStyle}>Awaiting Login</div>
           {invites.map((inv) => (
             <div key={inv.key} style={{
               display: "flex",
@@ -283,7 +283,7 @@ export default function TeacherManagement({ user, teacherData, onImpersonate }) 
                   cursor: "pointer",
                 }}
               >
-                Cancel
+                Remove
               </button>
             </div>
           ))}

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useTheme, FONT_MONO } from "../contexts/ThemeContext";
 import { PERIOD_COLORS } from "../data/constants";
 import { Icon } from "@iconify/react";
@@ -13,6 +13,12 @@ export default function TimePeriodsEditor({ draftPeriods, draftTimelineRange, on
   const [editingPeriodId, setEditingPeriodId] = useState(null);
   const [draftEraStart, setDraftEraStart] = useState("");
   const [draftEraEnd, setDraftEraEnd] = useState("");
+  const selfChangeRef = useRef(false);
+
+  const fireSelfChange = (newPeriods) => {
+    selfChangeRef.current = true;
+    onPeriodsChange(newPeriods);
+  };
 
   const openPeriodEdit = (period) => {
     setEditingPeriodId(period.id);
@@ -23,16 +29,19 @@ export default function TimePeriodsEditor({ draftPeriods, draftTimelineRange, on
   const commitEra = (periodId) => {
     const s = Number(draftEraStart) || 0;
     const e = Number(draftEraEnd) || 0;
-    onPeriodsChange(
+    fireSelfChange(
       draftPeriods.map((x) => x.id === periodId ? { ...x, era: [s, Math.max(s + 1, e)] } : x)
     );
   };
 
-  // Close inline edit when parent resets (discard)
+  // Close inline edit when parent resets (discard), but not on self-initiated changes
   const [prevPeriods, setPrevPeriods] = useState(draftPeriods);
   if (draftPeriods !== prevPeriods) {
     setPrevPeriods(draftPeriods);
-    setEditingPeriodId(null);
+    if (!selfChangeRef.current) {
+      setEditingPeriodId(null);
+    }
+    selfChangeRef.current = false;
   }
 
   const eraInputStyle = {
@@ -114,7 +123,7 @@ export default function TimePeriodsEditor({ draftPeriods, draftTimelineRange, on
                     if (!window.confirm(`Delete "${p.label}"? Events assigned to this time period will lose their time period.`)) return;
                     const next = draftPeriods.filter((x) => x.id !== p.id);
                     if (editingPeriodId === p.id) setEditingPeriodId(null);
-                    onPeriodsChange(next);
+                    fireSelfChange(next);
                   }}
                   title="Delete time period"
                   size={11}
@@ -138,14 +147,14 @@ export default function TimePeriodsEditor({ draftPeriods, draftTimelineRange, on
                     onChange={(e) => {
                       const val = e.target.value;
                       if (val.trim() || val === "") {
-                        onPeriodsChange(
+                        fireSelfChange(
                           draftPeriods.map((x) => x.id === p.id ? { ...x, label: val } : x)
                         );
                       }
                     }}
                     onBlur={(e) => {
                       const finalLabel = e.target.value.trim() || "Untitled Time Period";
-                      onPeriodsChange(
+                      fireSelfChange(
                         draftPeriods.map((x) => x.id === p.id ? { ...x, label: finalLabel } : x)
                       );
                     }}
@@ -186,7 +195,7 @@ export default function TimePeriodsEditor({ draftPeriods, draftTimelineRange, on
                       <button
                         key={i}
                         onClick={() => {
-                          onPeriodsChange(
+                          fireSelfChange(
                             draftPeriods.map((x) => x.id === p.id ? { ...x, color: c.color, bg: c.bg, accent: c.accent } : x)
                           );
                         }}
@@ -225,7 +234,7 @@ export default function TimePeriodsEditor({ draftPeriods, draftTimelineRange, on
             accent: c.accent,
             era: [draftTimelineRange.start, draftTimelineRange.end],
           };
-          onPeriodsChange([...draftPeriods, newPeriod]);
+          fireSelfChange([...draftPeriods, newPeriod]);
           openPeriodEdit(newPeriod);
         }}
         style={{

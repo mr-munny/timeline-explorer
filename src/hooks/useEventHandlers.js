@@ -2,9 +2,7 @@ import { useCallback } from "react";
 import { submitEvent, deleteEvent, updateEvent, resubmitEvent } from "../services/database";
 import { saveTimelineRange } from "../services/database";
 import { writeToSheet } from "../services/sheets";
-
-const floorToDecade = (value) => Math.floor(value / 10) * 10;
-const ceilToDecade = (value) => Math.ceil(value / 10) * 10;
+import { floorToDecade, ceilToDecade } from "../utils/dateUtils";
 
 export default function useEventHandlers({
   user,

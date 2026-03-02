@@ -64,7 +64,6 @@ export default function AdminView({
       }}>
         {effectiveTab === "moderation" ? (
           <ModerationPanel
-            embedded
             pendingEvents={pendingEvents}
             pendingConnections={pendingConnections}
             needsRevisionEvents={needsRevisionEvents}

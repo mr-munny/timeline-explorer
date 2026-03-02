@@ -69,3 +69,7 @@ export function maxDaysInMonth(month, year) {
   if (!month) return 31;
   return new Date(year || 2000, month, 0).getDate();
 }
+
+/** Round a year value down/up to the nearest decade */
+export const floorToDecade = (value) => Math.floor(value / 10) * 10;
+export const ceilToDecade = (value) => Math.ceil(value / 10) * 10;

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useTheme } from "../contexts/ThemeContext";
-import { PERIOD_COLORS } from "../data/constants";
+import { PERIOD_COLORS, DEFAULT_FIELD_CONFIG } from "../data/constants";
 import { subscribeToPeriods, subscribeToCompellingQuestion, subscribeToTimelineRange, subscribeToFieldConfig, savePeriods, saveCompellingQuestion, saveTimelineRange, saveFieldConfig } from "../services/database";
 import { Icon } from "@iconify/react";
 import pencilOutline from "@iconify-icons/mdi/pencil-outline";
@@ -16,25 +16,7 @@ import contentCopy from "@iconify-icons/mdi/content-copy";
 import deleteOutline from "@iconify-icons/mdi/delete-outline";
 import StudentRoster from "./StudentRoster";
 import CopySettingsDialog from "./CopySettingsDialog";
-
-const floorToDecade = (value) => Math.floor(value / 10) * 10;
-const ceilToDecade = (value) => Math.ceil(value / 10) * 10;
-
-const DEFAULT_FIELD_CONFIG = {
-  title: "mandatory",
-  year: "mandatory",
-  month: "hidden",
-  day: "hidden",
-  endDate: "hidden",
-  period: "mandatory",
-  tags: "mandatory",
-  sourceType: "mandatory",
-  description: "mandatory",
-  sourceNote: "optional",
-  sourceUrl: "optional",
-  imageUrl: "optional",
-  region: "optional",
-};
+import { floorToDecade, ceilToDecade } from "../utils/dateUtils";
 
 const FIELD_DEFINITIONS = [
   { key: "title", label: "Event Title" },

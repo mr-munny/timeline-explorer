@@ -3,7 +3,7 @@ import { Icon } from "@iconify/react";
 import chartTimelineVariantShimmer from "@iconify-icons/mdi/chart-timeline-variant-shimmer";
 import googleIcon from "@iconify-icons/mdi/google";
 import alertCircleOutline from "@iconify-icons/mdi/alert-circle-outline";
-import { useTheme } from "../contexts/ThemeContext";
+import { useTheme, FONT_MONO, FONT_SERIF } from "../contexts/ThemeContext";
 
 export default function LoginScreen({ onLogin, error }) {
   const { theme } = useTheme();
@@ -11,7 +11,7 @@ export default function LoginScreen({ onLogin, error }) {
   return (
     <div
       style={{
-        fontFamily: "'Newsreader', 'Georgia', serif",
+        fontFamily: FONT_SERIF,
         background: theme.pageBg,
         minHeight: "100vh",
         display: "flex",
@@ -44,7 +44,7 @@ export default function LoginScreen({ onLogin, error }) {
             fontSize: 10,
             fontWeight: 700,
             color: theme.accentGold,
-            fontFamily: "'Overpass Mono', monospace",
+            fontFamily: FONT_MONO,
             letterSpacing: "0.1em",
             textTransform: "uppercase",
             background: theme.accentGoldSubtle,
@@ -62,7 +62,7 @@ export default function LoginScreen({ onLogin, error }) {
             fontSize: 28,
             fontWeight: 700,
             margin: "0 0 6px 0",
-            fontFamily: "'Newsreader', 'Georgia', serif",
+            fontFamily: FONT_SERIF,
             letterSpacing: "-0.01em",
             display: "flex",
             alignItems: "center",
@@ -79,7 +79,7 @@ export default function LoginScreen({ onLogin, error }) {
             fontSize: 12,
             color: theme.textSecondary,
             margin: "0 0 28px 0",
-            fontFamily: "'Overpass Mono', monospace",
+            fontFamily: FONT_MONO,
           }}
         >
           Sign in with your school account to continue
@@ -95,7 +95,7 @@ export default function LoginScreen({ onLogin, error }) {
               marginBottom: 16,
               fontSize: 12,
               color: theme.errorRedText,
-              fontFamily: "'Overpass Mono', monospace",
+              fontFamily: FONT_MONO,
               display: "flex",
               alignItems: "center",
               gap: 6,
@@ -115,7 +115,7 @@ export default function LoginScreen({ onLogin, error }) {
             border: "none",
             borderRadius: 8,
             fontSize: 13,
-            fontFamily: "'Overpass Mono', monospace",
+            fontFamily: FONT_MONO,
             fontWeight: 700,
             cursor: "pointer",
             letterSpacing: "0.02em",
@@ -132,7 +132,7 @@ export default function LoginScreen({ onLogin, error }) {
             fontSize: 10,
             color: theme.textMuted,
             margin: "16px 0 0 0",
-            fontFamily: "'Overpass Mono', monospace",
+            fontFamily: FONT_MONO,
           }}
         >
           {ALLOW_ALL_DOMAINS ? "Any Google account can sign in" : `Requires an @${SCHOOL_DOMAIN} account`}

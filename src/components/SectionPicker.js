@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Icon } from "@iconify/react";
 import chartTimelineVariantShimmer from "@iconify-icons/mdi/chart-timeline-variant-shimmer";
 import arrowLeft from "@iconify-icons/mdi/arrow-left";
-import { useTheme } from "../contexts/ThemeContext";
+import { useTheme, FONT_MONO, FONT_SERIF } from "../contexts/ThemeContext";
 import { lookupTeacherByJoinCode, getSections } from "../services/database";
 
 export default function SectionPicker({ sections, onSelect, userName }) {
@@ -64,7 +64,7 @@ export default function SectionPicker({ sections, onSelect, userName }) {
   return (
     <div
       style={{
-        fontFamily: "'Newsreader', 'Georgia', serif",
+        fontFamily: FONT_SERIF,
         background: theme.pageBg,
         minHeight: "100vh",
         display: "flex",
@@ -85,7 +85,7 @@ export default function SectionPicker({ sections, onSelect, userName }) {
             fontSize: 10,
             fontWeight: 700,
             color: theme.accentGold,
-            fontFamily: "'Overpass Mono', monospace",
+            fontFamily: FONT_MONO,
             letterSpacing: "0.1em",
             textTransform: "uppercase",
             background: theme.accentGoldSubtle,
@@ -103,7 +103,7 @@ export default function SectionPicker({ sections, onSelect, userName }) {
             fontSize: 28,
             fontWeight: 700,
             margin: "0 0 6px 0",
-            fontFamily: "'Newsreader', 'Georgia', serif",
+            fontFamily: FONT_SERIF,
             letterSpacing: "-0.01em",
             display: "flex",
             alignItems: "center",
@@ -120,7 +120,7 @@ export default function SectionPicker({ sections, onSelect, userName }) {
             fontSize: 13,
             color: theme.textSecondary,
             margin: "0 0 6px 0",
-            fontFamily: "'Newsreader', 'Georgia', serif",
+            fontFamily: FONT_SERIF,
           }}
         >
           Welcome, {userName}!
@@ -133,7 +133,7 @@ export default function SectionPicker({ sections, onSelect, userName }) {
                 fontSize: 12,
                 color: theme.textMuted,
                 margin: "0 0 20px 0",
-                fontFamily: "'Overpass Mono', monospace",
+                fontFamily: FONT_MONO,
               }}
             >
               Enter your teacher's class code to get started
@@ -153,7 +153,7 @@ export default function SectionPicker({ sections, onSelect, userName }) {
                   border: `1.5px solid ${codeError ? theme.errorRed : theme.inputBorder}`,
                   borderRadius: 8,
                   fontSize: 16,
-                  fontFamily: "'Overpass Mono', monospace",
+                  fontFamily: FONT_MONO,
                   fontWeight: 700,
                   letterSpacing: "0.15em",
                   textAlign: "center",
@@ -173,7 +173,7 @@ export default function SectionPicker({ sections, onSelect, userName }) {
                   border: "none",
                   borderRadius: 8,
                   fontSize: 13,
-                  fontFamily: "'Overpass Mono', monospace",
+                  fontFamily: FONT_MONO,
                   fontWeight: 700,
                   cursor: lookingUp || !joinCode.trim() ? "default" : "pointer",
                   opacity: lookingUp || !joinCode.trim() ? 0.5 : 1,
@@ -189,7 +189,7 @@ export default function SectionPicker({ sections, onSelect, userName }) {
                 fontSize: 11,
                 color: theme.errorRed,
                 margin: "0 0 0 0",
-                fontFamily: "'Overpass Mono', monospace",
+                fontFamily: FONT_MONO,
               }}>
                 {codeError}
               </p>
@@ -204,7 +204,7 @@ export default function SectionPicker({ sections, onSelect, userName }) {
                 border: "none",
                 color: theme.textSecondary,
                 fontSize: 11,
-                fontFamily: "'Overpass Mono', monospace",
+                fontFamily: FONT_MONO,
                 cursor: "pointer",
                 display: "inline-flex",
                 alignItems: "center",
@@ -222,7 +222,7 @@ export default function SectionPicker({ sections, onSelect, userName }) {
                 fontSize: 12,
                 color: theme.textMuted,
                 margin: "0 0 20px 0",
-                fontFamily: "'Overpass Mono', monospace",
+                fontFamily: FONT_MONO,
               }}
             >
               Select your period in {teacher?.displayName || "your teacher"}'s class
@@ -241,7 +241,7 @@ export default function SectionPicker({ sections, onSelect, userName }) {
                     border: "none",
                     borderRadius: 8,
                     fontSize: 13,
-                    fontFamily: "'Overpass Mono', monospace",
+                    fontFamily: FONT_MONO,
                     fontWeight: 700,
                     cursor: selecting ? "default" : "pointer",
                     letterSpacing: "0.02em",
@@ -260,7 +260,7 @@ export default function SectionPicker({ sections, onSelect, userName }) {
                   fontSize: 12,
                   color: theme.textMuted,
                   margin: "16px 0 0 0",
-                  fontFamily: "'Overpass Mono', monospace",
+                  fontFamily: FONT_MONO,
                 }}
               >
                 No sections available yet. Ask your teacher to set up class sections.

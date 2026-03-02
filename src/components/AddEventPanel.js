@@ -5,7 +5,7 @@ import { Icon } from "@iconify/react";
 import closeIcon from "@iconify-icons/mdi/close";
 import sendIcon from "@iconify-icons/mdi/send";
 import lightbulbOutline from "@iconify-icons/mdi/lightbulb-outline";
-import { useTheme } from "../contexts/ThemeContext";
+import { useTheme, FONT_MONO, FONT_SERIF } from "../contexts/ThemeContext";
 import FeedbackBanner from "./FeedbackBanner";
 import ModalShell from "./ModalShell";
 
@@ -164,7 +164,7 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
     border: `1.5px solid ${errors[field] ? theme.errorRed : theme.inputBorder}`,
     borderRadius: 7,
     fontSize: 13,
-    fontFamily: "'Overpass Mono', monospace",
+    fontFamily: FONT_MONO,
     background: theme.inputBg,
     color: theme.textPrimary,
     outline: "none",
@@ -176,7 +176,7 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
     fontSize: 11,
     fontWeight: 700,
     color: theme.textTertiary,
-    fontFamily: "'Overpass Mono', monospace",
+    fontFamily: FONT_MONO,
     textTransform: "uppercase",
     letterSpacing: "0.05em",
     marginBottom: 4,
@@ -200,7 +200,7 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
                 fontSize: 20,
                 fontWeight: 700,
                 margin: 0,
-                fontFamily: "'Newsreader', 'Georgia', serif",
+                fontFamily: FONT_SERIF,
                 color: theme.textPrimary,
               }}
             >
@@ -211,7 +211,7 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
                 fontSize: 11,
                 color: theme.textSecondary,
                 margin: "4px 0 0",
-                fontFamily: "'Overpass Mono', monospace",
+                fontFamily: FONT_MONO,
               }}
             >
               {revisionMode
@@ -269,7 +269,7 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
                 type="number"
                 style={{
                   ...fieldStyle("year"),
-                  borderColor: warnings.year ? "#D97706" : (errors.year ? theme.errorRed : theme.inputBorder),
+                  borderColor: warnings.year ? theme.feedbackAmber : (errors.year ? theme.errorRed : theme.inputBorder),
                 }}
               />
             </div>
@@ -280,13 +280,13 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
           {warnings.year && (
             <div
               style={{
-                background: "#FEF3C7",
-                border: "1px solid #D97706",
+                background: theme.feedbackAmberBg,
+                border: `1px solid ${theme.feedbackAmber}`,
                 borderRadius: 6,
                 padding: "8px 12px",
                 fontSize: 11,
-                fontFamily: "'Overpass Mono', monospace",
-                color: "#92400E",
+                fontFamily: FONT_MONO,
+                color: theme.feedbackAmberText,
                 lineHeight: 1.4,
                 marginTop: -6,
               }}
@@ -339,7 +339,7 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
                   alignItems: "center",
                   gap: 8,
                   fontSize: 12,
-                  fontFamily: "'Overpass Mono', monospace",
+                  fontFamily: FONT_MONO,
                   color: theme.textSecondary,
                   cursor: "pointer",
                   userSelect: "none",
@@ -400,13 +400,13 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
               {warnings.endDate && (
                 <div
                   style={{
-                    background: "#FEF3C7",
-                    border: "1px solid #D97706",
+                    background: theme.feedbackAmberBg,
+                    border: `1px solid ${theme.feedbackAmber}`,
                     borderRadius: 6,
                     padding: "8px 12px",
                     fontSize: 11,
-                    fontFamily: "'Overpass Mono', monospace",
-                    color: "#92400E",
+                    fontFamily: FONT_MONO,
+                    color: theme.feedbackAmberText,
                     lineHeight: 1.4,
                     marginTop: -6,
                   }}
@@ -460,7 +460,7 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
                     background: form.tags.includes(tag) ? theme.activeToggleBg : theme.inputBg,
                     color: form.tags.includes(tag) ? theme.activeToggleText : theme.textTertiary,
                     fontSize: 11,
-                    fontFamily: "'Overpass Mono', monospace",
+                    fontFamily: FONT_MONO,
                     fontWeight: 600,
                     cursor: "pointer",
                     transition: "all 0.15s",
@@ -498,7 +498,7 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
                         : theme.inputBg,
                       color: isSelected ? st.color : theme.textSecondary,
                       fontSize: 12,
-                      fontFamily: "'Overpass Mono', monospace",
+                      fontFamily: FONT_MONO,
                       fontWeight: 700,
                       cursor: "pointer",
                       transition: "all 0.15s",
@@ -607,7 +607,7 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
               borderRadius: 8,
               padding: "10px 14px",
               fontSize: 11,
-              fontFamily: "'Overpass Mono', monospace",
+              fontFamily: FONT_MONO,
               color: theme.textTertiary,
               lineHeight: 1.5,
             }}
@@ -631,7 +631,7 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
                 borderRadius: 6,
                 padding: "8px 12px",
                 fontSize: 11,
-                fontFamily: "'Overpass Mono', monospace",
+                fontFamily: FONT_MONO,
                 color: theme.errorRed,
                 lineHeight: 1.4,
               }}
@@ -654,7 +654,7 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
               border: "none",
               borderRadius: 8,
               fontSize: 13,
-              fontFamily: "'Overpass Mono', monospace",
+              fontFamily: FONT_MONO,
               fontWeight: 700,
               cursor: submitting ? "default" : "pointer",
               letterSpacing: "0.03em",

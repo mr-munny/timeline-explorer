@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { Icon } from "@iconify/react";
 import accountGroup from "@iconify-icons/mdi/account-group";
 import trophyOutline from "@iconify-icons/mdi/trophy-outline";
-import { useTheme } from "../contexts/ThemeContext";
+import { useTheme, FONT_MONO } from "../contexts/ThemeContext";
 
 export default function ContributorSidebar({ events, teacherEmail }) {
   const { theme } = useTheme();
@@ -24,6 +24,8 @@ export default function ContributorSidebar({ events, teacherEmail }) {
       }));
   }, [events, teacherEmail]);
 
+  const topContributor = contributors.find((x) => !x.isTeacher);
+
   return (
     <div
       style={{
@@ -38,7 +40,7 @@ export default function ContributorSidebar({ events, teacherEmail }) {
           fontSize: 11,
           fontWeight: 700,
           color: theme.textSecondary,
-          fontFamily: "'Overpass Mono', monospace",
+          fontFamily: FONT_MONO,
           textTransform: "uppercase",
           letterSpacing: "0.06em",
           margin: "0 0 12px 0",
@@ -61,13 +63,13 @@ export default function ContributorSidebar({ events, teacherEmail }) {
             <span
               style={{
                 fontSize: 12,
-                fontFamily: "'Overpass Mono', monospace",
+                fontFamily: FONT_MONO,
                 color: c.isTeacher ? theme.textTertiary : theme.textPrimary,
                 fontWeight: c.isTeacher ? 500 : 600,
                 fontStyle: c.isTeacher ? "italic" : "normal",
               }}
             >
-              {!c.isTeacher && c === contributors.find((x) => !x.isTeacher) && (
+              {!c.isTeacher && c === topContributor && (
                 <Icon icon={trophyOutline} width={12} style={{ color: "#F59E0B", marginRight: 3, verticalAlign: "middle" }} />
               )}
               {c.name}
@@ -85,7 +87,7 @@ export default function ContributorSidebar({ events, teacherEmail }) {
               <span
                 style={{
                   fontSize: 11,
-                  fontFamily: "'Overpass Mono', monospace",
+                  fontFamily: FONT_MONO,
                   color: theme.textSecondary,
                   fontWeight: 600,
                   minWidth: 16,

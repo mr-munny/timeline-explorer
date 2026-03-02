@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { useTheme } from "../contexts/ThemeContext";
+import { useTheme, FONT_MONO, FONT_SERIF } from "../contexts/ThemeContext";
 import { PERIOD_COLORS, DEFAULT_FIELD_CONFIG } from "../data/constants";
 import { subscribeToPeriods, subscribeToCompellingQuestion, subscribeToTimelineRange, subscribeToFieldConfig, savePeriods, saveCompellingQuestion, saveTimelineRange, saveFieldConfig } from "../services/database";
 import { Icon } from "@iconify/react";
@@ -223,7 +223,7 @@ export default function AdminSectionSettings({
     border: `1.5px solid ${theme.inputBorder}`,
     borderRadius: 6,
     fontSize: 12,
-    fontFamily: "'Overpass Mono', monospace",
+    fontFamily: FONT_MONO,
     fontWeight: 700,
     background: theme.inputBg,
     color: theme.textPrimary,
@@ -236,7 +236,7 @@ export default function AdminSectionSettings({
 
   return (
     <div style={{
-      fontFamily: "'Overpass Mono', monospace",
+      fontFamily: FONT_MONO,
       position: "relative",
       minHeight: "100%",
       display: "flex",
@@ -260,7 +260,7 @@ export default function AdminSectionSettings({
                 style={{
                   fontSize: 22,
                   fontWeight: 700,
-                  fontFamily: "'Newsreader', 'Georgia', serif",
+                  fontFamily: FONT_SERIF,
                   border: `1.5px solid ${theme.inputBorder}`,
                   borderRadius: 6,
                   background: theme.inputBg,
@@ -274,7 +274,7 @@ export default function AdminSectionSettings({
                 style={{
                   fontSize: 22,
                   fontWeight: 700,
-                  fontFamily: "'Newsreader', 'Georgia', serif",
+                  fontFamily: FONT_SERIF,
                   color: theme.textPrimary,
                   margin: 0,
                   cursor: "pointer",
@@ -517,7 +517,7 @@ export default function AdminSectionSettings({
                         border: `1.5px solid ${theme.inputBorder}`,
                         borderRadius: 4,
                         fontSize: 11,
-                        fontFamily: "'Overpass Mono', monospace",
+                        fontFamily: FONT_MONO,
                         background: theme.inputBg,
                         color: theme.textPrimary,
                         outline: "none",
@@ -537,7 +537,7 @@ export default function AdminSectionSettings({
                           border: `1.5px solid ${theme.inputBorder}`,
                           borderRadius: 4,
                           fontSize: 11,
-                          fontFamily: "'Overpass Mono', monospace",
+                          fontFamily: FONT_MONO,
                           background: theme.inputBg,
                           color: theme.textPrimary,
                           outline: "none",
@@ -558,7 +558,7 @@ export default function AdminSectionSettings({
                           border: `1.5px solid ${theme.inputBorder}`,
                           borderRadius: 4,
                           fontSize: 11,
-                          fontFamily: "'Overpass Mono', monospace",
+                          fontFamily: FONT_MONO,
                           background: theme.inputBg,
                           color: theme.textPrimary,
                           outline: "none",
@@ -625,7 +625,7 @@ export default function AdminSectionSettings({
             background: "transparent",
             color: theme.textSecondary,
             fontSize: 10,
-            fontFamily: "'Overpass Mono', monospace",
+            fontFamily: FONT_MONO,
             fontWeight: 600,
             cursor: "pointer",
             display: "flex",
@@ -664,7 +664,7 @@ export default function AdminSectionSettings({
             background: "transparent",
             cursor: "pointer",
             fontSize: 10,
-            fontFamily: "'Overpass Mono', monospace",
+            fontFamily: FONT_MONO,
             color: draftCQ.enabled ? theme.teacherGreen : theme.textMuted,
             fontWeight: 600,
             transition: "all 0.15s",
@@ -690,7 +690,7 @@ export default function AdminSectionSettings({
             border: `1.5px solid ${theme.inputBorder}`,
             borderRadius: 6,
             fontSize: 12,
-            fontFamily: "'Newsreader', 'Georgia', serif",
+            fontFamily: FONT_SERIF,
             background: theme.inputBg,
             color: theme.textPrimary,
             outline: "none",
@@ -747,18 +747,18 @@ export default function AdminSectionSettings({
                       style={{
                         fontSize: 8,
                         fontWeight: mode === m ? 700 : 500,
-                        fontFamily: "'Overpass Mono', monospace",
+                        fontFamily: FONT_MONO,
                         padding: "2px 5px",
                         borderRadius: 3,
-                        border: `1px solid ${mode === m ? (m === "mandatory" ? theme.teacherGreen : m === "optional" ? "#D97706" : theme.errorRed) : theme.inputBorder}`,
-                        background: mode === m ? (m === "mandatory" ? theme.teacherGreen + "20" : m === "optional" ? "#D9770620" : theme.errorRed + "20") : "transparent",
-                        color: mode === m ? (m === "mandatory" ? theme.teacherGreen : m === "optional" ? "#D97706" : theme.errorRed) : theme.textMuted,
+                        border: `1px solid ${mode === m ? (m === "mandatory" ? theme.teacherGreen : m === "optional" ? theme.feedbackAmber : theme.errorRed) : theme.inputBorder}`,
+                        background: mode === m ? (m === "mandatory" ? theme.teacherGreen + "20" : m === "optional" ? theme.feedbackAmber + "20" : theme.errorRed + "20") : "transparent",
+                        color: mode === m ? (m === "mandatory" ? theme.teacherGreen : m === "optional" ? theme.feedbackAmber : theme.errorRed) : theme.textMuted,
                         cursor: "pointer",
                         textTransform: "uppercase",
                         letterSpacing: "0.03em",
                         transition: "all 0.15s",
                       }}
-                      onMouseEnter={(e) => { if (mode !== m) { const c = m === "mandatory" ? theme.teacherGreen : m === "optional" ? "#D97706" : theme.errorRed; e.currentTarget.style.borderColor = c; e.currentTarget.style.color = c; } }}
+                      onMouseEnter={(e) => { if (mode !== m) { const c = m === "mandatory" ? theme.teacherGreen : m === "optional" ? theme.feedbackAmber : theme.errorRed; e.currentTarget.style.borderColor = c; e.currentTarget.style.color = c; } }}
                       onMouseLeave={(e) => { if (mode !== m) { e.currentTarget.style.borderColor = theme.inputBorder; e.currentTarget.style.color = theme.textMuted; } }}
                     >
                       {m === "mandatory" ? "Req" : m === "optional" ? "Opt" : "Hide"}
@@ -778,7 +778,6 @@ export default function AdminSectionSettings({
           sections={sections}
           onReassign={reassignStudentSection}
           onRemove={removeStudentSection}
-          theme={theme}
         />
       </div>
 
@@ -806,7 +805,7 @@ export default function AdminSectionSettings({
             background: isDirty ? theme.teacherGreen : theme.inputBorder,
             color: isDirty ? "#fff" : theme.textMuted,
             fontSize: 11,
-            fontFamily: "'Overpass Mono', monospace",
+            fontFamily: FONT_MONO,
             fontWeight: 700,
             cursor: isDirty && !saving ? "pointer" : "not-allowed",
             display: "inline-flex",
@@ -833,7 +832,7 @@ export default function AdminSectionSettings({
             background: "transparent",
             color: isDirty ? theme.textSecondary : theme.textMuted,
             fontSize: 11,
-            fontFamily: "'Overpass Mono', monospace",
+            fontFamily: FONT_MONO,
             fontWeight: 600,
             cursor: isDirty ? "pointer" : "not-allowed",
             display: "inline-flex",
@@ -858,7 +857,7 @@ export default function AdminSectionSettings({
             background: "transparent",
             color: theme.textSecondary,
             fontSize: 11,
-            fontFamily: "'Overpass Mono', monospace",
+            fontFamily: FONT_MONO,
             fontWeight: 600,
             cursor: "pointer",
             display: "inline-flex",

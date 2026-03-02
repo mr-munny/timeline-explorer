@@ -3,7 +3,7 @@ import { Icon } from "@iconify/react";
 import closeIcon from "@iconify-icons/mdi/close";
 import sendIcon from "@iconify-icons/mdi/send";
 import arrowRightBold from "@iconify-icons/mdi/arrow-right-bold";
-import { useTheme } from "../contexts/ThemeContext";
+import { useTheme, FONT_MONO, FONT_SERIF } from "../contexts/ThemeContext";
 import FeedbackBanner from "./FeedbackBanner";
 import ModalShell from "./ModalShell";
 import { getPeriod } from "../data/constants";
@@ -41,7 +41,7 @@ function EventSearchDropdown({ label, events, selectedId, onSelect, excludeId, p
     border: `1.5px solid ${error ? theme.errorRed : theme.inputBorder}`,
     borderRadius: 7,
     fontSize: 13,
-    fontFamily: "'Overpass Mono', monospace",
+    fontFamily: FONT_MONO,
     background: theme.inputBg,
     color: theme.textPrimary,
     outline: "none",
@@ -53,7 +53,7 @@ function EventSearchDropdown({ label, events, selectedId, onSelect, excludeId, p
     fontSize: 11,
     fontWeight: 700,
     color: error ? theme.errorRed : theme.textTertiary,
-    fontFamily: "'Overpass Mono', monospace",
+    fontFamily: FONT_MONO,
     textTransform: "uppercase",
     letterSpacing: "0.05em",
     marginBottom: 4,
@@ -86,7 +86,7 @@ function EventSearchDropdown({ label, events, selectedId, onSelect, excludeId, p
               fontWeight: 700,
               padding: "2px 6px",
               borderRadius: 4,
-              fontFamily: "'Overpass Mono', monospace",
+              fontFamily: FONT_MONO,
               flexShrink: 0,
             }}
           >
@@ -95,7 +95,7 @@ function EventSearchDropdown({ label, events, selectedId, onSelect, excludeId, p
           <span
             style={{
               fontSize: 13,
-              fontFamily: "'Newsreader', serif",
+              fontFamily: FONT_SERIF,
               fontWeight: 600,
               color: theme.textPrimary,
               flex: 1,
@@ -184,7 +184,7 @@ function EventSearchDropdown({ label, events, selectedId, onSelect, excludeId, p
                     fontWeight: 700,
                     padding: "2px 5px",
                     borderRadius: 3,
-                    fontFamily: "'Overpass Mono', monospace",
+                    fontFamily: FONT_MONO,
                     flexShrink: 0,
                   }}
                 >
@@ -193,7 +193,7 @@ function EventSearchDropdown({ label, events, selectedId, onSelect, excludeId, p
                 <span
                   style={{
                     fontSize: 12,
-                    fontFamily: "'Newsreader', serif",
+                    fontFamily: FONT_SERIF,
                     color: theme.textPrimary,
                     overflow: "hidden",
                     textOverflow: "ellipsis",
@@ -220,7 +220,7 @@ function EventSearchDropdown({ label, events, selectedId, onSelect, excludeId, p
             marginTop: 4,
             padding: "12px 14px",
             fontSize: 11,
-            fontFamily: "'Overpass Mono', monospace",
+            fontFamily: FONT_MONO,
             color: theme.textSecondary,
             textAlign: "center",
           }}
@@ -270,7 +270,7 @@ export default function AddConnectionPanel({ onAdd, onClose, userName, approvedE
     fontSize: 11,
     fontWeight: 700,
     color: theme.textTertiary,
-    fontFamily: "'Overpass Mono', monospace",
+    fontFamily: FONT_MONO,
     textTransform: "uppercase",
     letterSpacing: "0.05em",
     marginBottom: 4,
@@ -294,7 +294,7 @@ export default function AddConnectionPanel({ onAdd, onClose, userName, approvedE
                 fontSize: 20,
                 fontWeight: 700,
                 margin: 0,
-                fontFamily: "'Newsreader', 'Georgia', serif",
+                fontFamily: FONT_SERIF,
                 color: theme.textPrimary,
               }}
             >
@@ -305,7 +305,7 @@ export default function AddConnectionPanel({ onAdd, onClose, userName, approvedE
                 fontSize: 11,
                 color: theme.textSecondary,
                 margin: "4px 0 0",
-                fontFamily: "'Overpass Mono', monospace",
+                fontFamily: FONT_MONO,
               }}
             >
               {revisionMode
@@ -382,7 +382,7 @@ export default function AddConnectionPanel({ onAdd, onClose, userName, approvedE
                 border: `1.5px solid ${errors.description ? theme.errorRed : theme.inputBorder}`,
                 borderRadius: 7,
                 fontSize: 13,
-                fontFamily: "'Overpass Mono', monospace",
+                fontFamily: FONT_MONO,
                 background: theme.inputBg,
                 color: theme.textPrimary,
                 outline: "none",
@@ -401,7 +401,7 @@ export default function AddConnectionPanel({ onAdd, onClose, userName, approvedE
               borderRadius: 8,
               padding: "10px 14px",
               fontSize: 11,
-              fontFamily: "'Overpass Mono', monospace",
+              fontFamily: FONT_MONO,
               color: theme.textTertiary,
               lineHeight: 1.5,
             }}
@@ -421,7 +421,7 @@ export default function AddConnectionPanel({ onAdd, onClose, userName, approvedE
                 borderRadius: 6,
                 padding: "8px 12px",
                 fontSize: 11,
-                fontFamily: "'Overpass Mono', monospace",
+                fontFamily: FONT_MONO,
                 color: "#991B1B",
                 lineHeight: 1.4,
               }}
@@ -440,7 +440,7 @@ export default function AddConnectionPanel({ onAdd, onClose, userName, approvedE
               border: "none",
               borderRadius: 8,
               fontSize: 13,
-              fontFamily: "'Overpass Mono', monospace",
+              fontFamily: FONT_MONO,
               fontWeight: 700,
               cursor: submitting ? "default" : "pointer",
               letterSpacing: "0.03em",

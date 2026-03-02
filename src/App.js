@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { useAuth } from "./contexts/AuthContext";
-import { useTheme } from "./contexts/ThemeContext";
+import { useTheme, FONT_MONO, FONT_SERIF } from "./contexts/ThemeContext";
 import { getPeriod, DEFAULT_PERIODS, DEFAULT_FIELD_CONFIG } from "./data/constants";
 import { compareEventDates } from "./utils/dateUtils";
 import { savePeriods, saveSections, saveCompellingQuestion, saveTimelineRange, saveFieldConfig, assignStudentSection, reassignStudentSection, removeStudentSection } from "./services/database";
@@ -29,7 +29,7 @@ function getInitialSection() {
 
 export default function App() {
   const { user, loading, authError, login, logout, isTeacher, isSuperAdmin, teacherData, effectiveTeacherUid, impersonatingTeacher, setImpersonating, userSection, sectionLoading } = useAuth();
-  const { theme, mode, toggleTheme, getThemedPeriodBg } = useTheme();
+  const { theme, mode, toggleTheme } = useTheme();
   const userName = user ? (user.displayName || user.email.split("@")[0]) : "";
   const [section, setSection] = useState(getInitialSection);
   const [selectedPeriods, setSelectedPeriods] = useState([]);
@@ -282,7 +282,7 @@ export default function App() {
     if (selected.length === 0) return null;
     return { start: Math.min(...selected.map((p) => p.era[0])), end: Math.max(...selected.map((p) => p.era[1])) };
   }, [selectedPeriods, displayPeriods]);
-  const findPeriod = (id) => getPeriod(displayPeriods, id);
+  const findPeriod = useCallback((id) => getPeriod(displayPeriods, id), [displayPeriods]);
   const displayCQ = section === "all" ? null : compellingQuestion;
 
   const {
@@ -328,6 +328,14 @@ export default function App() {
     setRevisingConnection,
   });
 
+  // Count unique student contributors (exclude any teacher-created events)
+  const teacherEmail = teacherData?.email || user?.email;
+  const studentCount = useMemo(() => [
+    ...new Set(
+      approvedEvents.filter((e) => e.addedByEmail !== teacherEmail).map((e) => e.addedBy)
+    ),
+  ].length, [approvedEvents, teacherEmail]);
+
   // Loading state
   if (loading || (!user ? false : !isTeacher && sectionLoading)) {
     return (
@@ -337,7 +345,7 @@ export default function App() {
           alignItems: "center",
           justifyContent: "center",
           minHeight: "100vh",
-          fontFamily: "'Overpass Mono', monospace",
+          fontFamily: FONT_MONO,
           color: theme.textSecondary,
           fontSize: 13,
           background: theme.pageBg,
@@ -366,18 +374,10 @@ export default function App() {
     );
   }
 
-  // Count unique student contributors (exclude any teacher-created events)
-  const teacherEmail = teacherData?.email || user?.email;
-  const studentCount = [
-    ...new Set(
-      approvedEvents.filter((e) => e.addedByEmail !== teacherEmail).map((e) => e.addedBy)
-    ),
-  ].length;
-
   return (
     <div
       style={{
-        fontFamily: "'Newsreader', 'Georgia', serif",
+        fontFamily: FONT_SERIF,
         background: theme.pageBg,
         minHeight: "100vh",
         color: theme.pageText,
@@ -397,7 +397,7 @@ export default function App() {
           color: "#fff",
           padding: "8px 16px",
           fontSize: 12,
-          fontFamily: "'Overpass Mono', monospace",
+          fontFamily: FONT_MONO,
           fontWeight: 600,
           display: "flex",
           alignItems: "center",
@@ -414,7 +414,7 @@ export default function App() {
               borderRadius: 4,
               padding: "3px 10px",
               fontSize: 11,
-              fontFamily: "'Overpass Mono', monospace",
+              fontFamily: FONT_MONO,
               fontWeight: 700,
               cursor: "pointer",
             }}
@@ -504,8 +504,6 @@ export default function App() {
       {/* Main Content */}
       <div style={{ maxWidth: 960, margin: "0 auto", padding: "20px 28px" }}>
         <FilterBar
-          theme={theme}
-          getThemedPeriodBg={getThemedPeriodBg}
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}
           selectedPeriods={selectedPeriods}
@@ -565,7 +563,7 @@ export default function App() {
             style={{
               fontSize: 10,
               color: theme.textMuted,
-              fontFamily: "'Overpass Mono', monospace",
+              fontFamily: FONT_MONO,
               margin: 0,
               lineHeight: 1.6,
             }}

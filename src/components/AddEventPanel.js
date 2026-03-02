@@ -8,6 +8,7 @@ import lightbulbOutline from "@iconify-icons/mdi/lightbulb-outline";
 import { useTheme, FONT_MONO, FONT_SERIF } from "../contexts/ThemeContext";
 import FeedbackBanner from "./FeedbackBanner";
 import ModalShell from "./ModalShell";
+import IconButton from "./IconButton";
 
 export default function AddEventPanel({ onAdd, onClose, userName, timelineStart = 1910, timelineEnd = 2000, periods = [], fieldConfig, editingEvent, isTeacher, revisionMode = false, feedback = null }) {
   const fc = { ...DEFAULT_FIELD_CONFIG, ...(fieldConfig || {}) };
@@ -222,25 +223,7 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
               }
             </p>
           </div>
-          <button
-            onClick={onClose}
-            style={{
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              color: theme.textSecondary,
-              lineHeight: 1,
-              padding: 4,
-              display: "flex",
-              alignItems: "center",
-              borderRadius: 4,
-              transition: "all 0.15s",
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.color = theme.textPrimary; e.currentTarget.style.background = theme.subtleBg; }}
-            onMouseLeave={(e) => { e.currentTarget.style.color = theme.textSecondary; e.currentTarget.style.background = "none"; }}
-          >
-            <Icon icon={closeIcon} width={20} />
-          </button>
+          <IconButton icon={closeIcon} onClick={onClose} size={20} color={theme.textSecondary} hoverColor={theme.textPrimary} hoverBg={theme.subtleBg} />
         </div>
 
         {revisionMode && <FeedbackBanner feedback={feedback} />}

@@ -18,6 +18,7 @@ import databaseImportOutline from "@iconify-icons/mdi/database-import-outline";
 import deleteSweepOutline from "@iconify-icons/mdi/delete-sweep-outline";
 import StudentRoster from "./StudentRoster";
 import CopySettingsDialog from "./CopySettingsDialog";
+import IconButton from "./IconButton";
 import { floorToDecade, ceilToDecade } from "../utils/dateUtils";
 
 const FIELD_DEFINITIONS = [
@@ -292,41 +293,8 @@ export default function AdminSectionSettings({
                 {sectionName}
               </h2>
             )}
-            <button
-              onClick={() => { setEditingName(true); setDraftSectionName(sectionName); }}
-              title="Rename section"
-              style={{
-                background: "none",
-                border: "none",
-                padding: 4,
-                cursor: "pointer",
-                color: theme.textMuted,
-                display: "inline-flex",
-                transition: "color 0.15s",
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.color = theme.textPrimary; }}
-              onMouseLeave={(e) => { e.currentTarget.style.color = theme.textMuted; }}
-            >
-              <Icon icon={pencilOutline} width={16} />
-            </button>
-            <button
-              onClick={handleDeleteSection}
-              title="Delete section"
-              style={{
-                background: "none",
-                border: "none",
-                padding: 4,
-                cursor: "pointer",
-                color: theme.textMuted,
-                display: "inline-flex",
-                transition: "color 0.15s",
-                marginLeft: "auto",
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.color = theme.errorRed; }}
-              onMouseLeave={(e) => { e.currentTarget.style.color = theme.textMuted; }}
-            >
-              <Icon icon={deleteOutline} width={16} />
-            </button>
+            <IconButton icon={pencilOutline} onClick={() => { setEditingName(true); setDraftSectionName(sectionName); }} title="Rename section" size={16} color={theme.textMuted} hoverColor={theme.textPrimary} />
+            <IconButton icon={deleteOutline} onClick={handleDeleteSection} title="Delete section" size={16} color={theme.textMuted} hoverColor={theme.errorRed} style={{ marginLeft: "auto" }} />
           </div>
           <div style={{ fontSize: 10, color: theme.textMuted, letterSpacing: "0.05em" }}>
             ID: {sectionId}
@@ -451,24 +419,17 @@ export default function AdminSectionSettings({
                   }}>
                     {p.era[0]}&ndash;{p.era[1]}
                   </span>
-                  <button
+                  <IconButton
+                    icon={pencilOutline}
                     onClick={() => isEditing ? setEditingPeriodId(null) : openPeriodEdit(p)}
                     title="Edit time period"
-                    style={{
-                      background: "none",
-                      border: "none",
-                      padding: 0,
-                      cursor: "pointer",
-                      color: isEditing ? theme.teacherGreen : theme.textMuted,
-                      display: "inline-flex",
-                      transition: "color 0.15s",
-                    }}
-                    onMouseEnter={(e) => { if (!isEditing) e.currentTarget.style.color = theme.textPrimary; }}
-                    onMouseLeave={(e) => { if (!isEditing) e.currentTarget.style.color = theme.textMuted; }}
-                  >
-                    <Icon icon={pencilOutline} width={11} />
-                  </button>
-                  <button
+                    size={11}
+                    color={isEditing ? theme.teacherGreen : theme.textMuted}
+                    hoverColor={isEditing ? theme.teacherGreen : theme.textPrimary}
+                    padding={0}
+                  />
+                  <IconButton
+                    icon={closeCircleOutline}
                     onClick={() => {
                       if (!window.confirm(`Delete "${p.label}"? Events assigned to this time period will lose their time period.`)) return;
                       setDraftPeriods((prev) => prev.filter((x) => x.id !== p.id));
@@ -476,20 +437,11 @@ export default function AdminSectionSettings({
                       markDirty();
                     }}
                     title="Delete time period"
-                    style={{
-                      background: "none",
-                      border: "none",
-                      padding: 0,
-                      cursor: "pointer",
-                      color: theme.textMuted,
-                      display: "inline-flex",
-                      transition: "color 0.15s",
-                    }}
-                    onMouseEnter={(e) => { e.currentTarget.style.color = theme.errorRed; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.color = theme.textMuted; }}
-                  >
-                    <Icon icon={closeCircleOutline} width={11} />
-                  </button>
+                    size={11}
+                    color={theme.textMuted}
+                    hoverColor={theme.errorRed}
+                    padding={0}
+                  />
                 </div>
 
                 {/* Inline edit form */}
@@ -656,33 +608,16 @@ export default function AdminSectionSettings({
           Compelling Question
         </div>
 
-        <button
-          onClick={() => {
-            setDraftCQ((prev) => ({ ...prev, enabled: !prev.enabled }));
-            markDirty();
-          }}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
-            padding: "4px 6px",
-            borderRadius: 4,
-            border: "none",
-            background: "transparent",
-            cursor: "pointer",
-            fontSize: 10,
-            fontFamily: FONT_MONO,
-            color: draftCQ.enabled ? theme.teacherGreen : theme.textMuted,
-            fontWeight: 600,
-            transition: "all 0.15s",
-            marginBottom: 6,
-          }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = theme.subtleBg; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+        <IconButton
+          icon={draftCQ.enabled ? eyeOutline : eyeOffOutline}
+          onClick={() => { setDraftCQ((prev) => ({ ...prev, enabled: !prev.enabled })); markDirty(); }}
+          size={13}
+          color={draftCQ.enabled ? theme.teacherGreen : theme.textMuted}
+          hoverBg={theme.subtleBg}
+          style={{ background: "transparent", padding: "4px 6px", gap: 6, fontSize: 10, fontFamily: FONT_MONO, fontWeight: 600, marginBottom: 6 }}
         >
-          <Icon icon={draftCQ.enabled ? eyeOutline : eyeOffOutline} width={13} />
           {draftCQ.enabled ? "Visible to students" : "Hidden from students"}
-        </button>
+        </IconButton>
 
         <textarea
           value={draftCQ.text}
@@ -824,7 +759,7 @@ export default function AdminSectionSettings({
               padding: "8px 16px",
               borderRadius: 6,
               border: "none",
-              background: seeding ? "#6366F1" + "80" : "#6366F1",
+              background: seeding ? "#6366F180" : "#6366F1",
               color: "#fff",
               fontSize: 10,
               fontFamily: FONT_MONO,
@@ -938,55 +873,48 @@ export default function AdminSectionSettings({
           <Icon icon={contentSave} width={14} />
           {saving ? "Saving..." : "Save Changes"}
         </button>
-        <button
+        <IconButton
+          icon={undoIcon}
           onClick={handleDiscard}
           disabled={!isDirty}
+          size={14}
+          color={isDirty ? theme.textSecondary : theme.textMuted}
+          hoverBg={theme.subtleBg}
           style={{
+            background: "transparent",
             padding: "8px 16px",
             borderRadius: 6,
             border: `1px solid ${isDirty ? theme.inputBorder : "transparent"}`,
-            background: "transparent",
-            color: isDirty ? theme.textSecondary : theme.textMuted,
             fontSize: 11,
             fontFamily: FONT_MONO,
             fontWeight: 600,
-            cursor: isDirty ? "pointer" : "not-allowed",
-            display: "inline-flex",
-            alignItems: "center",
             gap: 6,
-            transition: "all 0.15s",
             opacity: isDirty ? 1 : 0.4,
           }}
-          onMouseEnter={(e) => { if (isDirty) e.currentTarget.style.background = theme.subtleBg; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
         >
-          <Icon icon={undoIcon} width={14} />
           Discard
-        </button>
+        </IconButton>
         <div style={{ flex: 1 }} />
-        <button
+        <IconButton
+          icon={contentCopy}
           onClick={() => setShowCopyDialog(true)}
+          size={14}
+          color={theme.textSecondary}
+          hoverColor={theme.textPrimary}
+          hoverBg={theme.subtleBg}
           style={{
+            background: "transparent",
             padding: "8px 16px",
             borderRadius: 6,
             border: `1px solid ${theme.inputBorder}`,
-            background: "transparent",
-            color: theme.textSecondary,
             fontSize: 11,
             fontFamily: FONT_MONO,
             fontWeight: 600,
-            cursor: "pointer",
-            display: "inline-flex",
-            alignItems: "center",
             gap: 6,
-            transition: "all 0.15s",
           }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = theme.subtleBg; e.currentTarget.style.color = theme.textPrimary; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = theme.textSecondary; }}
         >
-          <Icon icon={contentCopy} width={14} />
           Copy to...
-        </button>
+        </IconButton>
       </div>
 
       {/* Copy Settings Dialog */}

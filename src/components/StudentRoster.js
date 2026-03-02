@@ -4,6 +4,7 @@ import { Icon } from "@iconify/react";
 import accountGroup from "@iconify-icons/mdi/account-group";
 import chevronDown from "@iconify-icons/mdi/chevron-down";
 import closeCircleOutline from "@iconify-icons/mdi/close-circle-outline";
+import IconButton from "./IconButton";
 
 export default function StudentRoster({
   students,
@@ -281,7 +282,8 @@ function StudentRow({
         </button>
       )}
 
-      <button
+      <IconButton
+        icon={closeCircleOutline}
         onClick={() => {
           if (
             !window.confirm(
@@ -292,20 +294,11 @@ function StudentRow({
           onRemove(student.uid);
         }}
         title="Remove section assignment"
-        style={{
-          background: "none",
-          border: "none",
-          padding: 0,
-          cursor: "pointer",
-          color: theme.textMuted,
-          display: "inline-flex",
-          transition: "color 0.15s",
-        }}
-        onMouseEnter={(e) => (e.currentTarget.style.color = theme.errorRed)}
-        onMouseLeave={(e) => (e.currentTarget.style.color = theme.textMuted)}
-      >
-        <Icon icon={closeCircleOutline} width={11} />
-      </button>
+        size={11}
+        color={theme.textMuted}
+        hoverColor={theme.errorRed}
+        padding={0}
+      />
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { savePeriods, saveCompellingQuestion, saveTimelineRange, saveFieldConfig
 import { Icon } from "@iconify/react";
 import contentCopy from "@iconify-icons/mdi/content-copy";
 import closeIcon from "@iconify-icons/mdi/close";
+import IconButton from "./IconButton";
 
 const SETTING_CATEGORIES = [
   { key: "timelineRange", label: "Timeline Range" },
@@ -130,21 +131,7 @@ export default function CopySettingsDialog({ sourceSection, sourceName, sections
           }}>
             Copy Settings
           </div>
-          <button
-            onClick={onClose}
-            style={{
-              background: "none",
-              border: "none",
-              padding: 4,
-              cursor: "pointer",
-              color: theme.textMuted,
-              display: "inline-flex",
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.color = theme.textPrimary; }}
-            onMouseLeave={(e) => { e.currentTarget.style.color = theme.textMuted; }}
-          >
-            <Icon icon={closeIcon} width={18} />
-          </button>
+          <IconButton icon={closeIcon} onClick={onClose} size={18} color={theme.textMuted} hoverColor={theme.textPrimary} />
         </div>
 
         <div style={{

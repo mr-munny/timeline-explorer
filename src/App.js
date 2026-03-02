@@ -12,9 +12,8 @@ import VisualTimeline from "./components/VisualTimeline";
 import AddEventPanel from "./components/AddEventPanel";
 import AddConnectionPanel from "./components/AddConnectionPanel";
 import ModerationPanel from "./components/ModerationPanel";
-import { Icon } from "@iconify/react";
-import closeIcon from "@iconify-icons/mdi/close";
 import AdminView from "./components/AdminView";
+import ModalShell, { ModalCloseButton } from "./components/ModalShell";
 import LoginScreen from "./components/LoginScreen";
 import SectionPicker from "./components/SectionPicker";
 import TimelineHeader from "./components/TimelineHeader";
@@ -75,14 +74,14 @@ export default function App() {
     [activeSections]
   );
 
-  const switchSection = (newSection) => {
+  const switchSection = useCallback((newSection) => {
     setSection(newSection);
     setExpandedEvent(null);
     // Update URL without reload
     const url = new URL(window.location);
     url.searchParams.set("section", newSection);
     window.history.replaceState({}, "", url);
-  };
+  }, []);
 
   // Lock student to their assigned section (overrides URL param)
   useEffect(() => {
@@ -113,7 +112,7 @@ export default function App() {
     saveCompellingQuestion(id, { text: "", enabled: false });
     saveTimelineRange(id, { start: 1900, end: 2000 });
     saveFieldConfig(id, DEFAULT_FIELD_CONFIG);
-  }, [allSectionsRaw, effectiveTeacherUid]);
+  }, [allSectionsRaw, effectiveTeacherUid, setSections]);
 
   const handleDeleteSection = useCallback((id) => {
     const updated = (allSectionsRaw || []).filter((s) => s.id !== id);
@@ -123,13 +122,13 @@ export default function App() {
       const remaining = activeSections.filter((s) => s.id !== id);
       switchSection(remaining.length > 0 ? remaining[0].id : "all");
     }
-  }, [allSectionsRaw, activeSections, section]);
+  }, [allSectionsRaw, activeSections, section, setSections, switchSection]);
 
   const handleRenameSection = useCallback((id, newName) => {
     const updated = (allSectionsRaw || []).map((s) => s.id === id ? { ...s, name: newName } : s);
     setSections(updated);
     saveSections(updated);
-  }, [allSectionsRaw]);
+  }, [allSectionsRaw, setSections]);
 
   // Active field config (merged with defaults)
   const activeFieldConfig = useMemo(() => ({
@@ -623,52 +622,8 @@ export default function App() {
 
       {/* Pending Queue Modal (students) */}
       {showPendingQueue && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: theme.modalOverlay,
-            backdropFilter: "blur(4px)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 1000,
-            padding: 20,
-          }}
-          onClick={(e) => { if (e.target === e.currentTarget) setShowPendingQueue(false); }}
-        >
-          <div
-            style={{
-              background: theme.cardBg,
-              borderRadius: 14,
-              width: "100%",
-              maxWidth: 640,
-              maxHeight: "90vh",
-              overflow: "auto",
-              boxShadow: theme.modalShadow,
-              position: "relative",
-            }}
-          >
-            <button
-              onClick={() => setShowPendingQueue(false)}
-              style={{
-                position: "absolute",
-                top: 16,
-                right: 16,
-                background: "none",
-                border: "none",
-                color: theme.textSecondary,
-                cursor: "pointer",
-                padding: 4,
-                borderRadius: 6,
-                zIndex: 1,
-                transition: "all 0.15s",
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.color = theme.textPrimary; e.currentTarget.style.background = theme.subtleBg; }}
-              onMouseLeave={(e) => { e.currentTarget.style.color = theme.textSecondary; e.currentTarget.style.background = "none"; }}
-            >
-              <Icon icon={closeIcon} width={20} />
-            </button>
+        <ModalShell onClose={() => setShowPendingQueue(false)} maxWidth={640}>
+          <ModalCloseButton onClose={() => setShowPendingQueue(false)} />
             <ModerationPanel
               readOnly
               user={user}
@@ -685,8 +640,7 @@ export default function App() {
                 else handleDeleteConnection(id);
               }}
             />
-          </div>
-        </div>
+        </ModalShell>
       )}
 
       {/* Edit Connection Modal */}

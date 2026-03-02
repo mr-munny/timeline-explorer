@@ -2,12 +2,13 @@ import { useState } from "react";
 import { getPeriod } from "../data/constants";
 import { formatEventDate } from "../utils/dateUtils";
 import { Icon } from "@iconify/react";
-import closeIcon from "@iconify-icons/mdi/close";
 import pencilIcon from "@iconify-icons/mdi/pencil";
 import arrowRightBold from "@iconify-icons/mdi/arrow-right-bold";
 import chevronDown from "@iconify-icons/mdi/chevron-down";
 import chevronUp from "@iconify-icons/mdi/chevron-up";
 import { useTheme } from "../contexts/ThemeContext";
+import FeedbackBanner from "./FeedbackBanner";
+import ModalShell, { ModalCloseButton } from "./ModalShell";
 
 export default function RevisionPanel({
   revisionEvents = [],
@@ -24,52 +25,8 @@ export default function RevisionPanel({
   const findEvent = (id) => allEvents.find((e) => e.id === id);
 
   return (
-    <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        background: theme.modalOverlay,
-        backdropFilter: "blur(4px)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        zIndex: 1000,
-        padding: 20,
-      }}
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
-    >
-      <div
-        style={{
-          background: theme.cardBg,
-          borderRadius: 14,
-          width: "100%",
-          maxWidth: 640,
-          maxHeight: "90vh",
-          overflow: "auto",
-          boxShadow: theme.modalShadow,
-          position: "relative",
-        }}
-      >
-        <button
-          onClick={onClose}
-          style={{
-            position: "absolute",
-            top: 16,
-            right: 16,
-            background: "none",
-            border: "none",
-            color: theme.textSecondary,
-            cursor: "pointer",
-            padding: 4,
-            borderRadius: 6,
-            zIndex: 1,
-            transition: "all 0.15s",
-          }}
-          onMouseEnter={(e) => { e.currentTarget.style.color = theme.textPrimary; e.currentTarget.style.background = theme.subtleBg; }}
-          onMouseLeave={(e) => { e.currentTarget.style.color = theme.textSecondary; e.currentTarget.style.background = "none"; }}
-        >
-          <Icon icon={closeIcon} width={20} />
-        </button>
+    <ModalShell onClose={onClose} maxWidth={640}>
+      <ModalCloseButton onClose={onClose} />
 
         <div style={{ padding: "24px 32px", fontFamily: "'Overpass Mono', monospace" }}>
           <h2 style={{
@@ -136,36 +93,7 @@ export default function RevisionPanel({
                       {event.description?.length > 200 ? event.description.slice(0, 200) + "..." : event.description}
                     </p>
 
-                    {/* Teacher feedback */}
-                    {event.feedback && (
-                      <div style={{
-                        background: theme.warmSubtleBg || "#FEF3C7",
-                        border: "1.5px solid #D97706",
-                        borderLeft: "4px solid #D97706",
-                        borderRadius: 8,
-                        padding: "10px 14px",
-                        marginBottom: 10,
-                      }}>
-                        <div style={{
-                          fontSize: 9, fontWeight: 700, fontFamily: "'Overpass Mono', monospace",
-                          color: "#92400E", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4,
-                        }}>
-                          Teacher Feedback
-                        </div>
-                        <p style={{
-                          fontSize: 12, fontFamily: "'Newsreader', serif",
-                          color: theme.textDescription, lineHeight: 1.6, margin: 0,
-                        }}>
-                          {event.feedback.text}
-                        </p>
-                        <div style={{
-                          fontSize: 9, fontFamily: "'Overpass Mono', monospace",
-                          color: theme.textTertiary, marginTop: 4,
-                        }}>
-                          {event.feedback.givenBy} &middot; {new Date(event.feedback.date).toLocaleDateString()}
-                        </div>
-                      </div>
-                    )}
+                    <FeedbackBanner feedback={event.feedback} compact />
 
                     {/* Past feedback history */}
                     {hasHistory && (
@@ -301,35 +229,7 @@ export default function RevisionPanel({
                         {conn.description}
                       </p>
 
-                      {conn.feedback && (
-                        <div style={{
-                          background: theme.warmSubtleBg || "#FEF3C7",
-                          border: "1.5px solid #D97706",
-                          borderLeft: "4px solid #D97706",
-                          borderRadius: 8,
-                          padding: "10px 14px",
-                          marginBottom: 10,
-                        }}>
-                          <div style={{
-                            fontSize: 9, fontWeight: 700, fontFamily: "'Overpass Mono', monospace",
-                            color: "#92400E", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4,
-                          }}>
-                            Teacher Feedback
-                          </div>
-                          <p style={{
-                            fontSize: 12, fontFamily: "'Newsreader', serif",
-                            color: theme.textDescription, lineHeight: 1.6, margin: 0,
-                          }}>
-                            {conn.feedback.text}
-                          </p>
-                          <div style={{
-                            fontSize: 9, fontFamily: "'Overpass Mono', monospace",
-                            color: theme.textTertiary, marginTop: 4,
-                          }}>
-                            {conn.feedback.givenBy} &middot; {new Date(conn.feedback.date).toLocaleDateString()}
-                          </div>
-                        </div>
-                      )}
+                      <FeedbackBanner feedback={conn.feedback} compact />
 
                       {hasHistory && (
                         <button
@@ -408,7 +308,6 @@ export default function RevisionPanel({
             </div>
           )}
         </div>
-      </div>
-    </div>
+    </ModalShell>
   );
 }

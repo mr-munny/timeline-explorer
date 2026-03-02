@@ -4,6 +4,8 @@ import closeIcon from "@iconify-icons/mdi/close";
 import sendIcon from "@iconify-icons/mdi/send";
 import arrowRightBold from "@iconify-icons/mdi/arrow-right-bold";
 import { useTheme } from "../contexts/ThemeContext";
+import FeedbackBanner from "./FeedbackBanner";
+import ModalShell from "./ModalShell";
 import { getPeriod } from "../data/constants";
 import { formatEventDate } from "../utils/dateUtils";
 
@@ -276,31 +278,8 @@ export default function AddConnectionPanel({ onAdd, onClose, userName, approvedE
   };
 
   return (
-    <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        background: theme.modalOverlay,
-        backdropFilter: "blur(4px)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        zIndex: 1000,
-        padding: 20,
-      }}
-    >
-      <div
-        style={{
-          background: theme.cardBg,
-          borderRadius: 14,
-          padding: "28px 28px 20px",
-          width: "100%",
-          maxWidth: 520,
-          maxHeight: "90vh",
-          overflow: "auto",
-          boxShadow: theme.modalShadow,
-        }}
-      >
+    <ModalShell onClose={onClose} maxWidth={520} closeOnBackdrop={false}>
+      <div style={{ padding: "28px 28px 20px" }}>
         <div
           style={{
             display: "flex",
@@ -359,36 +338,7 @@ export default function AddConnectionPanel({ onAdd, onClose, userName, approvedE
           </button>
         </div>
 
-        {/* Teacher feedback banner (revision mode) */}
-        {revisionMode && feedback && (
-          <div style={{
-            background: theme.warmSubtleBg || "#FEF3C7",
-            border: "1.5px solid #D97706",
-            borderLeft: "4px solid #D97706",
-            borderRadius: 8,
-            padding: "12px 16px",
-            marginBottom: 4,
-          }}>
-            <div style={{
-              fontSize: 10, fontWeight: 700, fontFamily: "'Overpass Mono', monospace",
-              color: "#92400E", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6,
-            }}>
-              Teacher Feedback
-            </div>
-            <p style={{
-              fontSize: 13, fontFamily: "'Newsreader', serif",
-              color: theme.textDescription, lineHeight: 1.6, margin: 0,
-            }}>
-              {feedback.text}
-            </p>
-            <div style={{
-              fontSize: 10, fontFamily: "'Overpass Mono', monospace",
-              color: theme.textTertiary, marginTop: 6,
-            }}>
-              {feedback.givenBy} &middot; {new Date(feedback.date).toLocaleDateString()}
-            </div>
-          </div>
-        )}
+        {revisionMode && <FeedbackBanner feedback={feedback} />}
 
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           <EventSearchDropdown
@@ -507,6 +457,6 @@ export default function AddConnectionPanel({ onAdd, onClose, userName, approvedE
           </button>
         </div>
       </div>
-    </div>
+    </ModalShell>
   );
 }

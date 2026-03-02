@@ -12,8 +12,9 @@ import contentSave from "@iconify-icons/mdi/content-save";
 import arrowRightBold from "@iconify-icons/mdi/arrow-right-bold";
 import commentAlertOutline from "@iconify-icons/mdi/comment-alert-outline";
 import { useTheme } from "../contexts/ThemeContext";
+import FeedbackBanner from "./FeedbackBanner";
 
-export default function ModerationPanel({ pendingEvents, pendingConnections = [], needsRevisionEvents = [], needsRevisionConnections = [], allEvents = [], allConnections = [], periods = [], getSectionName = (id) => id, onEventApproved, embedded = true, readOnly = false, user, userName, onEditPendingEvent, onEditPendingConnection, onWithdraw }) {
+export default function ModerationPanel({ pendingEvents, pendingConnections = [], needsRevisionEvents = [], needsRevisionConnections = [], allEvents = [], allConnections = [], periods = [], getSectionName = (id) => id, onEventApproved, readOnly = false, user, userName, onEditPendingEvent, onEditPendingConnection, onWithdraw }) {
   const { theme } = useTheme();
   const [activeTab, setActiveTab] = useState("events");
   const [editingId, setEditingId] = useState(null);
@@ -1056,36 +1057,7 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                         </div>
                       </div>
                     </div>
-                    {/* Show the feedback that was given */}
-                    {event.feedback && (
-                      <div style={{
-                        background: theme.warmSubtleBg || "#FEF3C7",
-                        border: "1.5px solid #D97706",
-                        borderLeft: "4px solid #D97706",
-                        borderRadius: 8,
-                        padding: "10px 14px",
-                        marginBottom: 10,
-                      }}>
-                        <div style={{
-                          fontSize: 9, fontWeight: 700, fontFamily: "'Overpass Mono', monospace",
-                          color: "#92400E", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4,
-                        }}>
-                          Your Feedback
-                        </div>
-                        <p style={{
-                          fontSize: 12, fontFamily: "'Newsreader', serif",
-                          color: theme.textDescription, lineHeight: 1.6, margin: 0,
-                        }}>
-                          {event.feedback.text}
-                        </p>
-                        <div style={{
-                          fontSize: 9, fontFamily: "'Overpass Mono', monospace",
-                          color: theme.textTertiary, marginTop: 4,
-                        }}>
-                          {event.feedback.givenBy} &middot; {new Date(event.feedback.date).toLocaleDateString()}
-                        </div>
-                      </div>
-                    )}
+                    <FeedbackBanner feedback={event.feedback} title="Your Feedback" compact />
                     <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
                       <button
                         onClick={() => handleReject(event.id)}
@@ -1607,32 +1579,7 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                     }}>
                       {conn.description}
                     </p>
-                    {conn.feedback && (
-                      <div style={{
-                        background: theme.warmSubtleBg || "#FEF3C7",
-                        border: "1.5px solid #D97706", borderLeft: "4px solid #D97706",
-                        borderRadius: 8, padding: "10px 14px", marginBottom: 10,
-                      }}>
-                        <div style={{
-                          fontSize: 9, fontWeight: 700, fontFamily: "'Overpass Mono', monospace",
-                          color: "#92400E", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4,
-                        }}>
-                          Your Feedback
-                        </div>
-                        <p style={{
-                          fontSize: 12, fontFamily: "'Newsreader', serif",
-                          color: theme.textDescription, lineHeight: 1.6, margin: 0,
-                        }}>
-                          {conn.feedback.text}
-                        </p>
-                        <div style={{
-                          fontSize: 9, fontFamily: "'Overpass Mono', monospace",
-                          color: theme.textTertiary, marginTop: 4,
-                        }}>
-                          {conn.feedback.givenBy} &middot; {new Date(conn.feedback.date).toLocaleDateString()}
-                        </div>
-                      </div>
-                    )}
+                    <FeedbackBanner feedback={conn.feedback} title="Your Feedback" compact />
                     <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
                       <button
                         onClick={() => handleRejectConnection(conn.id)}

@@ -1,15 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useTheme, FONT_MONO, FONT_SERIF } from "../contexts/ThemeContext";
-import { PERIOD_COLORS, DEFAULT_FIELD_CONFIG } from "../data/constants";
+import { DEFAULT_FIELD_CONFIG } from "../data/constants";
 import { subscribeToPeriods, subscribeToCompellingQuestion, subscribeToTimelineRange, subscribeToFieldConfig, savePeriods, saveCompellingQuestion, saveTimelineRange, saveFieldConfig, seedDemoData, wipeSectionData } from "../services/database";
 import { Icon } from "@iconify/react";
 import pencilOutline from "@iconify-icons/mdi/pencil-outline";
-import closeCircleOutline from "@iconify-icons/mdi/close-circle-outline";
-import eyeOutline from "@iconify-icons/mdi/eye-outline";
-import eyeOffOutline from "@iconify-icons/mdi/eye-off-outline";
 import formatQuoteOpenOutline from "@iconify-icons/mdi/format-quote-open-outline";
 import formTextboxIcon from "@iconify-icons/mdi/form-textbox";
-import plusIcon from "@iconify-icons/mdi/plus";
 import contentSave from "@iconify-icons/mdi/content-save";
 import undoIcon from "@iconify-icons/mdi/undo";
 import contentCopy from "@iconify-icons/mdi/content-copy";
@@ -19,23 +15,10 @@ import deleteSweepOutline from "@iconify-icons/mdi/delete-sweep-outline";
 import StudentRoster from "./StudentRoster";
 import CopySettingsDialog from "./CopySettingsDialog";
 import IconButton from "./IconButton";
-import { floorToDecade, ceilToDecade } from "../utils/dateUtils";
-
-const FIELD_DEFINITIONS = [
-  { key: "title", label: "Event Title" },
-  { key: "year", label: "Year" },
-  { key: "month", label: "Month" },
-  { key: "day", label: "Day" },
-  { key: "endDate", label: "End Date" },
-  { key: "period", label: "Time Period" },
-  { key: "tags", label: "Tags" },
-  { key: "sourceType", label: "Source Type" },
-  { key: "description", label: "Description" },
-  { key: "sourceNote", label: "Source Citation" },
-  { key: "sourceUrl", label: "Source URL" },
-  { key: "imageUrl", label: "Image URL" },
-  { key: "region", label: "Region" },
-];
+import TimelineRangeEditor from "./TimelineRangeEditor";
+import TimePeriodsEditor from "./TimePeriodsEditor";
+import CompellingQuestionEditor from "./CompellingQuestionEditor";
+import FieldConfigEditor from "./FieldConfigEditor";
 
 export default function AdminSectionSettings({
   sectionId,
@@ -62,18 +45,9 @@ export default function AdminSectionSettings({
   const [draftFieldConfig, setDraftFieldConfig] = useState({ ...DEFAULT_FIELD_CONFIG });
   const [isDirty, setIsDirty] = useState(false);
 
-  // Period editing
-  const [editingPeriodId, setEditingPeriodId] = useState(null);
-  const [draftEraStart, setDraftEraStart] = useState("");
-  const [draftEraEnd, setDraftEraEnd] = useState("");
-
   // Section rename
   const [editingName, setEditingName] = useState(false);
   const [draftSectionName, setDraftSectionName] = useState(sectionName);
-
-  // Timeline range draft inputs
-  const [draftStartStr, setDraftStartStr] = useState(String(liveTimelineRange.start));
-  const [draftEndStr, setDraftEndStr] = useState(String(liveTimelineRange.end));
 
   // Copy dialog
   const [showCopyDialog, setShowCopyDialog] = useState(false);
@@ -93,7 +67,6 @@ export default function AdminSectionSettings({
   useEffect(() => {
     setIsDirty(false);
     isDirtyRef.current = false;
-    setEditingPeriodId(null);
     setEditingName(false);
     setDraftSectionName(sectionName);
   }, [sectionId, sectionName]);
@@ -129,8 +102,6 @@ export default function AdminSectionSettings({
       setLiveTimelineRange(range);
       if (!isDirtyRef.current) {
         setDraftTimelineRange(range);
-        setDraftStartStr(String(range.start));
-        setDraftEndStr(String(range.end));
       }
     });
     return () => unsub();
@@ -174,10 +145,7 @@ export default function AdminSectionSettings({
     setDraftPeriods(livePeriods);
     setDraftCQ(liveCQ);
     setDraftTimelineRange(liveTimelineRange);
-    setDraftStartStr(String(liveTimelineRange.start));
-    setDraftEndStr(String(liveTimelineRange.end));
     setDraftFieldConfig(liveFieldConfig);
-    setEditingPeriodId(null);
     setIsDirty(false);
     isDirtyRef.current = false;
   };
@@ -193,22 +161,6 @@ export default function AdminSectionSettings({
       onRenameSection(sectionId, trimmed);
     }
     setEditingName(false);
-  };
-
-  // Period editing helpers
-  const openPeriodEdit = (period) => {
-    setEditingPeriodId(period.id);
-    setDraftEraStart(String(period.era[0]));
-    setDraftEraEnd(String(period.era[1]));
-  };
-
-  const commitEra = (periodId) => {
-    const s = Number(draftEraStart) || 0;
-    const e = Number(draftEraEnd) || 0;
-    setDraftPeriods((prev) =>
-      prev.map((x) => x.id === periodId ? { ...x, era: [s, Math.max(s + 1, e)] } : x)
-    );
-    markDirty();
   };
 
   // Section header style
@@ -303,302 +255,22 @@ export default function AdminSectionSettings({
 
         {/* Timeline Range */}
         <div style={sectionHeaderStyle}>Timeline Range</div>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <div style={{ flex: 1 }}>
-            <label style={{
-              fontSize: 9,
-              color: theme.textSecondary,
-              textTransform: "uppercase",
-              letterSpacing: "0.05em",
-              fontWeight: 600,
-              marginBottom: 3,
-              display: "block",
-            }}>Start</label>
-            <input
-              type="number"
-              value={draftStartStr}
-              step={10}
-              onChange={(e) => setDraftStartStr(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter") e.target.blur(); }}
-              onBlur={() => {
-                const v = floorToDecade(Math.min(Number(draftStartStr), draftTimelineRange.end - 10));
-                setDraftTimelineRange((prev) => ({ ...prev, start: v }));
-                setDraftStartStr(String(v));
-                markDirty();
-              }}
-              style={{ ...inputStyle, width: "100%" }}
-            />
-          </div>
-          <span style={{ fontSize: 12, color: theme.textMuted, marginTop: 14 }}>&ndash;</span>
-          <div style={{ flex: 1 }}>
-            <label style={{
-              fontSize: 9,
-              color: theme.textSecondary,
-              textTransform: "uppercase",
-              letterSpacing: "0.05em",
-              fontWeight: 600,
-              marginBottom: 3,
-              display: "block",
-            }}>End</label>
-            <input
-              type="number"
-              value={draftEndStr}
-              step={10}
-              onChange={(e) => setDraftEndStr(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter") e.target.blur(); }}
-              onBlur={() => {
-                const v = ceilToDecade(Math.max(draftTimelineRange.start + 10, Number(draftEndStr)));
-                setDraftTimelineRange((prev) => ({ ...prev, end: v }));
-                setDraftEndStr(String(v));
-                markDirty();
-              }}
-              style={{ ...inputStyle, width: "100%" }}
-            />
-          </div>
-        </div>
-        <div style={{
-          fontSize: 9,
-          color: theme.textMuted,
-          marginTop: 6,
-          textAlign: "center",
-          letterSpacing: "0.05em",
-        }}>
-          {draftTimelineRange.end - draftTimelineRange.start} year span &middot; snaps to decade
-        </div>
+        <TimelineRangeEditor
+          draftRange={draftTimelineRange}
+          onRangeChange={(newRange) => { setDraftTimelineRange(newRange); markDirty(); }}
+          inputStyle={inputStyle}
+        />
 
         <div style={dividerStyle} />
 
         {/* Time Periods */}
         <div style={sectionHeaderStyle}>Time Periods</div>
-
-        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-          {draftPeriods.length === 0 && (
-            <div style={{
-              fontSize: 10,
-              color: theme.textMuted,
-              fontStyle: "italic",
-              padding: "4px 6px",
-            }}>
-              No time periods configured
-            </div>
-          )}
-          {draftPeriods.map((p) => {
-            const isEditing = editingPeriodId === p.id;
-            return (
-              <div key={p.id}>
-                <div style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6,
-                  padding: "4px 6px",
-                  borderRadius: 4,
-                  background: isEditing ? theme.subtleBg : "transparent",
-                  transition: "background 0.15s",
-                }}>
-                  <div style={{
-                    width: 8,
-                    height: 8,
-                    borderRadius: "50%",
-                    background: p.accent,
-                    flexShrink: 0,
-                  }} />
-                  <span style={{
-                    fontSize: 10,
-                    color: theme.textPrimary,
-                    flex: 1,
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                  }}>
-                    {p.label}
-                  </span>
-                  <span style={{
-                    fontSize: 9,
-                    color: theme.textMuted,
-                    flexShrink: 0,
-                  }}>
-                    {p.era[0]}&ndash;{p.era[1]}
-                  </span>
-                  <IconButton
-                    icon={pencilOutline}
-                    onClick={() => isEditing ? setEditingPeriodId(null) : openPeriodEdit(p)}
-                    title="Edit time period"
-                    size={11}
-                    color={isEditing ? theme.teacherGreen : theme.textMuted}
-                    hoverColor={isEditing ? theme.teacherGreen : theme.textPrimary}
-                    padding={0}
-                  />
-                  <IconButton
-                    icon={closeCircleOutline}
-                    onClick={() => {
-                      if (!window.confirm(`Delete "${p.label}"? Events assigned to this time period will lose their time period.`)) return;
-                      setDraftPeriods((prev) => prev.filter((x) => x.id !== p.id));
-                      if (editingPeriodId === p.id) setEditingPeriodId(null);
-                      markDirty();
-                    }}
-                    title="Delete time period"
-                    size={11}
-                    color={theme.textMuted}
-                    hoverColor={theme.errorRed}
-                    padding={0}
-                  />
-                </div>
-
-                {/* Inline edit form */}
-                {isEditing && (
-                  <div style={{
-                    padding: "8px 6px 6px",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 6,
-                  }}>
-                    <input
-                      type="text"
-                      value={p.label}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        if (val.trim() || val === "") {
-                          setDraftPeriods((prev) =>
-                            prev.map((x) => x.id === p.id ? { ...x, label: val } : x)
-                          );
-                          markDirty();
-                        }
-                      }}
-                      onBlur={(e) => {
-                        const finalLabel = e.target.value.trim() || "Untitled Time Period";
-                        setDraftPeriods((prev) =>
-                          prev.map((x) => x.id === p.id ? { ...x, label: finalLabel } : x)
-                        );
-                      }}
-                      placeholder="Time period label"
-                      style={{
-                        padding: "5px 8px",
-                        border: `1.5px solid ${theme.inputBorder}`,
-                        borderRadius: 4,
-                        fontSize: 11,
-                        fontFamily: FONT_MONO,
-                        background: theme.inputBg,
-                        color: theme.textPrimary,
-                        outline: "none",
-                        boxSizing: "border-box",
-                      }}
-                    />
-                    <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                      <input
-                        type="number"
-                        value={draftEraStart}
-                        onChange={(e) => setDraftEraStart(e.target.value)}
-                        onKeyDown={(e) => { if (e.key === "Enter") e.target.blur(); }}
-                        onBlur={() => commitEra(p.id)}
-                        style={{
-                          width: "100%",
-                          padding: "5px 6px",
-                          border: `1.5px solid ${theme.inputBorder}`,
-                          borderRadius: 4,
-                          fontSize: 11,
-                          fontFamily: FONT_MONO,
-                          background: theme.inputBg,
-                          color: theme.textPrimary,
-                          outline: "none",
-                          boxSizing: "border-box",
-                          textAlign: "center",
-                        }}
-                      />
-                      <span style={{ fontSize: 10, color: theme.textMuted }}>&ndash;</span>
-                      <input
-                        type="number"
-                        value={draftEraEnd}
-                        onChange={(e) => setDraftEraEnd(e.target.value)}
-                        onKeyDown={(e) => { if (e.key === "Enter") e.target.blur(); }}
-                        onBlur={() => commitEra(p.id)}
-                        style={{
-                          width: "100%",
-                          padding: "5px 6px",
-                          border: `1.5px solid ${theme.inputBorder}`,
-                          borderRadius: 4,
-                          fontSize: 11,
-                          fontFamily: FONT_MONO,
-                          background: theme.inputBg,
-                          color: theme.textPrimary,
-                          outline: "none",
-                          boxSizing: "border-box",
-                          textAlign: "center",
-                        }}
-                      />
-                    </div>
-                    <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
-                      {PERIOD_COLORS.map((c, i) => (
-                        <button
-                          key={i}
-                          onClick={() => {
-                            setDraftPeriods((prev) =>
-                              prev.map((x) => x.id === p.id ? { ...x, color: c.color, bg: c.bg, accent: c.accent } : x)
-                            );
-                            markDirty();
-                          }}
-                          title={`Color ${i + 1}`}
-                          style={{
-                            width: 18,
-                            height: 18,
-                            borderRadius: "50%",
-                            background: c.accent,
-                            border: p.color === c.color ? `2px solid ${theme.textPrimary}` : `2px solid transparent`,
-                            cursor: "pointer",
-                            padding: 0,
-                            transition: "border-color 0.15s",
-                          }}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Add period button */}
-        <button
-          onClick={() => {
-            const newId = "period-" + Date.now();
-            const colorIdx = draftPeriods.length % PERIOD_COLORS.length;
-            const c = PERIOD_COLORS[colorIdx];
-            const newPeriod = {
-              id: newId,
-              label: "New Time Period",
-              color: c.color,
-              bg: c.bg,
-              accent: c.accent,
-              era: [draftTimelineRange.start, draftTimelineRange.end],
-            };
-            setDraftPeriods((prev) => [...prev, newPeriod]);
-            openPeriodEdit(newPeriod);
-            markDirty();
-          }}
-          style={{
-            width: "100%",
-            marginTop: 6,
-            padding: "5px 0",
-            border: `1.5px dashed ${theme.inputBorder}`,
-            borderRadius: 4,
-            background: "transparent",
-            color: theme.textSecondary,
-            fontSize: 10,
-            fontFamily: FONT_MONO,
-            fontWeight: 600,
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 4,
-            transition: "all 0.15s",
-          }}
-          onMouseEnter={(e) => { e.currentTarget.style.borderColor = theme.textSecondary; e.currentTarget.style.color = theme.textPrimary; }}
-          onMouseLeave={(e) => { e.currentTarget.style.borderColor = theme.inputBorder; e.currentTarget.style.color = theme.textSecondary; }}
-        >
-          <Icon icon={plusIcon} width={12} />
-          Add Time Period
-        </button>
+        <TimePeriodsEditor
+          draftPeriods={draftPeriods}
+          draftTimelineRange={draftTimelineRange}
+          onPeriodsChange={(newPeriods) => { setDraftPeriods(newPeriods); markDirty(); }}
+          inputStyle={inputStyle}
+        />
 
         <div style={dividerStyle} />
 
@@ -607,39 +279,9 @@ export default function AdminSectionSettings({
           <Icon icon={formatQuoteOpenOutline} width={12} />
           Compelling Question
         </div>
-
-        <IconButton
-          icon={draftCQ.enabled ? eyeOutline : eyeOffOutline}
-          onClick={() => { setDraftCQ((prev) => ({ ...prev, enabled: !prev.enabled })); markDirty(); }}
-          size={13}
-          color={draftCQ.enabled ? theme.teacherGreen : theme.textMuted}
-          hoverBg={theme.subtleBg}
-          style={{ background: "transparent", padding: "4px 6px", gap: 6, fontSize: 10, fontFamily: FONT_MONO, fontWeight: 600, marginBottom: 6 }}
-        >
-          {draftCQ.enabled ? "Visible to students" : "Hidden from students"}
-        </IconButton>
-
-        <textarea
-          value={draftCQ.text}
-          onChange={(e) => {
-            setDraftCQ((prev) => ({ ...prev, text: e.target.value }));
-            markDirty();
-          }}
-          placeholder="e.g., How did global conflicts reshape the American identity?"
-          style={{
-            width: "100%",
-            padding: "8px 10px",
-            border: `1.5px solid ${theme.inputBorder}`,
-            borderRadius: 6,
-            fontSize: 12,
-            fontFamily: FONT_SERIF,
-            background: theme.inputBg,
-            color: theme.textPrimary,
-            outline: "none",
-            boxSizing: "border-box",
-            resize: "vertical",
-            minHeight: 60,
-          }}
+        <CompellingQuestionEditor
+          draftCQ={draftCQ}
+          onCQChange={(newCQ) => { setDraftCQ(newCQ); markDirty(); }}
         />
 
         <div style={dividerStyle} />
@@ -649,68 +291,10 @@ export default function AdminSectionSettings({
           <Icon icon={formTextboxIcon} width={12} />
           Entry Fields
         </div>
-
-        <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-          {FIELD_DEFINITIONS.map(({ key, label }) => {
-            const mode = draftFieldConfig[key] || "mandatory";
-            const allowedModes = key === "endDate"
-              ? ["optional", "hidden"]
-              : key === "year"
-              ? ["mandatory"]
-              : ["mandatory", "optional", "hidden"];
-            return (
-              <div
-                key={key}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6,
-                  padding: "3px 6px",
-                  borderRadius: 4,
-                }}
-              >
-                <span style={{
-                  fontSize: 10,
-                  color: mode === "hidden" ? theme.textMuted : theme.textPrimary,
-                  flex: 1,
-                  textDecoration: mode === "hidden" ? "line-through" : "none",
-                  opacity: mode === "hidden" ? 0.5 : 1,
-                }}>
-                  {label}
-                </span>
-                <div style={{ display: "flex", gap: 2 }}>
-                  {allowedModes.map((m) => (
-                    <button
-                      key={m}
-                      onClick={() => {
-                        setDraftFieldConfig((prev) => ({ ...prev, [key]: m }));
-                        markDirty();
-                      }}
-                      style={{
-                        fontSize: 8,
-                        fontWeight: mode === m ? 700 : 500,
-                        fontFamily: FONT_MONO,
-                        padding: "2px 5px",
-                        borderRadius: 3,
-                        border: `1px solid ${mode === m ? (m === "mandatory" ? theme.teacherGreen : m === "optional" ? theme.feedbackAmber : theme.errorRed) : theme.inputBorder}`,
-                        background: mode === m ? (m === "mandatory" ? theme.teacherGreen + "20" : m === "optional" ? theme.feedbackAmber + "20" : theme.errorRed + "20") : "transparent",
-                        color: mode === m ? (m === "mandatory" ? theme.teacherGreen : m === "optional" ? theme.feedbackAmber : theme.errorRed) : theme.textMuted,
-                        cursor: "pointer",
-                        textTransform: "uppercase",
-                        letterSpacing: "0.03em",
-                        transition: "all 0.15s",
-                      }}
-                      onMouseEnter={(e) => { if (mode !== m) { const c = m === "mandatory" ? theme.teacherGreen : m === "optional" ? theme.feedbackAmber : theme.errorRed; e.currentTarget.style.borderColor = c; e.currentTarget.style.color = c; } }}
-                      onMouseLeave={(e) => { if (mode !== m) { e.currentTarget.style.borderColor = theme.inputBorder; e.currentTarget.style.color = theme.textMuted; } }}
-                    >
-                      {m === "mandatory" ? "Req" : m === "optional" ? "Opt" : "Hide"}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            );
-          })}
-        </div>
+        <FieldConfigEditor
+          draftFieldConfig={draftFieldConfig}
+          onFieldConfigChange={(newConfig) => { setDraftFieldConfig(newConfig); markDirty(); }}
+        />
 
         <div style={dividerStyle} />
 

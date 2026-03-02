@@ -175,11 +175,7 @@ export function subscribeToConnectionsForSections(sectionIds, callback) {
 
 // Listen to events in real-time, filtered by section
 export function subscribeToEvents(section, callback) {
-  // If section is "all" (teacher view), listen to all events
-  const q =
-    section === "all"
-      ? eventsRef
-      : query(eventsRef, orderByChild("section"), equalTo(section));
+  const q = query(eventsRef, orderByChild("section"), equalTo(section));
 
   return onValue(q, (snapshot) => {
     const events = [];
@@ -237,10 +233,7 @@ export async function approveEdit(editProposalId, originalEventId, updates) {
 
 // Listen to connections in real-time, filtered by section
 export function subscribeToConnections(section, callback) {
-  const q =
-    section === "all"
-      ? connectionsRef
-      : query(connectionsRef, orderByChild("section"), equalTo(section));
+  const q = query(connectionsRef, orderByChild("section"), equalTo(section));
 
   return onValue(q, (snapshot) => {
     const connections = [];
@@ -361,22 +354,6 @@ export function subscribeToPeriods(section, callback) {
   });
 }
 
-// Listen to ALL sections' periods (teacher "all" view)
-export function subscribeToAllSectionPeriods(sections, callback) {
-  const periodsMap = {};
-  const unsubscribes = [];
-  for (const sec of sections) {
-    const periodsRef = ref(db, `sectionSettings/${sec}/periods`);
-    const unsub = onValue(periodsRef, (snapshot) => {
-      const data = snapshot.val();
-      periodsMap[sec] = Array.isArray(data) ? data.filter(Boolean) : null;
-      callback({ ...periodsMap });
-    });
-    unsubscribes.push(unsub);
-  }
-  return () => unsubscribes.forEach((fn) => fn());
-}
-
 // Write full periods array for a section
 export async function savePeriods(section, periods) {
   const periodsRef = ref(db, `sectionSettings/${section}/periods`);
@@ -404,21 +381,6 @@ export function subscribeToCompellingQuestion(section, callback) {
   return onValue(cqRef, (snapshot) => {
     callback(snapshot.val() || null);
   });
-}
-
-// Listen to ALL sections' compelling questions (teacher "all" view)
-export function subscribeToAllSectionCompellingQuestions(sections, callback) {
-  const cqMap = {};
-  const unsubscribes = [];
-  for (const sec of sections) {
-    const cqRef = ref(db, `sectionSettings/${sec}/compellingQuestion`);
-    const unsub = onValue(cqRef, (snapshot) => {
-      cqMap[sec] = snapshot.val() || null;
-      callback({ ...cqMap });
-    });
-    unsubscribes.push(unsub);
-  }
-  return () => unsubscribes.forEach((fn) => fn());
 }
 
 // Write compelling question for a section
@@ -474,21 +436,6 @@ export function subscribeToTimelineRange(section, callback) {
   });
 }
 
-// Listen to ALL sections' timeline ranges (teacher "all" view)
-export function subscribeToAllSectionTimelineRanges(sections, callback) {
-  const rangeMap = {};
-  const unsubscribes = [];
-  for (const sec of sections) {
-    const rangeRef = ref(db, `sectionSettings/${sec}/timelineRange`);
-    const unsub = onValue(rangeRef, (snapshot) => {
-      rangeMap[sec] = snapshot.val() || null;
-      callback({ ...rangeMap });
-    });
-    unsubscribes.push(unsub);
-  }
-  return () => unsubscribes.forEach((fn) => fn());
-}
-
 // Write timeline range for a section
 export async function saveTimelineRange(section, range) {
   const rangeRef = ref(db, `sectionSettings/${section}/timelineRange`);
@@ -515,21 +462,6 @@ export function subscribeToFieldConfig(section, callback) {
   return onValue(configRef, (snapshot) => {
     callback(snapshot.val() || null);
   });
-}
-
-// Listen to ALL sections' field configs (teacher "all" view)
-export function subscribeToAllSectionFieldConfigs(sections, callback) {
-  const configMap = {};
-  const unsubscribes = [];
-  for (const sec of sections) {
-    const configRef = ref(db, `sectionSettings/${sec}/fieldConfig`);
-    const unsub = onValue(configRef, (snapshot) => {
-      configMap[sec] = snapshot.val() || null;
-      callback({ ...configMap });
-    });
-    unsubscribes.push(unsub);
-  }
-  return () => unsubscribes.forEach((fn) => fn());
 }
 
 // Write field config for a section

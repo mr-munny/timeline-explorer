@@ -41,7 +41,7 @@ export default function useEventHandlers({
       setTimelineEnd(newEnd);
       // Persist to the event's section (or current section)
       const targetSection = event.section || section;
-      if (targetSection && targetSection !== "all") {
+      if (targetSection) {
         saveTimelineRange(targetSection, { start: newStart, end: newEnd });
       }
     }

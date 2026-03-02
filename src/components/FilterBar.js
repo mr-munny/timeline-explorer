@@ -17,18 +17,12 @@ export default function FilterBar({
   tagMatchMode,
   setTagMatchMode,
   clearAllFilters,
-  sectionFilter,
-  setSectionFilter,
   sortOrder,
   setSortOrder,
   showContributors,
   setShowContributors,
-  isTeacher,
-  section,
   displayPeriods,
-  activeSections,
   findPeriod,
-  getSectionName,
   filteredCount,
   totalCount,
 }) {
@@ -36,8 +30,7 @@ export default function FilterBar({
   const hasActiveFilters =
     selectedPeriods.length > 0 ||
     selectedTags.length > 0 ||
-    searchTerm ||
-    sectionFilter !== "all";
+    searchTerm;
 
   return (
     <>
@@ -83,29 +76,6 @@ export default function FilterBar({
             }}
           />
         </div>
-        {isTeacher && section === "all" && (
-          <select
-            value={sectionFilter}
-            onChange={(e) => setSectionFilter(e.target.value)}
-            style={{
-              padding: "9px 12px",
-              border: `1.5px solid ${theme.inputBorder}`,
-              borderRadius: 8,
-              fontSize: 11,
-              fontFamily: FONT_MONO,
-              background: theme.inputBg,
-              cursor: "pointer",
-              color: sectionFilter === "all" ? theme.textSecondary : theme.textPrimary,
-            }}
-          >
-            <option value="all">All Sections</option>
-            {activeSections.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
-          </select>
-        )}
         <button
           onClick={() => setSortOrder((s) => (s === "chrono" ? "reverse" : "chrono"))}
           style={{
@@ -342,21 +312,6 @@ export default function FilterBar({
                 </span>
               ))}
             </>
-          )}
-          {sectionFilter !== "all" && (
-            <span
-              style={{
-                fontSize: 10,
-                background: theme.subtleBg,
-                color: theme.textDescription,
-                padding: "3px 8px",
-                borderRadius: 4,
-                fontFamily: FONT_MONO,
-                fontWeight: 600,
-              }}
-            >
-              {getSectionName(sectionFilter)}
-            </span>
           )}
           {searchTerm && (
             <span

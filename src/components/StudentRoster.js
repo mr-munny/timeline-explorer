@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTheme, FONT_MONO } from "../contexts/ThemeContext";
 import { Icon } from "@iconify/react";
 import accountGroup from "@iconify-icons/mdi/account-group";
 import chevronDown from "@iconify-icons/mdi/chevron-down";
@@ -9,8 +10,8 @@ export default function StudentRoster({
   sections,
   onReassign,
   onRemove,
-  theme,
 }) {
+  const { theme } = useTheme();
   const [expanded, setExpanded] = useState(false);
 
   const getSectionName = (id) =>
@@ -60,7 +61,7 @@ export default function StudentRoster({
             fontWeight: 700,
             textTransform: "uppercase",
             letterSpacing: "0.1em",
-            fontFamily: "'Overpass Mono', monospace",
+            fontFamily: FONT_MONO,
             display: "flex",
             alignItems: "center",
             gap: 4,
@@ -98,7 +99,7 @@ export default function StudentRoster({
                 color: theme.textMuted,
                 fontStyle: "italic",
                 padding: "4px 6px",
-                fontFamily: "'Overpass Mono', monospace",
+                fontFamily: FONT_MONO,
               }}
             >
               No students have selected a section yet
@@ -117,7 +118,7 @@ export default function StudentRoster({
                     color: theme.accentGold,
                     textTransform: "uppercase",
                     letterSpacing: "0.08em",
-                    fontFamily: "'Overpass Mono', monospace",
+                    fontFamily: FONT_MONO,
                     marginBottom: 4,
                     padding: "0 6px",
                   }}
@@ -132,7 +133,6 @@ export default function StudentRoster({
                     getSectionName={getSectionName}
                     onReassign={onReassign}
                     onRemove={onRemove}
-                    theme={theme}
                   />
                 ))}
               </div>
@@ -149,7 +149,7 @@ export default function StudentRoster({
                   color: theme.errorRed,
                   textTransform: "uppercase",
                   letterSpacing: "0.08em",
-                  fontFamily: "'Overpass Mono', monospace",
+                  fontFamily: FONT_MONO,
                   marginBottom: 4,
                   padding: "0 6px",
                 }}
@@ -181,8 +181,8 @@ function StudentRow({
   getSectionName,
   onReassign,
   onRemove,
-  theme,
 }) {
+  const { theme } = useTheme();
   const [showReassign, setShowReassign] = useState(false);
 
   return (
@@ -194,7 +194,7 @@ function StudentRow({
         padding: "3px 6px",
         borderRadius: 4,
         fontSize: 10,
-        fontFamily: "'Overpass Mono', monospace",
+        fontFamily: FONT_MONO,
       }}
     >
       <div
@@ -233,7 +233,7 @@ function StudentRow({
           onBlur={() => setShowReassign(false)}
           style={{
             fontSize: 9,
-            fontFamily: "'Overpass Mono', monospace",
+            fontFamily: FONT_MONO,
             padding: "2px 4px",
             borderRadius: 3,
             border: `1px solid ${theme.inputBorder}`,
@@ -264,7 +264,7 @@ function StudentRow({
             cursor: "pointer",
             color: theme.textMuted,
             fontSize: 8,
-            fontFamily: "'Overpass Mono', monospace",
+            fontFamily: FONT_MONO,
             borderRadius: 3,
             transition: "all 0.15s",
           }}

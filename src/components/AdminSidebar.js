@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useTheme } from "../contexts/ThemeContext";
+import { useTheme, FONT_MONO } from "../contexts/ThemeContext";
 import { Icon } from "@iconify/react";
 import inboxArrowDown from "@iconify-icons/mdi/inbox-arrow-down";
 import plusIcon from "@iconify-icons/mdi/plus";
@@ -29,7 +29,7 @@ export default function AdminSidebar({ sections, selectedTab, onSelectTab, pendi
       display: "flex",
       flexDirection: "column",
       height: "100%",
-      fontFamily: "'Overpass Mono', monospace",
+      fontFamily: FONT_MONO,
     }}>
       {/* Moderation tab */}
       <div style={{ padding: "16px 12px 8px" }}>
@@ -43,7 +43,7 @@ export default function AdminSidebar({ sections, selectedTab, onSelectTab, pendi
             background: selectedTab === "moderation" ? theme.accentGold + "15" : "transparent",
             color: selectedTab === "moderation" ? theme.accentGold : theme.textPrimary,
             fontSize: 11,
-            fontFamily: "'Overpass Mono', monospace",
+            fontFamily: FONT_MONO,
             fontWeight: 700,
             cursor: "pointer",
             display: "flex",
@@ -84,7 +84,7 @@ export default function AdminSidebar({ sections, selectedTab, onSelectTab, pendi
               background: selectedTab === "teachers" ? theme.accentGold + "15" : "transparent",
               color: selectedTab === "teachers" ? theme.accentGold : theme.textPrimary,
               fontSize: 11,
-              fontFamily: "'Overpass Mono', monospace",
+              fontFamily: FONT_MONO,
               fontWeight: 700,
               cursor: "pointer",
               display: "flex",
@@ -134,7 +134,7 @@ export default function AdminSidebar({ sections, selectedTab, onSelectTab, pendi
                 background: isActive ? theme.accentGold + "15" : "transparent",
                 color: isActive ? theme.accentGold : theme.textPrimary,
                 fontSize: 11,
-                fontFamily: "'Overpass Mono', monospace",
+                fontFamily: FONT_MONO,
                 fontWeight: isActive ? 700 : 500,
                 cursor: "pointer",
                 display: "block",
@@ -173,7 +173,7 @@ export default function AdminSidebar({ sections, selectedTab, onSelectTab, pendi
                 border: `1.5px solid ${theme.inputBorder}`,
                 borderRadius: 4,
                 fontSize: 11,
-                fontFamily: "'Overpass Mono', monospace",
+                fontFamily: FONT_MONO,
                 background: theme.inputBg,
                 color: theme.textPrimary,
                 outline: "none",
@@ -207,7 +207,7 @@ export default function AdminSidebar({ sections, selectedTab, onSelectTab, pendi
               background: "transparent",
               color: theme.textSecondary,
               fontSize: 10,
-              fontFamily: "'Overpass Mono', monospace",
+              fontFamily: FONT_MONO,
               fontWeight: 600,
               cursor: "pointer",
               display: "flex",

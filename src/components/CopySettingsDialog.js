@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useTheme } from "../contexts/ThemeContext";
+import { useTheme, FONT_MONO } from "../contexts/ThemeContext";
 import { savePeriods, saveCompellingQuestion, saveTimelineRange, saveFieldConfig } from "../services/database";
 import { Icon } from "@iconify/react";
 import contentCopy from "@iconify-icons/mdi/content-copy";
@@ -113,7 +113,7 @@ export default function CopySettingsDialog({ sourceSection, sourceName, sections
         padding: "24px 28px",
         minWidth: 360,
         maxWidth: 440,
-        fontFamily: "'Overpass Mono', monospace",
+        fontFamily: FONT_MONO,
         boxShadow: "0 12px 40px rgba(0,0,0,0.25)",
       }}>
         {/* Header */}
@@ -178,7 +178,7 @@ export default function CopySettingsDialog({ sourceSection, sourceName, sections
                 background: "none",
                 border: "none",
                 cursor: "pointer",
-                fontFamily: "'Overpass Mono', monospace",
+                fontFamily: FONT_MONO,
                 fontWeight: 600,
                 textTransform: "uppercase",
                 letterSpacing: "0.05em",
@@ -239,7 +239,7 @@ export default function CopySettingsDialog({ sourceSection, sourceName, sections
                 background: "none",
                 border: "none",
                 cursor: "pointer",
-                fontFamily: "'Overpass Mono', monospace",
+                fontFamily: FONT_MONO,
                 fontWeight: 600,
                 textTransform: "uppercase",
                 letterSpacing: "0.05em",
@@ -296,7 +296,7 @@ export default function CopySettingsDialog({ sourceSection, sourceName, sections
               background: "transparent",
               color: theme.textSecondary,
               fontSize: 11,
-              fontFamily: "'Overpass Mono', monospace",
+              fontFamily: FONT_MONO,
               fontWeight: 600,
               cursor: "pointer",
               transition: "all 0.15s",
@@ -316,7 +316,7 @@ export default function CopySettingsDialog({ sourceSection, sourceName, sections
               background: done ? theme.teacherGreen : canCopy ? theme.accentGold : theme.inputBorder,
               color: done ? "#fff" : canCopy ? theme.bg : theme.textMuted,
               fontSize: 11,
-              fontFamily: "'Overpass Mono', monospace",
+              fontFamily: FONT_MONO,
               fontWeight: 700,
               cursor: canCopy ? "pointer" : "not-allowed",
               display: "inline-flex",

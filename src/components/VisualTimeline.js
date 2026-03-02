@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { getPeriod } from "../data/constants";
-import { useTheme } from "../contexts/ThemeContext";
+import { useTheme, FONT_MONO, FONT_SERIF } from "../contexts/ThemeContext";
 import { eventStartFraction, eventEndFraction, formatEventDate } from "../utils/dateUtils";
 
 const MIN_ZOOM = 1;
@@ -440,7 +440,7 @@ export default function VisualTimeline({
             justifyContent: "center",
             fontSize: 14,
             fontWeight: 700,
-            fontFamily: "'Overpass Mono', monospace",
+            fontFamily: FONT_MONO,
             padding: 0,
             transition: "all 0.15s",
           }}
@@ -450,7 +450,7 @@ export default function VisualTimeline({
         <span
           style={{
             fontSize: 9,
-            fontFamily: "'Overpass Mono', monospace",
+            fontFamily: FONT_MONO,
             color: theme.textMuted,
             minWidth: 36,
             textAlign: "center",
@@ -476,7 +476,7 @@ export default function VisualTimeline({
             justifyContent: "center",
             fontSize: 14,
             fontWeight: 700,
-            fontFamily: "'Overpass Mono', monospace",
+            fontFamily: FONT_MONO,
             padding: 0,
             transition: "all 0.15s",
           }}
@@ -497,7 +497,7 @@ export default function VisualTimeline({
             color: zoomLevel === 1 ? theme.textMuted : theme.textPrimary,
             cursor: zoomLevel === 1 ? "default" : "pointer",
             fontSize: 9,
-            fontFamily: "'Overpass Mono', monospace",
+            fontFamily: FONT_MONO,
             fontWeight: 600,
             transition: "all 0.15s",
           }}
@@ -575,7 +575,7 @@ export default function VisualTimeline({
                       fontSize: 9,
                       fontWeight: 700,
                       color: isActive ? u.color : theme.textSecondary,
-                      fontFamily: "'Overpass Mono', monospace",
+                      fontFamily: FONT_MONO,
                       letterSpacing: "0.05em",
                       textTransform: "uppercase",
                       whiteSpace: "nowrap",
@@ -785,7 +785,7 @@ export default function VisualTimeline({
                         fontSize: 8,
                         fontWeight: 800,
                         color: "#fff",
-                        fontFamily: "'Overpass Mono', monospace",
+                        fontFamily: FONT_MONO,
                         lineHeight: 1,
                       }}
                     >
@@ -821,7 +821,7 @@ export default function VisualTimeline({
                     transform: `translateX(-${pct}%)`,
                     fontSize: isMajor ? 9 : 8,
                     color: theme.textMuted,
-                    fontFamily: "'Overpass Mono', monospace",
+                    fontFamily: FONT_MONO,
                     fontWeight: isMajor ? 600 : 400,
                     whiteSpace: "nowrap",
                     opacity: isMajor ? 1 : 0.6,
@@ -866,7 +866,7 @@ export default function VisualTimeline({
             style={{
               padding: "4px 12px 6px",
               fontSize: 9,
-              fontFamily: "'Overpass Mono', monospace",
+              fontFamily: FONT_MONO,
               color: theme.textMuted,
               fontWeight: 600,
               textTransform: "uppercase",
@@ -903,7 +903,7 @@ export default function VisualTimeline({
                 style={{
                   fontSize: 10,
                   fontWeight: 700,
-                  fontFamily: "'Overpass Mono', monospace",
+                  fontFamily: FONT_MONO,
                   color: period.color,
                   minWidth: 32,
                   flexShrink: 0,
@@ -915,7 +915,7 @@ export default function VisualTimeline({
                 style={{
                   fontSize: 11,
                   color: theme.textPrimary,
-                  fontFamily: "'Newsreader', serif",
+                  fontFamily: FONT_SERIF,
                   overflow: "hidden",
                   textOverflow: "ellipsis",
                   whiteSpace: "nowrap",
@@ -929,7 +929,7 @@ export default function VisualTimeline({
                   style={{
                     fontSize: 9,
                     color: theme.textMuted,
-                    fontFamily: "'Overpass Mono', monospace",
+                    fontFamily: FONT_MONO,
                     flexShrink: 0,
                   }}
                 >

@@ -1,4 +1,4 @@
-import { useTheme } from "../contexts/ThemeContext";
+import { useTheme, FONT_MONO, FONT_SERIF } from "../contexts/ThemeContext";
 
 export default function CompellingQuestionHero({ compellingQuestion }) {
   const { theme } = useTheme();
@@ -19,7 +19,7 @@ export default function CompellingQuestionHero({ compellingQuestion }) {
           fontSize: 9,
           fontWeight: 700,
           color: theme.textMuted,
-          fontFamily: "'Overpass Mono', monospace",
+          fontFamily: FONT_MONO,
           letterSpacing: "0.1em",
           textTransform: "uppercase",
           marginBottom: 8,
@@ -29,7 +29,7 @@ export default function CompellingQuestionHero({ compellingQuestion }) {
         <p style={{
           fontSize: 20,
           fontWeight: 600,
-          fontFamily: "'Newsreader', 'Georgia', serif",
+          fontFamily: FONT_SERIF,
           color: theme.textPrimary,
           lineHeight: 1.4,
           margin: 0,

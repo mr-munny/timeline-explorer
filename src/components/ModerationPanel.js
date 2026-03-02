@@ -11,7 +11,7 @@ import cancelIcon from "@iconify-icons/mdi/cancel";
 import contentSave from "@iconify-icons/mdi/content-save";
 import arrowRightBold from "@iconify-icons/mdi/arrow-right-bold";
 import commentAlertOutline from "@iconify-icons/mdi/comment-alert-outline";
-import { useTheme } from "../contexts/ThemeContext";
+import { useTheme, FONT_MONO, FONT_SERIF } from "../contexts/ThemeContext";
 import FeedbackBanner from "./FeedbackBanner";
 
 export default function ModerationPanel({ pendingEvents, pendingConnections = [], needsRevisionEvents = [], needsRevisionConnections = [], allEvents = [], allConnections = [], periods = [], getSectionName = (id) => id, onEventApproved, readOnly = false, user, userName, onEditPendingEvent, onEditPendingConnection, onWithdraw }) {
@@ -224,7 +224,7 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
     border: `1.5px solid ${theme.inputBorder}`,
     borderRadius: 6,
     fontSize: 12,
-    fontFamily: "'Overpass Mono', monospace",
+    fontFamily: FONT_MONO,
     background: theme.inputBg,
     color: theme.textPrimary,
     outline: "none",
@@ -236,7 +236,7 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
         style={{
           padding: "24px 32px",
           maxWidth: 640,
-          fontFamily: "'Overpass Mono', monospace",
+          fontFamily: FONT_MONO,
         }}
       >
         <div
@@ -253,7 +253,7 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                 fontSize: 20,
                 fontWeight: 700,
                 margin: 0,
-                fontFamily: "'Newsreader', 'Georgia', serif",
+                fontFamily: FONT_SERIF,
                 color: theme.textPrimary,
               }}
             >
@@ -264,7 +264,7 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                 fontSize: 11,
                 color: theme.textSecondary,
                 margin: "4px 0 0",
-                fontFamily: "'Overpass Mono', monospace",
+                fontFamily: FONT_MONO,
               }}
             >
               {pendingEvents.length + pendingConnections.length} pending
@@ -291,7 +291,7 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                 borderBottom: activeTab === tab.id ? `2px solid ${theme.textPrimary}` : "2px solid transparent",
                 color: activeTab === tab.id ? theme.textPrimary : theme.textSecondary,
                 fontSize: 12,
-                fontFamily: "'Overpass Mono', monospace",
+                fontFamily: FONT_MONO,
                 fontWeight: 700,
                 cursor: "pointer",
                 transition: "all 0.15s",
@@ -310,7 +310,7 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
               textAlign: "center",
               padding: "32px 20px",
               color: theme.textSecondary,
-              fontFamily: "'Overpass Mono', monospace",
+              fontFamily: FONT_MONO,
               fontSize: 12,
             }}
           >
@@ -463,7 +463,7 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                                 : theme.inputBg,
                               color: editForm.tags.includes(tag) ? theme.activeToggleText : theme.textSecondary,
                               fontSize: 10,
-                              fontFamily: "'Overpass Mono', monospace",
+                              fontFamily: FONT_MONO,
                               cursor: "pointer",
                             }}
                           >
@@ -526,7 +526,7 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                             border: `1.5px solid ${theme.inputBorder}`,
                             borderRadius: 6,
                             fontSize: 11,
-                            fontFamily: "'Overpass Mono', monospace",
+                            fontFamily: FONT_MONO,
                             cursor: "pointer",
                             color: theme.textTertiary,
                             transition: "all 0.15s",
@@ -546,7 +546,7 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                             border: "none",
                             borderRadius: 6,
                             fontSize: 11,
-                            fontFamily: "'Overpass Mono', monospace",
+                            fontFamily: FONT_MONO,
                             fontWeight: 700,
                             cursor: "pointer",
                             transition: "filter 0.15s",
@@ -570,9 +570,9 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                               style={{
                                 fontSize: 10,
                                 fontWeight: 700,
-                                fontFamily: "'Overpass Mono', monospace",
-                                color: "#D97706",
-                                background: "#FEF3C7",
+                                fontFamily: FONT_MONO,
+                                color: theme.feedbackAmber,
+                                background: theme.feedbackAmberBg,
                                 padding: "3px 8px",
                                 borderRadius: 4,
                                 display: "inline-block",
@@ -587,7 +587,7 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                               style={{
                                 fontSize: 10,
                                 color: theme.textSecondary,
-                                fontFamily: "'Overpass Mono', monospace",
+                                fontFamily: FONT_MONO,
                                 marginBottom: 10,
                               }}
                             >
@@ -608,12 +608,12 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                                       padding: "6px 10px",
                                       background: theme.warmSubtleBg,
                                       borderRadius: 6,
-                                      borderLeft: `3px solid #D97706`,
+                                      borderLeft: `3px solid ${theme.feedbackAmber}`,
                                     }}>
                                       <div style={{
                                         fontSize: 9,
                                         fontWeight: 700,
-                                        fontFamily: "'Overpass Mono', monospace",
+                                        fontFamily: FONT_MONO,
                                         color: theme.textTertiary,
                                         textTransform: "uppercase",
                                         letterSpacing: "0.05em",
@@ -623,7 +623,7 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                                       </div>
                                       <div style={{
                                         fontSize: key === "description" ? 11 : 12,
-                                        fontFamily: (key === "description" || key === "title") ? "'Newsreader', serif" : "'Overpass Mono', monospace",
+                                        fontFamily: (key === "description" || key === "title") ? FONT_SERIF : FONT_MONO,
                                         lineHeight: 1.5,
                                       }}>
                                         {isTextField ? (
@@ -689,7 +689,7 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                             fontWeight: 700,
                             padding: "3px 7px",
                             borderRadius: 4,
-                            fontFamily: "'Overpass Mono', monospace",
+                            fontFamily: FONT_MONO,
                             flexShrink: 0,
                           }}
                         >
@@ -701,7 +701,7 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                               fontSize: 14,
                               fontWeight: 700,
                               color: theme.textPrimary,
-                              fontFamily: "'Newsreader', 'Georgia', serif",
+                              fontFamily: FONT_SERIF,
                             }}
                           >
                             {event.title}
@@ -710,7 +710,7 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                             style={{
                               fontSize: 10,
                               color: theme.textSecondary,
-                              fontFamily: "'Overpass Mono', monospace",
+                              fontFamily: FONT_MONO,
                               marginTop: 2,
                             }}
                           >
@@ -726,7 +726,7 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                           lineHeight: 1.6,
                           color: theme.textDescription,
                           margin: "0 0 8px 0",
-                          fontFamily: "'Newsreader', 'Georgia', serif",
+                          fontFamily: FONT_SERIF,
                         }}
                       >
                         {event.description}
@@ -753,7 +753,7 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                         style={{
                           fontSize: 10,
                           color: theme.textTertiary,
-                          fontFamily: "'Overpass Mono', monospace",
+                          fontFamily: FONT_MONO,
                           marginBottom: 10,
                         }}
                       >
@@ -792,7 +792,7 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                               borderRadius: 6,
                               color: theme.errorRed,
                               fontSize: 11,
-                              fontFamily: "'Overpass Mono', monospace",
+                              fontFamily: FONT_MONO,
                               fontWeight: 600,
                               cursor: "pointer",
                               transition: "all 0.15s",
@@ -812,7 +812,7 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                               borderRadius: 6,
                               color: theme.textDescription,
                               fontSize: 11,
-                              fontFamily: "'Overpass Mono', monospace",
+                              fontFamily: FONT_MONO,
                               fontWeight: 600,
                               cursor: "pointer",
                               transition: "all 0.15s",
@@ -840,7 +840,7 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                             borderRadius: 6,
                             color: theme.errorRed,
                             fontSize: 11,
-                            fontFamily: "'Overpass Mono', monospace",
+                            fontFamily: FONT_MONO,
                             fontWeight: 600,
                             cursor: "pointer",
                             transition: "all 0.15s",
@@ -857,16 +857,16 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                           style={{
                             padding: "6px 14px",
                             background: "none",
-                            border: "1.5px solid #D97706",
+                            border: `1.5px solid ${theme.feedbackAmber}`,
                             borderRadius: 6,
-                            color: "#D97706",
+                            color: theme.feedbackAmber,
                             fontSize: 11,
-                            fontFamily: "'Overpass Mono', monospace",
+                            fontFamily: FONT_MONO,
                             fontWeight: 600,
                             cursor: "pointer",
                             transition: "all 0.15s",
                           }}
-                          onMouseEnter={(e) => { e.currentTarget.style.background = "#D9770610"; }}
+                          onMouseEnter={(e) => { e.currentTarget.style.background = theme.feedbackAmber + "10"; }}
                           onMouseLeave={(e) => { e.currentTarget.style.background = "none"; }}
                         >
                           <Icon icon={commentAlertOutline} width={13} style={{ verticalAlign: "middle", marginRight: 3 }} />
@@ -882,7 +882,7 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                             borderRadius: 6,
                             color: theme.textDescription,
                             fontSize: 11,
-                            fontFamily: "'Overpass Mono', monospace",
+                            fontFamily: FONT_MONO,
                             fontWeight: 600,
                             cursor: "pointer",
                             transition: "all 0.15s",
@@ -903,7 +903,7 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                             border: "none",
                             borderRadius: 6,
                             fontSize: 11,
-                            fontFamily: "'Overpass Mono', monospace",
+                            fontFamily: FONT_MONO,
                             fontWeight: 700,
                             cursor: "pointer",
                             transition: "filter 0.15s",
@@ -919,15 +919,15 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                         <div style={{
                           marginTop: 10,
                           padding: "12px 14px",
-                          background: theme.warmSubtleBg || "#FEF3C7",
+                          background: theme.feedbackAmberBg,
                           borderRadius: 8,
-                          border: "1.5px solid #D97706",
+                          border: `1.5px solid ${theme.feedbackAmber}`,
                         }}>
                           <label style={{
                             fontSize: 10,
                             fontWeight: 700,
-                            fontFamily: "'Overpass Mono', monospace",
-                            color: "#92400E",
+                            fontFamily: FONT_MONO,
+                            color: theme.feedbackAmberText,
                             textTransform: "uppercase",
                             letterSpacing: "0.05em",
                             marginBottom: 6,
@@ -941,7 +941,7 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                             onChange={(e) => setFeedbackText(e.target.value)}
                             placeholder="What should the student fix or improve?"
                             rows={3}
-                            style={{ ...inputStyle, borderColor: "#D97706" }}
+                            style={{ ...inputStyle, borderColor: theme.feedbackAmber }}
                           />
                           <div style={{ display: "flex", gap: 6, justifyContent: "flex-end", marginTop: 8 }}>
                             <button
@@ -952,7 +952,7 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                                 border: `1.5px solid ${theme.inputBorder}`,
                                 borderRadius: 6,
                                 fontSize: 11,
-                                fontFamily: "'Overpass Mono', monospace",
+                                fontFamily: FONT_MONO,
                                 cursor: "pointer",
                                 color: theme.textTertiary,
                                 transition: "all 0.15s",
@@ -967,12 +967,12 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                               disabled={!feedbackText.trim() || isProcessing}
                               style={{
                                 padding: "6px 14px",
-                                background: feedbackText.trim() ? "#D97706" : theme.inputBorder,
+                                background: feedbackText.trim() ? theme.feedbackAmber : theme.inputBorder,
                                 color: "#fff",
                                 border: "none",
                                 borderRadius: 6,
                                 fontSize: 11,
-                                fontFamily: "'Overpass Mono', monospace",
+                                fontFamily: FONT_MONO,
                                 fontWeight: 700,
                                 cursor: feedbackText.trim() ? "pointer" : "default",
                                 transition: "filter 0.15s",
@@ -1004,8 +1004,8 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
               borderTop: pendingEvents.length > 0 ? `1px solid ${theme.inputBorder}` : "none",
               fontSize: 10,
               fontWeight: 700,
-              fontFamily: "'Overpass Mono', monospace",
-              color: "#D97706",
+              fontFamily: FONT_MONO,
+              color: theme.feedbackAmber,
               textTransform: "uppercase",
               letterSpacing: "0.08em",
             }}>
@@ -1019,16 +1019,16 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                   <div
                     key={event.id}
                     style={{
-                      border: `1.5px solid #D9770640`,
+                      border: `1.5px solid ${theme.feedbackAmber}40`,
                       borderRadius: 10,
                       padding: "16px 18px",
-                      borderLeft: "4px solid #D97706",
+                      borderLeft: `4px solid ${theme.feedbackAmber}`,
                       opacity: 0.85,
                     }}
                   >
                     <div style={{
-                      fontSize: 10, fontWeight: 700, fontFamily: "'Overpass Mono', monospace",
-                      color: "#D97706", background: theme.warmSubtleBg || "#FEF3C7",
+                      fontSize: 10, fontWeight: 700, fontFamily: FONT_MONO,
+                      color: theme.feedbackAmber, background: theme.feedbackAmberBg,
                       padding: "3px 8px", borderRadius: 4, display: "inline-block",
                       marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em",
                     }}>
@@ -1038,20 +1038,20 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                       <div style={{
                         background: unit?.color || theme.textTertiary, color: "#fff",
                         fontSize: 11, fontWeight: 700, padding: "3px 7px", borderRadius: 4,
-                        fontFamily: "'Overpass Mono', monospace", flexShrink: 0,
+                        fontFamily: FONT_MONO, flexShrink: 0,
                       }}>
                         {formatEventDate(event)}
                       </div>
                       <div style={{ flex: 1 }}>
                         <div style={{
                           fontSize: 14, fontWeight: 700, color: theme.textPrimary,
-                          fontFamily: "'Newsreader', 'Georgia', serif",
+                          fontFamily: FONT_SERIF,
                         }}>
                           {event.title}
                         </div>
                         <div style={{
                           fontSize: 10, color: theme.textSecondary,
-                          fontFamily: "'Overpass Mono', monospace", marginTop: 2,
+                          fontFamily: FONT_MONO, marginTop: 2,
                         }}>
                           by {event.addedBy} &middot; {getSectionName(event.section)}
                         </div>
@@ -1066,7 +1066,7 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                           padding: "6px 14px", background: "none",
                           border: `1.5px solid ${theme.errorRed}`, borderRadius: 6,
                           color: theme.errorRed, fontSize: 11,
-                          fontFamily: "'Overpass Mono', monospace", fontWeight: 600,
+                          fontFamily: FONT_MONO, fontWeight: 600,
                           cursor: "pointer", transition: "all 0.15s",
                         }}
                         onMouseEnter={(e) => { e.currentTarget.style.background = (theme.errorRed || "#DC2626") + "10"; }}
@@ -1089,7 +1089,7 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
               textAlign: "center",
               padding: "32px 20px",
               color: theme.textSecondary,
-              fontFamily: "'Overpass Mono', monospace",
+              fontFamily: FONT_MONO,
               fontSize: 12,
             }}
           >
@@ -1123,13 +1123,13 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                       borderLeft: `3px solid ${causeUnit?.color || theme.textSecondary}`,
                     }}>
                       <span style={{
-                        fontSize: 10, fontWeight: 700, fontFamily: "'Overpass Mono', monospace",
+                        fontSize: 10, fontWeight: 700, fontFamily: FONT_MONO,
                         color: causeUnit?.color || theme.textSecondary,
                       }}>
                         {causeEvent?.year || "?"}
                       </span>
                       <span style={{
-                        fontSize: 12, fontFamily: "'Newsreader', serif", fontWeight: 600,
+                        fontSize: 12, fontFamily: FONT_SERIF, fontWeight: 600,
                         color: theme.textPrimary,
                       }}>
                         {causeEvent?.title || "Unknown event"}
@@ -1142,13 +1142,13 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                       borderLeft: `3px solid ${effectUnit?.color || theme.textSecondary}`,
                     }}>
                       <span style={{
-                        fontSize: 10, fontWeight: 700, fontFamily: "'Overpass Mono', monospace",
+                        fontSize: 10, fontWeight: 700, fontFamily: FONT_MONO,
                         color: effectUnit?.color || theme.textSecondary,
                       }}>
                         {effectEvent?.year || "?"}
                       </span>
                       <span style={{
-                        fontSize: 12, fontFamily: "'Newsreader', serif", fontWeight: 600,
+                        fontSize: 12, fontFamily: FONT_SERIF, fontWeight: 600,
                         color: theme.textPrimary,
                       }}>
                         {effectEvent?.title || "Unknown event"}
@@ -1170,7 +1170,7 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                           style={{
                             padding: "6px 14px", background: "none",
                             border: `1.5px solid ${theme.inputBorder}`, borderRadius: 6,
-                            fontSize: 11, fontFamily: "'Overpass Mono', monospace",
+                            fontSize: 11, fontFamily: FONT_MONO,
                             cursor: "pointer", color: theme.textTertiary,
                             transition: "all 0.15s",
                           }}
@@ -1185,7 +1185,7 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                           style={{
                             padding: "6px 14px", background: theme.activeToggleBg,
                             color: theme.activeToggleText, border: "none", borderRadius: 6,
-                            fontSize: 11, fontFamily: "'Overpass Mono', monospace",
+                            fontSize: 11, fontFamily: FONT_MONO,
                             fontWeight: 700, cursor: "pointer",
                             transition: "filter 0.15s",
                           }}
@@ -1204,20 +1204,20 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                           <div style={{
                             display: "inline-block", padding: "2px 8px", borderRadius: 4,
                             background: "#FEE2E2", color: "#991B1B", fontSize: 10,
-                            fontFamily: "'Overpass Mono', monospace", fontWeight: 700,
+                            fontFamily: FONT_MONO, fontWeight: 700,
                             marginBottom: 8,
                           }}>
                             Suggested Deletion
                           </div>
                           <p style={{
                             fontSize: 12, lineHeight: 1.6, color: theme.textDescription,
-                            margin: "0 0 8px 0", fontFamily: "'Newsreader', serif",
+                            margin: "0 0 8px 0", fontFamily: FONT_SERIF,
                           }}>
                             {conn.description}
                           </p>
                           <div style={{
                             fontSize: 10, color: theme.textTertiary,
-                            fontFamily: "'Overpass Mono', monospace", marginBottom: 10,
+                            fontFamily: FONT_MONO, marginBottom: 10,
                           }}>
                             by {conn.addedBy} &middot; {getSectionName(conn.section)}
                             {!findConnection(conn.deleteOf) && <> &middot; <span style={{ color: theme.errorRed }}>Original connection already deleted</span></>}
@@ -1229,15 +1229,15 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                           <>
                             <div style={{
                               display: "inline-block", padding: "2px 8px", borderRadius: 4,
-                              background: "#FEF3C7", color: "#92400E", fontSize: 10,
-                              fontFamily: "'Overpass Mono', monospace", fontWeight: 700,
+                              background: theme.feedbackAmberBg, color: theme.feedbackAmberText, fontSize: 10,
+                              fontFamily: FONT_MONO, fontWeight: 700,
                               marginBottom: 8,
                             }}>
                               Suggested Edit
                             </div>
                             <div style={{
                               fontSize: 10, color: theme.textTertiary,
-                              fontFamily: "'Overpass Mono', monospace", marginBottom: 10,
+                              fontFamily: FONT_MONO, marginBottom: 10,
                             }}>
                               by {conn.addedBy} &middot; {getSectionName(conn.section)}
                               {!originalConn && <> &middot; <span style={{ color: theme.errorRed }}>Original connection not found</span></>}
@@ -1247,15 +1247,15 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                                 {String(originalConn.description ?? "") !== String(conn.description ?? "") && (
                                   <div style={{
                                     padding: "6px 10px", background: theme.warmSubtleBg,
-                                    borderRadius: 6, borderLeft: "3px solid #D97706",
+                                    borderRadius: 6, borderLeft: `3px solid ${theme.feedbackAmber}`,
                                   }}>
                                     <div style={{
-                                      fontSize: 9, fontWeight: 700, fontFamily: "'Overpass Mono', monospace",
+                                      fontSize: 9, fontWeight: 700, fontFamily: FONT_MONO,
                                       color: theme.textTertiary, textTransform: "uppercase", marginBottom: 4,
                                     }}>
                                       Description
                                     </div>
-                                    <div style={{ fontSize: 11, fontFamily: "'Newsreader', serif", lineHeight: 1.5 }}>
+                                    <div style={{ fontSize: 11, fontFamily: FONT_SERIF, lineHeight: 1.5 }}>
                                       {computeWordDiff(originalConn.description, conn.description).map((part, i) => (
                                         <span key={i} style={{
                                           color: part.type === "del" ? (theme.errorRed || "#DC2626") : part.type === "add" ? "#16A34A" : theme.textDescription,
@@ -1273,15 +1273,15 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                                 {originalConn.causeEventId !== conn.causeEventId && (
                                   <div style={{
                                     padding: "6px 10px", background: theme.warmSubtleBg,
-                                    borderRadius: 6, borderLeft: "3px solid #D97706",
+                                    borderRadius: 6, borderLeft: `3px solid ${theme.feedbackAmber}`,
                                   }}>
                                     <div style={{
-                                      fontSize: 9, fontWeight: 700, fontFamily: "'Overpass Mono', monospace",
+                                      fontSize: 9, fontWeight: 700, fontFamily: FONT_MONO,
                                       color: theme.textTertiary, textTransform: "uppercase", marginBottom: 4,
                                     }}>
                                       Cause Event
                                     </div>
-                                    <div style={{ fontSize: 11, fontFamily: "'Newsreader', serif" }}>
+                                    <div style={{ fontSize: 11, fontFamily: FONT_SERIF }}>
                                       <span style={{ color: theme.errorRed || "#DC2626", textDecoration: "line-through", opacity: 0.7 }}>
                                         {findEvent(originalConn.causeEventId)?.title || "Unknown"}
                                       </span>
@@ -1295,15 +1295,15 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                                 {originalConn.effectEventId !== conn.effectEventId && (
                                   <div style={{
                                     padding: "6px 10px", background: theme.warmSubtleBg,
-                                    borderRadius: 6, borderLeft: "3px solid #D97706",
+                                    borderRadius: 6, borderLeft: `3px solid ${theme.feedbackAmber}`,
                                   }}>
                                     <div style={{
-                                      fontSize: 9, fontWeight: 700, fontFamily: "'Overpass Mono', monospace",
+                                      fontSize: 9, fontWeight: 700, fontFamily: FONT_MONO,
                                       color: theme.textTertiary, textTransform: "uppercase", marginBottom: 4,
                                     }}>
                                       Effect Event
                                     </div>
-                                    <div style={{ fontSize: 11, fontFamily: "'Newsreader', serif" }}>
+                                    <div style={{ fontSize: 11, fontFamily: FONT_SERIF }}>
                                       <span style={{ color: theme.errorRed || "#DC2626", textDecoration: "line-through", opacity: 0.7 }}>
                                         {findEvent(originalConn.effectEventId)?.title || "Unknown"}
                                       </span>
@@ -1322,13 +1322,13 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                         <>
                           <p style={{
                             fontSize: 12, lineHeight: 1.6, color: theme.textDescription,
-                            margin: "0 0 8px 0", fontFamily: "'Newsreader', serif",
+                            margin: "0 0 8px 0", fontFamily: FONT_SERIF,
                           }}>
                             {conn.description}
                           </p>
                           <div style={{
                             fontSize: 10, color: theme.textTertiary,
-                            fontFamily: "'Overpass Mono', monospace", marginBottom: 10,
+                            fontFamily: FONT_MONO, marginBottom: 10,
                           }}>
                             by {conn.addedBy} &middot; {getSectionName(conn.section)}
                           </div>
@@ -1346,7 +1346,7 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                               padding: "6px 14px", background: "none",
                               border: `1.5px solid ${theme.errorRed}`, borderRadius: 6,
                               color: theme.errorRed, fontSize: 11,
-                              fontFamily: "'Overpass Mono', monospace", fontWeight: 600, cursor: "pointer",
+                              fontFamily: FONT_MONO, fontWeight: 600, cursor: "pointer",
                               transition: "all 0.15s",
                             }}
                             onMouseEnter={(e) => { e.currentTarget.style.background = (theme.errorRed || "#DC2626") + "10"; }}
@@ -1362,7 +1362,7 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                                 padding: "6px 14px", background: "none",
                                 border: `1.5px solid ${theme.inputBorder}`, borderRadius: 6,
                                 color: theme.textDescription, fontSize: 11,
-                                fontFamily: "'Overpass Mono', monospace", fontWeight: 600, cursor: "pointer",
+                                fontFamily: FONT_MONO, fontWeight: 600, cursor: "pointer",
                                 transition: "all 0.15s",
                               }}
                               onMouseEnter={(e) => { e.currentTarget.style.background = theme.subtleBg; }}
@@ -1385,7 +1385,7 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                             padding: "6px 14px", background: "none",
                             border: `1.5px solid ${theme.errorRed}`, borderRadius: 6,
                             color: theme.errorRed, fontSize: 11,
-                            fontFamily: "'Overpass Mono', monospace", fontWeight: 600, cursor: "pointer",
+                            fontFamily: FONT_MONO, fontWeight: 600, cursor: "pointer",
                             transition: "all 0.15s",
                           }}
                           onMouseEnter={(e) => { e.currentTarget.style.background = (theme.errorRed || "#DC2626") + "10"; }}
@@ -1400,12 +1400,12 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                             disabled={isProcessing}
                             style={{
                               padding: "6px 14px", background: "none",
-                              border: "1.5px solid #D97706", borderRadius: 6,
-                              color: "#D97706", fontSize: 11,
-                              fontFamily: "'Overpass Mono', monospace", fontWeight: 600, cursor: "pointer",
+                              border: `1.5px solid ${theme.feedbackAmber}`, borderRadius: 6,
+                              color: theme.feedbackAmber, fontSize: 11,
+                              fontFamily: FONT_MONO, fontWeight: 600, cursor: "pointer",
                               transition: "all 0.15s",
                             }}
-                            onMouseEnter={(e) => { e.currentTarget.style.background = "#D9770610"; }}
+                            onMouseEnter={(e) => { e.currentTarget.style.background = theme.feedbackAmber + "10"; }}
                             onMouseLeave={(e) => { e.currentTarget.style.background = "none"; }}
                           >
                             <Icon icon={commentAlertOutline} width={13} style={{ verticalAlign: "middle", marginRight: 3 }} />
@@ -1420,7 +1420,7 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                               padding: "6px 14px", background: "none",
                               border: `1.5px solid ${theme.inputBorder}`, borderRadius: 6,
                               color: theme.textDescription, fontSize: 11,
-                              fontFamily: "'Overpass Mono', monospace", fontWeight: 600, cursor: "pointer",
+                              fontFamily: FONT_MONO, fontWeight: 600, cursor: "pointer",
                               transition: "all 0.15s",
                             }}
                             onMouseEnter={(e) => { e.currentTarget.style.background = theme.subtleBg; }}
@@ -1436,7 +1436,7 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                           style={{
                             padding: "6px 14px", background: conn.deleteOf ? (theme.errorRed || "#DC2626") : theme.successGreen,
                             color: "#fff", border: "none", borderRadius: 6,
-                            fontSize: 11, fontFamily: "'Overpass Mono', monospace",
+                            fontSize: 11, fontFamily: FONT_MONO,
                             fontWeight: 700, cursor: "pointer",
                             transition: "filter 0.15s",
                           }}
@@ -1450,12 +1450,12 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                       {feedbackId === conn.id && feedbackType === "connection" && (
                         <div style={{
                           marginTop: 10, padding: "12px 14px",
-                          background: theme.warmSubtleBg || "#FEF3C7",
-                          borderRadius: 8, border: "1.5px solid #D97706",
+                          background: theme.feedbackAmberBg,
+                          borderRadius: 8, border: `1.5px solid ${theme.feedbackAmber}`,
                         }}>
                           <label style={{
-                            fontSize: 10, fontWeight: 700, fontFamily: "'Overpass Mono', monospace",
-                            color: "#92400E", textTransform: "uppercase", letterSpacing: "0.05em",
+                            fontSize: 10, fontWeight: 700, fontFamily: FONT_MONO,
+                            color: theme.feedbackAmberText, textTransform: "uppercase", letterSpacing: "0.05em",
                             marginBottom: 6, display: "block",
                           }}>
                             Feedback for Student
@@ -1466,7 +1466,7 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                             onChange={(e) => setFeedbackText(e.target.value)}
                             placeholder="What should the student fix or improve?"
                             rows={3}
-                            style={{ ...inputStyle, borderColor: "#D97706" }}
+                            style={{ ...inputStyle, borderColor: theme.feedbackAmber }}
                           />
                           <div style={{ display: "flex", gap: 6, justifyContent: "flex-end", marginTop: 8 }}>
                             <button
@@ -1474,7 +1474,7 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                               style={{
                                 padding: "6px 14px", background: "none",
                                 border: `1.5px solid ${theme.inputBorder}`, borderRadius: 6,
-                                fontSize: 11, fontFamily: "'Overpass Mono', monospace",
+                                fontSize: 11, fontFamily: FONT_MONO,
                                 cursor: "pointer", color: theme.textTertiary, transition: "all 0.15s",
                               }}
                               onMouseEnter={(e) => { e.currentTarget.style.background = theme.subtleBg; }}
@@ -1487,9 +1487,9 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                               disabled={!feedbackText.trim() || isProcessing}
                               style={{
                                 padding: "6px 14px",
-                                background: feedbackText.trim() ? "#D97706" : theme.inputBorder,
+                                background: feedbackText.trim() ? theme.feedbackAmber : theme.inputBorder,
                                 color: "#fff", border: "none", borderRadius: 6,
-                                fontSize: 11, fontFamily: "'Overpass Mono', monospace",
+                                fontSize: 11, fontFamily: FONT_MONO,
                                 fontWeight: 700, cursor: feedbackText.trim() ? "pointer" : "default",
                                 transition: "filter 0.15s",
                               }}
@@ -1518,8 +1518,8 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
               padding: "10px 0 6px",
               marginTop: pendingConnections.length > 0 ? 12 : 0,
               borderTop: pendingConnections.length > 0 ? `1px solid ${theme.inputBorder}` : "none",
-              fontSize: 10, fontWeight: 700, fontFamily: "'Overpass Mono', monospace",
-              color: "#D97706", textTransform: "uppercase", letterSpacing: "0.08em",
+              fontSize: 10, fontWeight: 700, fontFamily: FONT_MONO,
+              color: theme.feedbackAmber, textTransform: "uppercase", letterSpacing: "0.08em",
             }}>
               Awaiting Student Revision ({needsRevisionConnections.length})
             </div>
@@ -1534,13 +1534,13 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                   <div
                     key={conn.id}
                     style={{
-                      border: "1.5px solid #D9770640", borderRadius: 10,
-                      padding: "16px 18px", borderLeft: "4px solid #D97706", opacity: 0.85,
+                      border: `1.5px solid ${theme.feedbackAmber}40`, borderRadius: 10,
+                      padding: "16px 18px", borderLeft: `4px solid ${theme.feedbackAmber}`, opacity: 0.85,
                     }}
                   >
                     <div style={{
-                      fontSize: 10, fontWeight: 700, fontFamily: "'Overpass Mono', monospace",
-                      color: "#D97706", background: theme.warmSubtleBg || "#FEF3C7",
+                      fontSize: 10, fontWeight: 700, fontFamily: FONT_MONO,
+                      color: theme.feedbackAmber, background: theme.feedbackAmberBg,
                       padding: "3px 8px", borderRadius: 4, display: "inline-block",
                       marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em",
                     }}>
@@ -1552,30 +1552,30 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                         padding: "4px 10px", background: theme.warmSubtleBg, borderRadius: 6,
                         borderLeft: `3px solid ${causeUnit?.color || theme.textSecondary}`,
                       }}>
-                        <span style={{ fontSize: 10, fontWeight: 700, fontFamily: "'Overpass Mono', monospace", color: causeUnit?.color || theme.textSecondary }}>
+                        <span style={{ fontSize: 10, fontWeight: 700, fontFamily: FONT_MONO, color: causeUnit?.color || theme.textSecondary }}>
                           {causeEvent?.year || "?"}
                         </span>
-                        <span style={{ fontSize: 12, fontFamily: "'Newsreader', serif", fontWeight: 600, color: theme.textPrimary }}>
+                        <span style={{ fontSize: 12, fontFamily: FONT_SERIF, fontWeight: 600, color: theme.textPrimary }}>
                           {causeEvent?.title || "Unknown event"}
                         </span>
                       </div>
-                      <Icon icon={arrowRightBold} width={18} style={{ color: "#D97706", flexShrink: 0 }} />
+                      <Icon icon={arrowRightBold} width={18} style={{ color: theme.feedbackAmber, flexShrink: 0 }} />
                       <div style={{
                         display: "flex", alignItems: "center", gap: 6,
                         padding: "4px 10px", background: theme.warmSubtleBg, borderRadius: 6,
                         borderLeft: `3px solid ${effectUnit?.color || theme.textSecondary}`,
                       }}>
-                        <span style={{ fontSize: 10, fontWeight: 700, fontFamily: "'Overpass Mono', monospace", color: effectUnit?.color || theme.textSecondary }}>
+                        <span style={{ fontSize: 10, fontWeight: 700, fontFamily: FONT_MONO, color: effectUnit?.color || theme.textSecondary }}>
                           {effectEvent?.year || "?"}
                         </span>
-                        <span style={{ fontSize: 12, fontFamily: "'Newsreader', serif", fontWeight: 600, color: theme.textPrimary }}>
+                        <span style={{ fontSize: 12, fontFamily: FONT_SERIF, fontWeight: 600, color: theme.textPrimary }}>
                           {effectEvent?.title || "Unknown event"}
                         </span>
                       </div>
                     </div>
                     <p style={{
                       fontSize: 12, lineHeight: 1.6, color: theme.textDescription,
-                      margin: "0 0 8px 0", fontFamily: "'Newsreader', serif",
+                      margin: "0 0 8px 0", fontFamily: FONT_SERIF,
                     }}>
                       {conn.description}
                     </p>
@@ -1588,7 +1588,7 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                           padding: "6px 14px", background: "none",
                           border: `1.5px solid ${theme.errorRed}`, borderRadius: 6,
                           color: theme.errorRed, fontSize: 11,
-                          fontFamily: "'Overpass Mono', monospace", fontWeight: 600,
+                          fontFamily: FONT_MONO, fontWeight: 600,
                           cursor: "pointer", transition: "all 0.15s",
                         }}
                         onMouseEnter={(e) => { e.currentTarget.style.background = (theme.errorRed || "#DC2626") + "10"; }}

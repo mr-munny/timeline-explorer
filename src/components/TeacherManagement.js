@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useTheme } from "../contexts/ThemeContext";
+import { useTheme, FONT_MONO, FONT_SERIF } from "../contexts/ThemeContext";
 import { Icon } from "@iconify/react";
 import accountPlus from "@iconify-icons/mdi/account-plus";
 import contentCopy from "@iconify-icons/mdi/content-copy";
@@ -104,7 +104,7 @@ export default function TeacherManagement({ user, teacherData, onImpersonate }) 
     fontSize: 9,
     fontWeight: 700,
     color: theme.textMuted,
-    fontFamily: "'Overpass Mono', monospace",
+    fontFamily: FONT_MONO,
     textTransform: "uppercase",
     letterSpacing: "0.1em",
     marginBottom: 12,
@@ -124,7 +124,7 @@ export default function TeacherManagement({ user, teacherData, onImpersonate }) 
         fontSize: 18,
         fontWeight: 700,
         margin: "0 0 4px 0",
-        fontFamily: "'Newsreader', 'Georgia', serif",
+        fontFamily: FONT_SERIF,
         color: theme.textPrimary,
       }}>
         Teacher Management
@@ -132,7 +132,7 @@ export default function TeacherManagement({ user, teacherData, onImpersonate }) 
       <p style={{
         fontSize: 11,
         color: theme.textMuted,
-        fontFamily: "'Overpass Mono', monospace",
+        fontFamily: FONT_MONO,
         margin: "0 0 24px 0",
       }}>
         Manage teacher accounts and join codes
@@ -145,7 +145,7 @@ export default function TeacherManagement({ user, teacherData, onImpersonate }) 
           <span style={{
             fontSize: 24,
             fontWeight: 700,
-            fontFamily: "'Overpass Mono', monospace",
+            fontFamily: FONT_MONO,
             letterSpacing: "0.15em",
             color: theme.textPrimary,
           }}>
@@ -161,7 +161,7 @@ export default function TeacherManagement({ user, teacherData, onImpersonate }) 
               cursor: "pointer",
               color: copiedCode === teacherData?.joinCode ? theme.teacherGreen : theme.textSecondary,
               fontSize: 11,
-              fontFamily: "'Overpass Mono', monospace",
+              fontFamily: FONT_MONO,
               display: "inline-flex",
               alignItems: "center",
               gap: 4,
@@ -181,7 +181,7 @@ export default function TeacherManagement({ user, teacherData, onImpersonate }) 
               cursor: "pointer",
               color: theme.textSecondary,
               fontSize: 11,
-              fontFamily: "'Overpass Mono', monospace",
+              fontFamily: FONT_MONO,
               transition: "all 0.15s",
             }}
           >
@@ -191,7 +191,7 @@ export default function TeacherManagement({ user, teacherData, onImpersonate }) 
         <p style={{
           fontSize: 10,
           color: theme.textMuted,
-          fontFamily: "'Overpass Mono', monospace",
+          fontFamily: FONT_MONO,
           margin: "8px 0 0 0",
         }}>
           Share this code with students so they can join your class.
@@ -216,7 +216,7 @@ export default function TeacherManagement({ user, teacherData, onImpersonate }) 
               border: `1.5px solid ${inviteError ? theme.errorRed : theme.inputBorder}`,
               borderRadius: 6,
               fontSize: 12,
-              fontFamily: "'Overpass Mono', monospace",
+              fontFamily: FONT_MONO,
               background: theme.inputBg,
               color: theme.textPrimary,
               outline: "none",
@@ -232,7 +232,7 @@ export default function TeacherManagement({ user, teacherData, onImpersonate }) 
               border: "none",
               borderRadius: 6,
               fontSize: 11,
-              fontFamily: "'Overpass Mono', monospace",
+              fontFamily: FONT_MONO,
               fontWeight: 700,
               cursor: inviteEmail.trim() ? "pointer" : "default",
               opacity: inviteEmail.trim() ? 1 : 0.5,
@@ -242,12 +242,12 @@ export default function TeacherManagement({ user, teacherData, onImpersonate }) 
           </button>
         </div>
         {inviteError && (
-          <p style={{ fontSize: 11, color: theme.errorRed, fontFamily: "'Overpass Mono', monospace", margin: "6px 0 0" }}>
+          <p style={{ fontSize: 11, color: theme.errorRed, fontFamily: FONT_MONO, margin: "6px 0 0" }}>
             {inviteError}
           </p>
         )}
         {inviteSuccess && (
-          <p style={{ fontSize: 11, color: theme.teacherGreen, fontFamily: "'Overpass Mono', monospace", margin: "6px 0 0" }}>
+          <p style={{ fontSize: 11, color: theme.teacherGreen, fontFamily: FONT_MONO, margin: "6px 0 0" }}>
             {inviteSuccess}
           </p>
         )}
@@ -267,7 +267,7 @@ export default function TeacherManagement({ user, teacherData, onImpersonate }) 
             }}>
               <span style={{
                 fontSize: 12,
-                fontFamily: "'Overpass Mono', monospace",
+                fontFamily: FONT_MONO,
                 color: theme.textPrimary,
               }}>
                 {inv.email}
@@ -279,7 +279,7 @@ export default function TeacherManagement({ user, teacherData, onImpersonate }) 
                   border: "none",
                   color: theme.textMuted,
                   fontSize: 10,
-                  fontFamily: "'Overpass Mono', monospace",
+                  fontFamily: FONT_MONO,
                   cursor: "pointer",
                 }}
               >
@@ -307,7 +307,7 @@ export default function TeacherManagement({ user, teacherData, onImpersonate }) 
                 <div style={{
                   fontSize: 13,
                   fontWeight: 600,
-                  fontFamily: "'Overpass Mono', monospace",
+                  fontFamily: FONT_MONO,
                   color: theme.textPrimary,
                 }}>
                   {t.displayName || t.email.split("@")[0]}
@@ -329,7 +329,7 @@ export default function TeacherManagement({ user, teacherData, onImpersonate }) 
                 <div style={{
                   fontSize: 10,
                   color: theme.textMuted,
-                  fontFamily: "'Overpass Mono', monospace",
+                  fontFamily: FONT_MONO,
                 }}>
                   {t.email}
                   {" \u00B7 "}
@@ -350,7 +350,7 @@ export default function TeacherManagement({ user, teacherData, onImpersonate }) 
                           border: `1px solid ${theme.inputBorder}`,
                           borderRadius: 3,
                           fontSize: 10,
-                          fontFamily: "'Overpass Mono', monospace",
+                          fontFamily: FONT_MONO,
                           background: theme.inputBg,
                           color: theme.textPrimary,
                           textTransform: "uppercase",
@@ -405,7 +405,7 @@ export default function TeacherManagement({ user, teacherData, onImpersonate }) 
                           borderRadius: 4,
                           padding: "4px 8px",
                           fontSize: 10,
-                          fontFamily: "'Overpass Mono', monospace",
+                          fontFamily: FONT_MONO,
                           fontWeight: 700,
                           cursor: "pointer",
                         }}
@@ -420,7 +420,7 @@ export default function TeacherManagement({ user, teacherData, onImpersonate }) 
                           borderRadius: 4,
                           padding: "4px 8px",
                           fontSize: 10,
-                          fontFamily: "'Overpass Mono', monospace",
+                          fontFamily: FONT_MONO,
                           cursor: "pointer",
                           color: theme.textSecondary,
                         }}

@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { useTheme } from "../contexts/ThemeContext";
+import { useTheme, FONT_MONO } from "../contexts/ThemeContext";
 import EventCard from "./EventCard";
 import ConnectionLines from "./ConnectionLines";
 import ContributorSidebar from "./ContributorSidebar";
@@ -48,7 +48,7 @@ export default function EventList({
               textAlign: "center",
               padding: "48px 20px",
               color: theme.textSecondary,
-              fontFamily: "'Overpass Mono', monospace",
+              fontFamily: FONT_MONO,
               fontSize: 12,
             }}
           >

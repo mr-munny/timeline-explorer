@@ -3,6 +3,8 @@ import { createContext, useContext, useState, useEffect, useMemo } from "react";
 const ThemeContext = createContext(null);
 
 const STORAGE_KEY = "timeline-explorer-theme";
+export const FONT_MONO = "'Overpass Mono', monospace";
+export const FONT_SERIF = "'Newsreader', 'Georgia', serif";
 
 const lightTheme = {
   pageBg: "#F7F7F5",
@@ -43,6 +45,10 @@ const lightTheme = {
   successGreen: "#059669",
   teacherGreen: "#34D399",
   teacherGreenSubtle: "#34D39918",
+
+  feedbackAmber: "#D97706",
+  feedbackAmberText: "#92400E",
+  feedbackAmberBg: "#FEF3C7",
 
   modalOverlay: "rgba(0,0,0,0.4)",
   modalShadow: "0 24px 48px rgba(0,0,0,0.15)",
@@ -92,6 +98,10 @@ const darkTheme = {
   successGreen: "#059669",
   teacherGreen: "#34D399",
   teacherGreenSubtle: "#34D39922",
+
+  feedbackAmber: "#D97706",
+  feedbackAmberText: "#FDE68A",
+  feedbackAmberBg: "#422006",
 
   modalOverlay: "rgba(0,0,0,0.6)",
   modalShadow: "0 24px 48px rgba(0,0,0,0.4)",

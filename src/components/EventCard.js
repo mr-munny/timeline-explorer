@@ -16,7 +16,7 @@ import imageOutline from "@iconify-icons/mdi/image-outline";
 import accountOutline from "@iconify-icons/mdi/account-outline";
 import mapMarkerOutline from "@iconify-icons/mdi/map-marker-outline";
 import schoolOutline from "@iconify-icons/mdi/school-outline";
-import { useTheme } from "../contexts/ThemeContext";
+import { useTheme, FONT_MONO, FONT_SERIF } from "../contexts/ThemeContext";
 
 export default function EventCard({ event, isExpanded, isRead, onToggle, isTeacher, onEdit, onDelete, periods = [], onReturnToTimeline, connections, allEvents = [], onScrollToEvent, onDeleteConnection, onEditConnection, onSuggestDeleteConnection }) {
   const { theme } = useTheme();
@@ -62,7 +62,7 @@ export default function EventCard({ event, isExpanded, isRead, onToggle, isTeach
             fontWeight: 700,
             padding: "4px 8px",
             borderRadius: 5,
-            fontFamily: "'Overpass Mono', monospace",
+            fontFamily: FONT_MONO,
             flexShrink: 0,
             letterSpacing: "0.02em",
             lineHeight: 1.2,
@@ -81,7 +81,7 @@ export default function EventCard({ event, isExpanded, isRead, onToggle, isTeach
               fontWeight: 700,
               color: theme.textPrimary,
               margin: 0,
-              fontFamily: "'Newsreader', 'Georgia', serif",
+              fontFamily: FONT_SERIF,
               lineHeight: 1.35,
             }}
           >
@@ -94,7 +94,7 @@ export default function EventCard({ event, isExpanded, isRead, onToggle, isTeach
                 style={{
                   fontSize: 10,
                   color: periodColor,
-                  fontFamily: "'Overpass Mono', monospace",
+                  fontFamily: FONT_MONO,
                   fontWeight: 600,
                 }}
               >
@@ -105,7 +105,7 @@ export default function EventCard({ event, isExpanded, isRead, onToggle, isTeach
                 style={{
                   fontSize: 10,
                   color: theme.textSecondary,
-                  fontFamily: "'Overpass Mono', monospace",
+                  fontFamily: FONT_MONO,
                 }}
               >
                 {(event.tags || []).slice(0, 3).join(", ")}
@@ -115,7 +115,7 @@ export default function EventCard({ event, isExpanded, isRead, onToggle, isTeach
                 style={{
                   fontSize: 10,
                   color: theme.textSecondary,
-                  fontFamily: "'Overpass Mono', monospace",
+                  fontFamily: FONT_MONO,
                 }}
               >
                 {event.addedBy}
@@ -127,7 +127,7 @@ export default function EventCard({ event, isExpanded, isRead, onToggle, isTeach
                     style={{
                       fontSize: 10,
                       color: theme.textTertiary,
-                      fontFamily: "'Overpass Mono', monospace",
+                      fontFamily: FONT_MONO,
                       fontStyle: "italic",
                     }}
                   >
@@ -173,7 +173,7 @@ export default function EventCard({ event, isExpanded, isRead, onToggle, isTeach
                 background: theme.subtleBg,
                 color: theme.textMuted,
                 fontSize: 9,
-                fontFamily: "'Overpass Mono', monospace",
+                fontFamily: FONT_MONO,
                 fontWeight: 600,
                 cursor: "pointer",
                 marginBottom: 10,
@@ -194,7 +194,7 @@ export default function EventCard({ event, isExpanded, isRead, onToggle, isTeach
                 lineHeight: 1.7,
                 color: theme.textDescription,
                 margin: 0,
-                fontFamily: "'Newsreader', 'Georgia', serif",
+                fontFamily: FONT_SERIF,
                 flex: 1,
               }}
             >
@@ -234,7 +234,7 @@ export default function EventCard({ event, isExpanded, isRead, onToggle, isTeach
                   background: theme.subtleBg,
                   padding: "3px 8px",
                   borderRadius: 4,
-                  fontFamily: "'Overpass Mono', monospace",
+                  fontFamily: FONT_MONO,
                   fontWeight: 500,
                 }}
               >
@@ -253,7 +253,7 @@ export default function EventCard({ event, isExpanded, isRead, onToggle, isTeach
               background: theme.warmSubtleBg,
               borderRadius: 8,
               fontSize: 11,
-              fontFamily: "'Overpass Mono', monospace",
+              fontFamily: FONT_MONO,
             }}
           >
             <div>
@@ -311,7 +311,7 @@ export default function EventCard({ event, isExpanded, isRead, onToggle, isTeach
                     style={{
                       color: "#2563EB",
                       fontSize: 10,
-                      fontFamily: "'Overpass Mono', monospace",
+                      fontFamily: FONT_MONO,
                       textDecoration: "none",
                       display: "inline-flex",
                       alignItems: "center",
@@ -342,7 +342,7 @@ export default function EventCard({ event, isExpanded, isRead, onToggle, isTeach
                   style={{
                     color: "#2563EB",
                     fontSize: 10,
-                    fontFamily: "'Overpass Mono', monospace",
+                    fontFamily: FONT_MONO,
                     textDecoration: "none",
                     display: "flex",
                     alignItems: "center",
@@ -393,7 +393,7 @@ export default function EventCard({ event, isExpanded, isRead, onToggle, isTeach
                   background: theme.subtleBg,
                   borderRadius: 5,
                   fontSize: 10,
-                  fontFamily: "'Overpass Mono', monospace",
+                  fontFamily: FONT_MONO,
                   display: "flex",
                   flexDirection: "column",
                   gap: 8,
@@ -419,7 +419,7 @@ export default function EventCard({ event, isExpanded, isRead, onToggle, isTeach
                               padding: "3px 6px",
                               background: theme.warmSubtleBg,
                               borderRadius: 4,
-                              borderLeft: `2px solid #D97706`,
+                              borderLeft: `2px solid ${theme.feedbackAmber}`,
                             }}>
                               <div style={{
                                 fontSize: 8,
@@ -433,7 +433,7 @@ export default function EventCard({ event, isExpanded, isRead, onToggle, isTeach
                               </div>
                               <div style={{
                                 fontSize: key === "description" ? 10 : 10,
-                                fontFamily: TEXT_FIELDS.has(key) ? "'Newsreader', serif" : "'Overpass Mono', monospace",
+                                fontFamily: TEXT_FIELDS.has(key) ? FONT_SERIF : FONT_MONO,
                                 lineHeight: 1.4,
                               }}>
                                 {TEXT_FIELDS.has(key) ? (
@@ -502,7 +502,7 @@ export default function EventCard({ event, isExpanded, isRead, onToggle, isTeach
                   fontSize: 10,
                   fontWeight: 700,
                   color: theme.textTertiary,
-                  fontFamily: "'Overpass Mono', monospace",
+                  fontFamily: FONT_MONO,
                   textTransform: "uppercase",
                   letterSpacing: "0.05em",
                   marginBottom: 8,
@@ -535,12 +535,12 @@ export default function EventCard({ event, isExpanded, isRead, onToggle, isTeach
                     >
                       <Icon icon={arrowRightThick} width={14} style={{ color: theme.accentGold || "#F59E0B", marginTop: 2, flexShrink: 0 }} />
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 12, fontFamily: "'Newsreader', serif", fontWeight: 600, color: theme.textPrimary }}>
+                        <div style={{ fontSize: 12, fontFamily: FONT_SERIF, fontWeight: 600, color: theme.textPrimary }}>
                           Leads to:{" "}
                           <span style={{ color: targetPeriod?.color || theme.textSecondary }}>{formatEventDate(target)}</span>
                           {" "}{target.title}
                         </div>
-                        <div style={{ fontSize: 11, color: theme.textSecondary, fontFamily: "'Newsreader', serif", marginTop: 2, lineHeight: 1.4 }}>
+                        <div style={{ fontSize: 11, color: theme.textSecondary, fontFamily: FONT_SERIF, marginTop: 2, lineHeight: 1.4 }}>
                           {conn.description}
                         </div>
                       </div>
@@ -611,7 +611,7 @@ export default function EventCard({ event, isExpanded, isRead, onToggle, isTeach
                           }}
                           style={{
                             color: theme.textTertiary, fontSize: 9,
-                            fontFamily: "'Overpass Mono', monospace", fontStyle: "italic",
+                            fontFamily: FONT_MONO, fontStyle: "italic",
                             cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 3,
                             transition: "color 0.15s",
                           }}
@@ -625,7 +625,7 @@ export default function EventCard({ event, isExpanded, isRead, onToggle, isTeach
                         {showConnEditHistory.has(conn.id) && (
                           <div style={{
                             marginTop: 4, padding: "6px 8px", background: theme.subtleBg,
-                            borderRadius: 5, fontSize: 9, fontFamily: "'Overpass Mono', monospace",
+                            borderRadius: 5, fontSize: 9, fontFamily: FONT_MONO,
                             display: "flex", flexDirection: "column", gap: 6,
                           }}>
                             {connHistory.map((entry, i) => (
@@ -647,7 +647,7 @@ export default function EventCard({ event, isExpanded, isRead, onToggle, isTeach
                                       return (
                                         <div key={key} style={{
                                           padding: "2px 5px", background: theme.warmSubtleBg,
-                                          borderRadius: 3, borderLeft: "2px solid #D97706",
+                                          borderRadius: 3, borderLeft: `2px solid ${theme.feedbackAmber}`,
                                         }}>
                                           <div style={{ fontSize: 7, fontWeight: 700, color: theme.textTertiary, textTransform: "uppercase" }}>
                                             {label}
@@ -722,12 +722,12 @@ export default function EventCard({ event, isExpanded, isRead, onToggle, isTeach
                     >
                       <Icon icon={arrowLeftThick} width={14} style={{ color: theme.accentGold || "#F59E0B", marginTop: 2, flexShrink: 0 }} />
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 12, fontFamily: "'Newsreader', serif", fontWeight: 600, color: theme.textPrimary }}>
+                        <div style={{ fontSize: 12, fontFamily: FONT_SERIF, fontWeight: 600, color: theme.textPrimary }}>
                           Caused by:{" "}
                           <span style={{ color: sourcePeriod?.color || theme.textSecondary }}>{formatEventDate(source)}</span>
                           {" "}{source.title}
                         </div>
-                        <div style={{ fontSize: 11, color: theme.textSecondary, fontFamily: "'Newsreader', serif", marginTop: 2, lineHeight: 1.4 }}>
+                        <div style={{ fontSize: 11, color: theme.textSecondary, fontFamily: FONT_SERIF, marginTop: 2, lineHeight: 1.4 }}>
                           {conn.description}
                         </div>
                       </div>
@@ -798,7 +798,7 @@ export default function EventCard({ event, isExpanded, isRead, onToggle, isTeach
                           }}
                           style={{
                             color: theme.textTertiary, fontSize: 9,
-                            fontFamily: "'Overpass Mono', monospace", fontStyle: "italic",
+                            fontFamily: FONT_MONO, fontStyle: "italic",
                             cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 3,
                             transition: "color 0.15s",
                           }}
@@ -812,7 +812,7 @@ export default function EventCard({ event, isExpanded, isRead, onToggle, isTeach
                         {showConnEditHistory.has(conn.id) && (
                           <div style={{
                             marginTop: 4, padding: "6px 8px", background: theme.subtleBg,
-                            borderRadius: 5, fontSize: 9, fontFamily: "'Overpass Mono', monospace",
+                            borderRadius: 5, fontSize: 9, fontFamily: FONT_MONO,
                             display: "flex", flexDirection: "column", gap: 6,
                           }}>
                             {connHistory.map((entry, i) => (
@@ -834,7 +834,7 @@ export default function EventCard({ event, isExpanded, isRead, onToggle, isTeach
                                       return (
                                         <div key={key} style={{
                                           padding: "2px 5px", background: theme.warmSubtleBg,
-                                          borderRadius: 3, borderLeft: "2px solid #D97706",
+                                          borderRadius: 3, borderLeft: `2px solid ${theme.feedbackAmber}`,
                                         }}>
                                           <div style={{ fontSize: 7, fontWeight: 700, color: theme.textTertiary, textTransform: "uppercase" }}>
                                             {label}
@@ -902,7 +902,7 @@ export default function EventCard({ event, isExpanded, isRead, onToggle, isTeach
                   borderRadius: 6,
                   color: theme.textDescription,
                   fontSize: 11,
-                  fontFamily: "'Overpass Mono', monospace",
+                  fontFamily: FONT_MONO,
                   fontWeight: 600,
                   cursor: "pointer",
                   transition: "all 0.15s",
@@ -929,7 +929,7 @@ export default function EventCard({ event, isExpanded, isRead, onToggle, isTeach
                   borderRadius: 6,
                   color: theme.errorRed,
                   fontSize: 11,
-                  fontFamily: "'Overpass Mono', monospace",
+                  fontFamily: FONT_MONO,
                   fontWeight: 600,
                   cursor: "pointer",
                   transition: "all 0.15s",

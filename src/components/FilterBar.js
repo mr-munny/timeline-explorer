@@ -1,4 +1,5 @@
 import { TAGS } from "../data/constants";
+import { useTheme, FONT_MONO } from "../contexts/ThemeContext";
 import { Icon } from "@iconify/react";
 import magnifyIcon from "@iconify-icons/mdi/magnify";
 import sortAscending from "@iconify-icons/mdi/sort-ascending";
@@ -7,8 +8,6 @@ import accountGroup from "@iconify-icons/mdi/account-group";
 import filterRemoveOutline from "@iconify-icons/mdi/filter-remove-outline";
 
 export default function FilterBar({
-  theme,
-  getThemedPeriodBg,
   searchTerm,
   setSearchTerm,
   selectedPeriods,
@@ -33,6 +32,7 @@ export default function FilterBar({
   filteredCount,
   totalCount,
 }) {
+  const { theme, getThemedPeriodBg } = useTheme();
   const hasActiveFilters =
     selectedPeriods.length > 0 ||
     selectedTags.length > 0 ||
@@ -75,7 +75,7 @@ export default function FilterBar({
               border: `1.5px solid ${theme.inputBorder}`,
               borderRadius: 8,
               fontSize: 12,
-              fontFamily: "'Overpass Mono', monospace",
+              fontFamily: FONT_MONO,
               background: theme.inputBg,
               color: theme.textPrimary,
               outline: "none",
@@ -92,7 +92,7 @@ export default function FilterBar({
               border: `1.5px solid ${theme.inputBorder}`,
               borderRadius: 8,
               fontSize: 11,
-              fontFamily: "'Overpass Mono', monospace",
+              fontFamily: FONT_MONO,
               background: theme.inputBg,
               cursor: "pointer",
               color: sectionFilter === "all" ? theme.textSecondary : theme.textPrimary,
@@ -113,7 +113,7 @@ export default function FilterBar({
             border: `1.5px solid ${theme.inputBorder}`,
             borderRadius: 8,
             fontSize: 11,
-            fontFamily: "'Overpass Mono', monospace",
+            fontFamily: FONT_MONO,
             background: theme.inputBg,
             cursor: "pointer",
             color: theme.textTertiary,
@@ -132,7 +132,7 @@ export default function FilterBar({
             border: `1.5px solid ${showContributors ? theme.activeToggleBg : theme.inputBorder}`,
             borderRadius: 8,
             fontSize: 11,
-            fontFamily: "'Overpass Mono', monospace",
+            fontFamily: FONT_MONO,
             background: showContributors ? theme.activeToggleBg : theme.inputBg,
             color: showContributors ? theme.activeToggleText : theme.textTertiary,
             cursor: "pointer",
@@ -161,7 +161,7 @@ export default function FilterBar({
           <span
             style={{
               fontSize: 10,
-              fontFamily: "'Overpass Mono', monospace",
+              fontFamily: FONT_MONO,
               color: theme.textMuted,
               fontWeight: 600,
               marginRight: 2,
@@ -182,7 +182,7 @@ export default function FilterBar({
                   background: isSelected ? (getThemedPeriodBg(p) || p.bg) : "transparent",
                   color: isSelected ? p.color : theme.textTertiary,
                   fontSize: 10,
-                  fontFamily: "'Overpass Mono', monospace",
+                  fontFamily: FONT_MONO,
                   fontWeight: isSelected ? 700 : 500,
                   cursor: "pointer",
                   transition: "all 0.15s",
@@ -208,7 +208,7 @@ export default function FilterBar({
         <span
           style={{
             fontSize: 10,
-            fontFamily: "'Overpass Mono', monospace",
+            fontFamily: FONT_MONO,
             color: theme.textMuted,
             fontWeight: 600,
             marginRight: 2,
@@ -229,7 +229,7 @@ export default function FilterBar({
                 background: isSelected ? theme.subtleBg : "transparent",
                 color: isSelected ? theme.textDescription : theme.textTertiary,
                 fontSize: 10,
-                fontFamily: "'Overpass Mono', monospace",
+                fontFamily: FONT_MONO,
                 fontWeight: isSelected ? 700 : 500,
                 cursor: "pointer",
                 transition: "all 0.15s",
@@ -255,7 +255,7 @@ export default function FilterBar({
               background: tagMatchMode === "and" ? theme.subtleBg : "transparent",
               color: theme.textDescription,
               fontSize: 9,
-              fontFamily: "'Overpass Mono', monospace",
+              fontFamily: FONT_MONO,
               fontWeight: 700,
               cursor: "pointer",
               transition: "all 0.15s",
@@ -282,7 +282,7 @@ export default function FilterBar({
             style={{
               fontSize: 10,
               color: theme.textMuted,
-              fontFamily: "'Overpass Mono', monospace",
+              fontFamily: FONT_MONO,
             }}
           >
             Showing:
@@ -300,7 +300,7 @@ export default function FilterBar({
                   color: p.color,
                   padding: "3px 8px",
                   borderRadius: 4,
-                  fontFamily: "'Overpass Mono', monospace",
+                  fontFamily: FONT_MONO,
                   fontWeight: 700,
                   cursor: "pointer",
                 }}
@@ -316,7 +316,7 @@ export default function FilterBar({
                   style={{
                     fontSize: 9,
                     color: theme.textMuted,
-                    fontFamily: "'Overpass Mono', monospace",
+                    fontFamily: FONT_MONO,
                     fontWeight: 600,
                   }}
                 >
@@ -333,7 +333,7 @@ export default function FilterBar({
                     color: theme.textDescription,
                     padding: "3px 8px",
                     borderRadius: 4,
-                    fontFamily: "'Overpass Mono', monospace",
+                    fontFamily: FONT_MONO,
                     fontWeight: 600,
                     cursor: "pointer",
                   }}
@@ -351,7 +351,7 @@ export default function FilterBar({
                 color: theme.textDescription,
                 padding: "3px 8px",
                 borderRadius: 4,
-                fontFamily: "'Overpass Mono', monospace",
+                fontFamily: FONT_MONO,
                 fontWeight: 600,
               }}
             >
@@ -366,7 +366,7 @@ export default function FilterBar({
                 color: theme.textDescription,
                 padding: "3px 8px",
                 borderRadius: 4,
-                fontFamily: "'Overpass Mono', monospace",
+                fontFamily: FONT_MONO,
               }}
             >
               "{searchTerm}"
@@ -380,7 +380,7 @@ export default function FilterBar({
               background: "none",
               border: "none",
               cursor: "pointer",
-              fontFamily: "'Overpass Mono', monospace",
+              fontFamily: FONT_MONO,
               fontWeight: 700,
               transition: "opacity 0.15s",
             }}
@@ -395,7 +395,7 @@ export default function FilterBar({
               marginLeft: "auto",
               fontSize: 11,
               color: theme.textSecondary,
-              fontFamily: "'Overpass Mono', monospace",
+              fontFamily: FONT_MONO,
             }}
           >
             {filteredCount} of {totalCount} events

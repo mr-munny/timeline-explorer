@@ -1,3 +1,4 @@
+import { FONT_MONO, FONT_SERIF } from "../contexts/ThemeContext";
 import { Icon } from "@iconify/react";
 import chartTimelineVariantShimmer from "@iconify-icons/mdi/chart-timeline-variant-shimmer";
 import plusIcon from "@iconify-icons/mdi/plus";
@@ -51,7 +52,7 @@ export default function TimelineHeader({
                     fontSize: 10,
                     fontWeight: 700,
                     color: theme.teacherGreen,
-                    fontFamily: "'Overpass Mono', monospace",
+                    fontFamily: FONT_MONO,
                     letterSpacing: "0.1em",
                     textTransform: "uppercase",
                     background: theme.teacherGreenSubtle,
@@ -73,7 +74,7 @@ export default function TimelineHeader({
                     fontSize: 10,
                     fontWeight: 700,
                     color: theme.teacherGreen,
-                    fontFamily: "'Overpass Mono', monospace",
+                    fontFamily: FONT_MONO,
                     letterSpacing: "0.1em",
                     textTransform: "uppercase",
                     background: theme.teacherGreenSubtle,
@@ -113,7 +114,7 @@ export default function TimelineHeader({
                     fontSize: 10,
                     fontWeight: 700,
                     color: theme.headerSubtext,
-                    fontFamily: "'Overpass Mono', monospace",
+                    fontFamily: FONT_MONO,
                     letterSpacing: "0.1em",
                     textTransform: "uppercase",
                     background: theme.headerButtonBg,
@@ -139,7 +140,7 @@ export default function TimelineHeader({
                 fontSize: 26,
                 fontWeight: 700,
                 margin: "6px 0 0 0",
-                fontFamily: "'Newsreader', 'Georgia', serif",
+                fontFamily: FONT_SERIF,
                 letterSpacing: "-0.01em",
                 lineHeight: 1.2,
                 display: "flex",
@@ -156,7 +157,7 @@ export default function TimelineHeader({
                   fontSize: 11,
                   color: theme.headerSubtext,
                   margin: "6px 0 0 0",
-                  fontFamily: "'Overpass Mono', monospace",
+                  fontFamily: FONT_MONO,
                 }}
               >
                 {approvedEvents.length} events &middot; {studentCount} student
@@ -170,7 +171,7 @@ export default function TimelineHeader({
                   fontSize: 11,
                   color: theme.headerSubtext,
                   margin: "6px 0 0 0",
-                  fontFamily: "'Overpass Mono', monospace",
+                  fontFamily: FONT_MONO,
                 }}
               >
                 Administration
@@ -192,7 +193,7 @@ export default function TimelineHeader({
                         background: isActive ? theme.accentGold : theme.headerButtonBg,
                         color: isActive ? theme.headerBg : theme.headerSubtext,
                         fontSize: 11,
-                        fontFamily: "'Overpass Mono', monospace",
+                        fontFamily: FONT_MONO,
                         fontWeight: isActive ? 700 : 500,
                         cursor: "pointer",
                         transition: "all 0.15s",
@@ -220,7 +221,7 @@ export default function TimelineHeader({
                       border: "none",
                       borderRadius: 8,
                       fontSize: 12,
-                      fontFamily: "'Overpass Mono', monospace",
+                      fontFamily: FONT_MONO,
                       fontWeight: 700,
                       cursor: "pointer",
                       position: "relative",
@@ -239,16 +240,16 @@ export default function TimelineHeader({
                     style={{
                       padding: "10px 18px",
                       background: "transparent",
-                      color: "#D97706",
-                      border: "1.5px solid #D97706",
+                      color: theme.feedbackAmber,
+                      border: `1.5px solid ${theme.feedbackAmber}`,
                       borderRadius: 8,
                       fontSize: 12,
-                      fontFamily: "'Overpass Mono', monospace",
+                      fontFamily: FONT_MONO,
                       fontWeight: 700,
                       cursor: "pointer",
                       transition: "all 0.15s",
                     }}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = "#D9770615"; }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = theme.feedbackAmber + "15"; }}
                     onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
                   >
                     <Icon icon={bellRingOutline} width={14} style={{ verticalAlign: "middle", marginRight: 4 }} />
@@ -265,7 +266,7 @@ export default function TimelineHeader({
                       border: `1.5px solid ${theme.accentGold}`,
                       borderRadius: 8,
                       fontSize: 12,
-                      fontFamily: "'Overpass Mono', monospace",
+                      fontFamily: FONT_MONO,
                       fontWeight: 700,
                       cursor: "pointer",
                       transition: "all 0.15s",
@@ -286,7 +287,7 @@ export default function TimelineHeader({
                     border: "none",
                     borderRadius: 8,
                     fontSize: 12,
-                    fontFamily: "'Overpass Mono', monospace",
+                    fontFamily: FONT_MONO,
                     fontWeight: 700,
                     cursor: "pointer",
                     letterSpacing: "0.02em",
@@ -307,7 +308,7 @@ export default function TimelineHeader({
                     border: `1.5px solid ${theme.accentGold}`,
                     borderRadius: 8,
                     fontSize: 12,
-                    fontFamily: "'Overpass Mono', monospace",
+                    fontFamily: FONT_MONO,
                     fontWeight: 700,
                     cursor: "pointer",
                     letterSpacing: "0.02em",
@@ -331,7 +332,7 @@ export default function TimelineHeader({
                 border: `1px solid ${theme.headerBorder}`,
                 borderRadius: 8,
                 fontSize: 16,
-                fontFamily: "'Overpass Mono', monospace",
+                fontFamily: FONT_MONO,
                 cursor: "pointer",
                 lineHeight: 1,
                 transition: "all 0.15s",
@@ -350,7 +351,7 @@ export default function TimelineHeader({
                 border: `1px solid ${theme.headerBorder}`,
                 borderRadius: 8,
                 fontSize: 11,
-                fontFamily: "'Overpass Mono', monospace",
+                fontFamily: FONT_MONO,
                 fontWeight: 600,
                 cursor: "pointer",
                 transition: "all 0.15s",

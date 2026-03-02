@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useReducer, useMemo, useCallback, useEffect } from "react";
 import { useAuth } from "./contexts/AuthContext";
 import { useTheme, FONT_MONO, FONT_SERIF } from "./contexts/ThemeContext";
 import { getPeriod, DEFAULT_PERIODS, DEFAULT_FIELD_CONFIG } from "./data/constants";
@@ -22,6 +22,17 @@ import CompellingQuestionHero from "./components/CompellingQuestionHero";
 import EventList from "./components/EventList";
 import RevisionPanel from "./components/RevisionPanel";
 
+function modalReducer(state, action) {
+  switch (action.type) {
+    case 'OPEN':
+      return { type: action.modalType, payload: action.payload || null };
+    case 'CLOSE':
+      return { type: null, payload: null };
+    default:
+      return state;
+  }
+}
+
 function getInitialSection() {
   const params = new URLSearchParams(window.location.search);
   return params.get("section") || "Period1";
@@ -38,17 +49,39 @@ export default function App() {
   const [expandedEvent, setExpandedEvent] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortOrder, setSortOrder] = useState("chrono");
-  const [showAddPanel, setShowAddPanel] = useState(false);
-  const [editingEvent, setEditingEvent] = useState(null);
+  const [modal, dispatchModal] = useReducer(modalReducer, { type: null, payload: null });
   const [showContributors, setShowContributors] = useState(false);
   const [showAdminView, setShowAdminView] = useState(false);
   const [sectionFilter, setSectionFilter] = useState("all");
-  const [showAddConnectionPanel, setShowAddConnectionPanel] = useState(false);
-  const [editingConnection, setEditingConnection] = useState(null);
-  const [showPendingQueue, setShowPendingQueue] = useState(false);
-  const [showRevisionPanel, setShowRevisionPanel] = useState(false);
-  const [revisingEvent, setRevisingEvent] = useState(null);
-  const [revisingConnection, setRevisingConnection] = useState(null);
+
+  // Derived modal state (backward-compatible with child components)
+  const showAddPanel = modal.type === 'addEvent';
+  const editingEvent = modal.type === 'editEvent' ? modal.payload : null;
+  const showAddConnectionPanel = modal.type === 'addConnection';
+  const editingConnection = modal.type === 'editConnection' ? modal.payload : null;
+  const showPendingQueue = modal.type === 'pendingQueue';
+  const showRevisionPanel = modal.type === 'revisionPanel';
+  const revisingEvent = modal.type === 'reviseEvent' ? modal.payload : null;
+  const revisingConnection = modal.type === 'reviseConnection' ? modal.payload : null;
+
+  // Stable modal dispatch helpers (passed to hooks and child components)
+  const closeModal = useCallback(() => dispatchModal({ type: 'CLOSE' }), []);
+  const setEditingEvent = useCallback((event) => {
+    if (event) dispatchModal({ type: 'OPEN', modalType: 'editEvent', payload: event });
+    else dispatchModal({ type: 'CLOSE' });
+  }, []);
+  const setEditingConnection = useCallback((conn) => {
+    if (conn) dispatchModal({ type: 'OPEN', modalType: 'editConnection', payload: conn });
+    else dispatchModal({ type: 'CLOSE' });
+  }, []);
+  const setRevisingEvent = useCallback((event) => {
+    if (event) dispatchModal({ type: 'OPEN', modalType: 'reviseEvent', payload: event });
+    else dispatchModal({ type: 'CLOSE' });
+  }, []);
+  const setRevisingConnection = useCallback((conn) => {
+    if (conn) dispatchModal({ type: 'OPEN', modalType: 'reviseConnection', payload: conn });
+    else dispatchModal({ type: 'CLOSE' });
+  }, []);
   const readEvents = useReadEvents(user, expandedEvent);
 
   const {
@@ -439,14 +472,14 @@ export default function App() {
         section={section}
         activeSections={activeSections}
         switchSection={switchSection}
-        setShowAddPanel={setShowAddPanel}
-        setShowAddConnectionPanel={setShowAddConnectionPanel}
+        setShowAddPanel={() => dispatchModal({ type: 'OPEN', modalType: 'addEvent' })}
+        setShowAddConnectionPanel={() => dispatchModal({ type: 'OPEN', modalType: 'addConnection' })}
         logout={logout}
         showPendingQueue={showPendingQueue}
-        setShowPendingQueue={setShowPendingQueue}
+        setShowPendingQueue={() => dispatchModal({ type: 'OPEN', modalType: 'pendingQueue' })}
         myRevisionEvents={myRevisionEvents}
         myRevisionConnections={myRevisionConnections}
-        setShowRevisionPanel={setShowRevisionPanel}
+        setShowRevisionPanel={() => dispatchModal({ type: 'OPEN', modalType: 'revisionPanel' })}
       />
 
       {/* Admin View (full page, replaces timeline content) */}
@@ -581,7 +614,7 @@ export default function App() {
       {showAddPanel && (
         <AddEventPanel
           onAdd={handleAddEvent}
-          onClose={() => setShowAddPanel(false)}
+          onClose={closeModal}
           userName={userName}
           timelineStart={timelineStart}
           timelineEnd={timelineEnd}
@@ -595,7 +628,7 @@ export default function App() {
       {editingEvent && (
         <AddEventPanel
           onAdd={handleSaveEdit}
-          onClose={() => setEditingEvent(null)}
+          onClose={closeModal}
           userName={userName}
           timelineStart={timelineStart}
           timelineEnd={timelineEnd}
@@ -610,7 +643,7 @@ export default function App() {
       {showAddConnectionPanel && (
         <AddConnectionPanel
           onAdd={handleAddConnection}
-          onClose={() => setShowAddConnectionPanel(false)}
+          onClose={closeModal}
           userName={userName}
           approvedEvents={approvedEvents}
           periods={displayPeriods}
@@ -620,8 +653,8 @@ export default function App() {
 
       {/* Pending Queue Modal (students) */}
       {showPendingQueue && (
-        <ModalShell onClose={() => setShowPendingQueue(false)} maxWidth={640}>
-          <ModalCloseButton onClose={() => setShowPendingQueue(false)} />
+        <ModalShell onClose={closeModal} maxWidth={640}>
+          <ModalCloseButton onClose={closeModal} />
             <ModerationPanel
               readOnly
               user={user}
@@ -631,8 +664,8 @@ export default function App() {
               allConnections={allConnections}
               periods={displayPeriods}
               getSectionName={getSectionName}
-              onEditPendingEvent={(event) => { setEditingEvent(event); setShowPendingQueue(false); }}
-              onEditPendingConnection={(conn) => { setEditingConnection(conn); setShowPendingQueue(false); }}
+              onEditPendingEvent={setEditingEvent}
+              onEditPendingConnection={setEditingConnection}
               onWithdraw={(type, id) => {
                 if (type === "event") handleDeleteEvent(id);
                 else handleDeleteConnection(id);
@@ -645,7 +678,7 @@ export default function App() {
       {editingConnection && (
         <AddConnectionPanel
           onAdd={handleSaveConnectionEdit}
-          onClose={() => setEditingConnection(null)}
+          onClose={closeModal}
           userName={userName}
           approvedEvents={approvedEvents}
           periods={displayPeriods}
@@ -661,9 +694,9 @@ export default function App() {
           revisionConnections={myRevisionConnections}
           allEvents={allEvents}
           periods={displayPeriods}
-          onReviseEvent={(event) => { setShowRevisionPanel(false); setRevisingEvent(event); }}
-          onReviseConnection={(conn) => { setShowRevisionPanel(false); setRevisingConnection(conn); }}
-          onClose={() => setShowRevisionPanel(false)}
+          onReviseEvent={setRevisingEvent}
+          onReviseConnection={setRevisingConnection}
+          onClose={closeModal}
         />
       )}
 
@@ -671,7 +704,7 @@ export default function App() {
       {revisingEvent && (
         <AddEventPanel
           onAdd={handleRevisionResubmit}
-          onClose={() => setRevisingEvent(null)}
+          onClose={closeModal}
           userName={userName}
           timelineStart={timelineStart}
           timelineEnd={timelineEnd}
@@ -688,7 +721,7 @@ export default function App() {
       {revisingConnection && (
         <AddConnectionPanel
           onAdd={handleConnectionRevisionResubmit}
-          onClose={() => setRevisingConnection(null)}
+          onClose={closeModal}
           userName={userName}
           approvedEvents={approvedEvents}
           periods={displayPeriods}

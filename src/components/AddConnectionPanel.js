@@ -6,6 +6,7 @@ import arrowRightBold from "@iconify-icons/mdi/arrow-right-bold";
 import { useTheme, FONT_MONO, FONT_SERIF } from "../contexts/ThemeContext";
 import FeedbackBanner from "./FeedbackBanner";
 import ModalShell from "./ModalShell";
+import IconButton from "./IconButton";
 import { getPeriod } from "../data/constants";
 import { formatEventDate } from "../utils/dateUtils";
 
@@ -106,25 +107,7 @@ function EventSearchDropdown({ label, events, selectedId, onSelect, excludeId, p
           >
             {selected.title}
           </span>
-          <button
-            onClick={() => onSelect(null)}
-            style={{
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              color: theme.textSecondary,
-              padding: 2,
-              display: "flex",
-              alignItems: "center",
-              flexShrink: 0,
-              borderRadius: 3,
-              transition: "all 0.15s",
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.color = theme.textPrimary; e.currentTarget.style.background = theme.subtleBg; }}
-            onMouseLeave={(e) => { e.currentTarget.style.color = theme.textSecondary; e.currentTarget.style.background = "none"; }}
-          >
-            <Icon icon={closeIcon} width={16} />
-          </button>
+          <IconButton icon={closeIcon} onClick={() => onSelect(null)} size={16} color={theme.textSecondary} hoverColor={theme.textPrimary} hoverBg={theme.subtleBg} padding={2} borderRadius={3} style={{ flexShrink: 0 }} />
         </div>
       </div>
     );
@@ -317,25 +300,7 @@ export default function AddConnectionPanel({ onAdd, onClose, userName, approvedE
               }
             </p>
           </div>
-          <button
-            onClick={onClose}
-            style={{
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              color: theme.textSecondary,
-              lineHeight: 1,
-              padding: 4,
-              display: "flex",
-              alignItems: "center",
-              borderRadius: 4,
-              transition: "all 0.15s",
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.color = theme.textPrimary; e.currentTarget.style.background = theme.subtleBg; }}
-            onMouseLeave={(e) => { e.currentTarget.style.color = theme.textSecondary; e.currentTarget.style.background = "none"; }}
-          >
-            <Icon icon={closeIcon} width={20} />
-          </button>
+          <IconButton icon={closeIcon} onClick={onClose} size={20} color={theme.textSecondary} hoverColor={theme.textPrimary} hoverBg={theme.subtleBg} />
         </div>
 
         {revisionMode && <FeedbackBanner feedback={feedback} />}

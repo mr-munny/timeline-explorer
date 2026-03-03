@@ -45,7 +45,7 @@ export default function VisualTimeline({
   expandedEventId,
   connectionsByEvent,
 }) {
-  const { theme } = useTheme();
+  const { theme, mode } = useTheme();
   const minYear = timelineStart;
   const maxYear = timelineEnd;
   const totalSpan = maxYear - minYear || 1;
@@ -612,7 +612,7 @@ export default function VisualTimeline({
                     height: ERA_LANE_HEIGHT,
                     zIndex: periodZIndex[u.id] || 0,
                     background: isActive ? u.accent + "25" : theme.subtleBg,
-                    borderLeft: `2px solid ${isActive ? u.color : theme.inputBorder}`,
+                    borderLeft: `2px solid ${isActive ? (mode === "dark" ? u.accent : u.color) : theme.inputBorder}`,
                     cursor: "pointer",
                     transition: "all 0.3s ease",
                     display: "flex",
@@ -627,7 +627,7 @@ export default function VisualTimeline({
                     style={{
                       fontSize: FONT_SIZES.micro,
                       fontWeight: 700,
-                      color: isActive ? u.color : theme.textSecondary,
+                      color: isActive ? (mode === "dark" ? u.accent : u.color) : theme.textSecondary,
                       fontFamily: FONT_MONO,
                       letterSpacing: "0.05em",
                       textTransform: "uppercase",
@@ -684,7 +684,7 @@ export default function VisualTimeline({
                 transform: "translate(-50%, -100%)",
                 zIndex: Z_INDEX.overlay,
                 background: theme.cardBg,
-                border: `1.5px solid ${hoveredEra.color}40`,
+                border: `1.5px solid ${(mode === "dark" ? hoveredEra.accent : hoveredEra.color)}40`,
                 borderRadius: RADII.md,
                 boxShadow: `0 4px 12px rgba(0,0,0,0.15)`,
                 padding: `${SPACING[1]} ${SPACING["2.5"]}`,
@@ -700,7 +700,7 @@ export default function VisualTimeline({
                   width: 6,
                   height: 6,
                   borderRadius: "50%",
-                  background: hoveredEra.color,
+                  background: mode === "dark" ? hoveredEra.accent : hoveredEra.color,
                   flexShrink: 0,
                 }}
               />

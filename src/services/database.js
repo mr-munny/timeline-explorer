@@ -343,6 +343,22 @@ export async function resubmitConnection(connId, updates, currentFeedback, exist
   });
 }
 
+// ── Color Palette ───────────────────────────────────────────
+
+// Listen to a section's selected color palette ID
+export function subscribeToPaletteId(section, callback) {
+  const paletteRef = ref(db, `sectionSettings/${section}/paletteId`);
+  return onValue(paletteRef, (snapshot) => {
+    callback(snapshot.val() || null);
+  });
+}
+
+// Save palette ID for a section
+export async function savePaletteId(section, paletteId) {
+  const paletteRef = ref(db, `sectionSettings/${section}/paletteId`);
+  await set(paletteRef, paletteId);
+}
+
 // ── Periods ─────────────────────────────────────────────────
 
 // Listen to a section's custom periods in real-time

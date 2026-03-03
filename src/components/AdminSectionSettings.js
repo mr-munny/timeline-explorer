@@ -1,11 +1,14 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useTheme, FONT_MONO, FONT_SERIF, FONT_SIZES, SPACING, RADII } from "../contexts/ThemeContext";
-import { DEFAULT_FIELD_CONFIG } from "../data/constants";
-import { subscribeToPeriods, subscribeToCompellingQuestion, subscribeToTimelineRange, subscribeToFieldConfig, savePeriods, saveCompellingQuestion, saveTimelineRange, saveFieldConfig, seedDemoData, wipeSectionData } from "../services/database";
+import { DEFAULT_FIELD_CONFIG, DEFAULT_PALETTE_ID, COLOR_PALETTES, getPaletteColors } from "../data/constants";
+import { subscribeToPeriods, subscribeToCompellingQuestion, subscribeToTimelineRange, subscribeToFieldConfig, subscribeToPaletteId, savePeriods, saveCompellingQuestion, saveTimelineRange, saveFieldConfig, savePaletteId, seedDemoData, wipeSectionData } from "../services/database";
 import { Icon } from "@iconify/react";
 import pencilOutline from "@iconify-icons/mdi/pencil-outline";
 import formatQuoteOpenOutline from "@iconify-icons/mdi/format-quote-open-outline";
 import formTextboxIcon from "@iconify-icons/mdi/form-textbox";
+import paletteOutline from "@iconify-icons/mdi/palette-outline";
+import chevronDown from "@iconify-icons/mdi/chevron-down";
+import chevronUp from "@iconify-icons/mdi/chevron-up";
 import contentSave from "@iconify-icons/mdi/content-save";
 import undoIcon from "@iconify-icons/mdi/undo";
 import contentCopy from "@iconify-icons/mdi/content-copy";
@@ -19,6 +22,7 @@ import TimelineRangeEditor from "./TimelineRangeEditor";
 import TimePeriodsEditor from "./TimePeriodsEditor";
 import CompellingQuestionEditor from "./CompellingQuestionEditor";
 import FieldConfigEditor from "./FieldConfigEditor";
+import PaletteSelector from "./PaletteSelector";
 
 export default function AdminSectionSettings({
   sectionId,
@@ -37,17 +41,22 @@ export default function AdminSectionSettings({
   const [liveCQ, setLiveCQ] = useState({ text: "", enabled: false });
   const [liveTimelineRange, setLiveTimelineRange] = useState({ start: 1900, end: 2000 });
   const [liveFieldConfig, setLiveFieldConfig] = useState({ ...DEFAULT_FIELD_CONFIG });
+  const [livePaletteId, setLivePaletteId] = useState(DEFAULT_PALETTE_ID);
 
   // Draft state (editable)
   const [draftPeriods, setDraftPeriods] = useState([]);
   const [draftCQ, setDraftCQ] = useState({ text: "", enabled: false });
   const [draftTimelineRange, setDraftTimelineRange] = useState({ start: 1900, end: 2000 });
   const [draftFieldConfig, setDraftFieldConfig] = useState({ ...DEFAULT_FIELD_CONFIG });
+  const [draftPaletteId, setDraftPaletteId] = useState(DEFAULT_PALETTE_ID);
   const [isDirty, setIsDirty] = useState(false);
 
   // Section rename
   const [editingName, setEditingName] = useState(false);
   const [draftSectionName, setDraftSectionName] = useState(sectionName);
+
+  // Palette section collapsed state
+  const [paletteOpen, setPaletteOpen] = useState(false);
 
   // Copy dialog
   const [showCopyDialog, setShowCopyDialog] = useState(false);
@@ -119,6 +128,18 @@ export default function AdminSectionSettings({
     return () => unsub();
   }, [sectionId]);
 
+  // Subscribe to palette ID
+  useEffect(() => {
+    const unsub = subscribeToPaletteId(sectionId, (data) => {
+      const pid = data || DEFAULT_PALETTE_ID;
+      setLivePaletteId(pid);
+      if (!isDirtyRef.current) {
+        setDraftPaletteId(pid);
+      }
+    });
+    return () => unsub();
+  }, [sectionId]);
+
   const markDirty = useCallback(() => {
     setIsDirty(true);
     isDirtyRef.current = true;
@@ -132,6 +153,7 @@ export default function AdminSectionSettings({
         saveCompellingQuestion(sectionId, draftCQ),
         saveTimelineRange(sectionId, draftTimelineRange),
         saveFieldConfig(sectionId, draftFieldConfig),
+        savePaletteId(sectionId, draftPaletteId),
       ]);
       setIsDirty(false);
       isDirtyRef.current = false;
@@ -146,6 +168,7 @@ export default function AdminSectionSettings({
     setDraftCQ(liveCQ);
     setDraftTimelineRange(liveTimelineRange);
     setDraftFieldConfig(liveFieldConfig);
+    setDraftPaletteId(livePaletteId);
     setIsDirty(false);
     isDirtyRef.current = false;
   };
@@ -161,6 +184,24 @@ export default function AdminSectionSettings({
       onRenameSection(sectionId, trimmed);
     }
     setEditingName(false);
+  };
+
+  const handlePaletteSwitch = (newPaletteId) => {
+    const oldColors = getPaletteColors(draftPaletteId);
+    const newColors = getPaletteColors(newPaletteId);
+    const remapped = draftPeriods.map((period) => {
+      const oldIdx = oldColors.findIndex(
+        (c) => c.color === period.color && c.bg === period.bg && c.accent === period.accent
+      );
+      if (oldIdx >= 0 && oldIdx < newColors.length) {
+        const nc = newColors[oldIdx];
+        return { ...period, color: nc.color, bg: nc.bg, accent: nc.accent };
+      }
+      return period;
+    });
+    setDraftPeriods(remapped);
+    setDraftPaletteId(newPaletteId);
+    markDirty();
   };
 
   // Section header style
@@ -262,6 +303,55 @@ export default function AdminSectionSettings({
 
         <div style={dividerStyle} />
 
+        {/* Color Palette */}
+        <button
+          onClick={() => setPaletteOpen((o) => !o)}
+          style={{
+            ...sectionHeaderStyle,
+            background: "none",
+            border: "none",
+            padding: 0,
+            cursor: "pointer",
+            width: "100%",
+          }}
+        >
+          <Icon icon={paletteOutline} width={12} />
+          Color Palette
+          {!paletteOpen && (
+            <>
+              <span style={{
+                fontWeight: 600,
+                fontSize: FONT_SIZES.micro,
+                color: theme.textSecondary,
+                textTransform: "none",
+                letterSpacing: "0.03em",
+              }}>
+                {COLOR_PALETTES[draftPaletteId]?.label || "Classic"}
+              </span>
+              <span style={{ display: "inline-flex", gap: 2, marginLeft: 2 }}>
+                {getPaletteColors(draftPaletteId).map((c, i) => (
+                  <span key={i} style={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: "50%",
+                    background: c.accent,
+                    display: "inline-block",
+                  }} />
+                ))}
+              </span>
+            </>
+          )}
+          <Icon icon={paletteOpen ? chevronUp : chevronDown} width={14} style={{ marginLeft: "auto" }} />
+        </button>
+        {paletteOpen && (
+          <PaletteSelector
+            selectedPaletteId={draftPaletteId}
+            onSelect={handlePaletteSwitch}
+          />
+        )}
+
+        <div style={dividerStyle} />
+
         {/* Time Periods */}
         <div style={sectionHeaderStyle}>Time Periods</div>
         <TimePeriodsEditor
@@ -269,6 +359,7 @@ export default function AdminSectionSettings({
           draftTimelineRange={draftTimelineRange}
           onPeriodsChange={(newPeriods) => { setDraftPeriods(newPeriods); markDirty(); }}
           inputStyle={inputStyle}
+          paletteId={draftPaletteId}
         />
 
         <div style={dividerStyle} />
@@ -511,6 +602,7 @@ export default function AdminSectionSettings({
             compellingQuestion: liveCQ,
             timelineRange: liveTimelineRange,
             fieldConfig: liveFieldConfig,
+            paletteId: livePaletteId,
           }}
           onClose={() => setShowCopyDialog(false)}
         />

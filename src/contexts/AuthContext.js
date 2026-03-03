@@ -100,7 +100,13 @@ export function AuthProvider({ children }) {
                 isSuperAdmin: false,
                 promotedBy: invite.invitedBy,
               });
-              await removeTeacherInvite(user.email);
+              // Best-effort cleanup — don't let a permissions failure here
+              // cascade into treating the newly-created teacher as a student.
+              try {
+                await removeTeacherInvite(user.email);
+              } catch (removeErr) {
+                console.warn("Could not remove teacher invite (will retry on next login):", removeErr);
+              }
               // The subscription will fire again with the new record
               return;
             }

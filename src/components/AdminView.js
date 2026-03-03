@@ -21,6 +21,7 @@ export default function AdminView({
   onRenameSection,
   onEventApproved,
   displayPeriods,
+  periodsBySection,
   reassignStudentSection,
   removeStudentSection,
   user,
@@ -71,6 +72,7 @@ export default function AdminView({
             allEvents={allEvents}
             allConnections={allConnections}
             periods={displayPeriods}
+            periodsBySection={periodsBySection}
             getSectionName={getSectionName}
             onEventApproved={onEventApproved}
             user={user}

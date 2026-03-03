@@ -8,7 +8,7 @@ import FeedbackBanner from "./FeedbackBanner";
 import IconButton from "./IconButton";
 
 export default function AwaitingRevisionSection({
-  items, type, periods, getSectionName, findEvent, processing, onReject, hasPendingItems,
+  items, type, periods, periodsBySection = {}, getSectionName, findEvent, processing, onReject, hasPendingItems,
 }) {
   const { theme } = useTheme();
 
@@ -36,7 +36,8 @@ export default function AwaitingRevisionSection({
           const isProcessing = processing === item.id;
 
           if (isEvent) {
-            const unit = getPeriod(periods, item.period);
+            const itemPeriods = periodsBySection[item.section] || periods;
+            const unit = getPeriod(itemPeriods, item.period);
             return (
               <div
                 key={item.id}
@@ -99,10 +100,11 @@ export default function AwaitingRevisionSection({
           }
 
           // Connection type
+          const connPeriods = periodsBySection[item.section] || periods;
           const causeEvent = findEvent(item.causeEventId);
           const effectEvent = findEvent(item.effectEventId);
-          const causeUnit = causeEvent ? getPeriod(periods, causeEvent.period) : null;
-          const effectUnit = effectEvent ? getPeriod(periods, effectEvent.period) : null;
+          const causeUnit = causeEvent ? getPeriod(connPeriods, causeEvent.period) : null;
+          const effectUnit = effectEvent ? getPeriod(connPeriods, effectEvent.period) : null;
 
           return (
             <div

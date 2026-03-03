@@ -23,6 +23,7 @@ export default function useFirebaseSubscriptions({
   const [allConnections, setAllConnections] = useState([]);
   const [sections, setSections] = useState(null);
   const [periods, setPeriods] = useState([]);
+  const [periodsBySection, setPeriodsBySection] = useState({});
   const [compellingQuestion, setCompellingQuestion] = useState({ text: "", enabled: false });
   const [timelineStart, setTimelineStart] = useState(1910);
   const [timelineEnd, setTimelineEnd] = useState(2000);
@@ -105,6 +106,20 @@ export default function useFirebaseSubscriptions({
     return () => unsub();
   }, [user, section]);
 
+  // Subscribe to periods for ALL teacher sections (admin view moderation)
+  useEffect(() => {
+    if (!user || !isTeacher || !showAdminView || teacherSectionIds.length === 0) {
+      setPeriodsBySection({});
+      return;
+    }
+    const unsubs = teacherSectionIds.map((sId) =>
+      subscribeToPeriods(sId, (data) => {
+        setPeriodsBySection((prev) => ({ ...prev, [sId]: data || [] }));
+      })
+    );
+    return () => unsubs.forEach((u) => u());
+  }, [user, isTeacher, showAdminView, teacherSectionIds]);
+
   // Subscribe to section-specific compelling question
   useEffect(() => {
     if (!user) return;
@@ -142,6 +157,7 @@ export default function useFirebaseSubscriptions({
     setSections,
     activeSections,
     periods,
+    periodsBySection,
     compellingQuestion,
     timelineStart,
     setTimelineStart,

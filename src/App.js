@@ -91,6 +91,7 @@ export default function App() {
     setSections,
     activeSections,
     periods,
+    periodsBySection,
     compellingQuestion,
     timelineStart,
     setTimelineStart,
@@ -506,6 +507,7 @@ export default function App() {
           onRenameSection={handleRenameSection}
           onEventApproved={handleEventApproved}
           displayPeriods={periods}
+          periodsBySection={periodsBySection}
           reassignStudentSection={reassignStudentSection}
           removeStudentSection={removeStudentSection}
           user={user}

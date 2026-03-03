@@ -6,7 +6,7 @@ import PendingEventCard from "./PendingEventCard";
 import PendingConnectionCard from "./PendingConnectionCard";
 import AwaitingRevisionSection from "./AwaitingRevisionSection";
 
-export default function ModerationPanel({ pendingEvents, pendingConnections = [], needsRevisionEvents = [], needsRevisionConnections = [], allEvents = [], allConnections = [], periods = [], getSectionName = (id) => id, onEventApproved, readOnly = false, user, userName, onEditPendingEvent, onEditPendingConnection, onWithdraw }) {
+export default function ModerationPanel({ pendingEvents, pendingConnections = [], needsRevisionEvents = [], needsRevisionConnections = [], allEvents = [], allConnections = [], periods = [], periodsBySection = {}, getSectionName = (id) => id, onEventApproved, readOnly = false, user, userName, onEditPendingEvent, onEditPendingConnection, onWithdraw }) {
   const { theme } = useTheme();
   const [activeTab, setActiveTab] = useState("events");
   const [editingId, setEditingId] = useState(null);
@@ -302,7 +302,7 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
               <PendingEventCard
                 key={event.id}
                 event={event}
-                periods={periods}
+                periods={periodsBySection[event.section] || periods}
                 getSectionName={getSectionName}
                 findEvent={findEvent}
                 readOnly={readOnly}
@@ -337,6 +337,7 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
             items={needsRevisionEvents}
             type="event"
             periods={periods}
+            periodsBySection={periodsBySection}
             getSectionName={getSectionName}
             findEvent={findEvent}
             processing={processing}
@@ -364,7 +365,7 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
               <PendingConnectionCard
                 key={conn.id}
                 conn={conn}
-                periods={periods}
+                periods={periodsBySection[conn.section] || periods}
                 getSectionName={getSectionName}
                 findEvent={findEvent}
                 findConnection={findConnection}
@@ -399,6 +400,7 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
             items={needsRevisionConnections}
             type="connection"
             periods={periods}
+            periodsBySection={periodsBySection}
             getSectionName={getSectionName}
             findEvent={findEvent}
             processing={processing}

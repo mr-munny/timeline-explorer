@@ -1,5 +1,5 @@
 import { getPeriod } from "../data/constants";
-import { useTheme, FONT_MONO } from "../contexts/ThemeContext";
+import { useTheme, FONT_MONO, FONT_SIZES, SPACING, RADII } from "../contexts/ThemeContext";
 import ConnectionItem from "./ConnectionItem";
 
 export default function EventConnections({ connections, allEvents = [], periods = [], isTeacher, onScrollToEvent, onEditConnection, onDeleteConnection, onSuggestDeleteConnection }) {
@@ -7,23 +7,24 @@ export default function EventConnections({ connections, allEvents = [], periods 
 
   return (
     <div
+      aria-label="Event connections"
       style={{
-        marginTop: 12,
-        padding: "12px 14px",
+        marginTop: SPACING[3],
+        padding: `${SPACING[3]} ${SPACING[3]}`,
         background: theme.warmSubtleBg,
-        borderRadius: 8,
+        borderRadius: RADII.lg,
         borderLeft: `3px solid ${theme.accentGold || "#F59E0B"}`,
       }}
     >
       <div
         style={{
-          fontSize: 10,
+          fontSize: FONT_SIZES.tiny,
           fontWeight: 700,
           color: theme.textTertiary,
           fontFamily: FONT_MONO,
           textTransform: "uppercase",
           letterSpacing: "0.05em",
-          marginBottom: 8,
+          marginBottom: SPACING[2],
         }}
       >
         Connections

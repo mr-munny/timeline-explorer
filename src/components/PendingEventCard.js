@@ -7,7 +7,7 @@ import pencilIcon from "@iconify-icons/mdi/pencil";
 import cancelIcon from "@iconify-icons/mdi/cancel";
 import contentSave from "@iconify-icons/mdi/content-save";
 import commentAlertOutline from "@iconify-icons/mdi/comment-alert-outline";
-import { useTheme, FONT_MONO, FONT_SERIF } from "../contexts/ThemeContext";
+import { useTheme, FONT_MONO, FONT_SERIF, FONT_SIZES, SPACING, RADII } from "../contexts/ThemeContext";
 import IconButton from "./IconButton";
 
 const DIFF_FIELDS = [
@@ -44,14 +44,13 @@ export default function PendingEventCard({
 
   const inputStyle = {
     width: "100%",
-    padding: "7px 10px",
+    padding: `${SPACING[1.5] || "0.4375rem"} ${SPACING[2.5]}`,
     border: `1.5px solid ${theme.inputBorder}`,
-    borderRadius: 6,
-    fontSize: 12,
+    borderRadius: RADII.md,
+    fontSize: FONT_SIZES.tiny,
     fontFamily: FONT_MONO,
     background: theme.inputBg,
     color: theme.textPrimary,
-    outline: "none",
     boxSizing: "border-box",
   };
 
@@ -66,19 +65,19 @@ export default function PendingEventCard({
     <div
       style={{
         border: `1.5px solid ${theme.inputBorder}`,
-        borderRadius: 10,
-        padding: "16px 18px",
+        borderRadius: RADII.xl,
+        padding: `${SPACING[4]} ${SPACING[4]}`,
         borderLeft: `4px solid ${unit?.color || theme.textSecondary}`,
       }}
     >
       {!readOnly && isEditing ? (
         /* Edit mode */
-        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: SPACING[2.5] }}>
           <div
             style={{
               display: "grid",
               gridTemplateColumns: "1fr 80px",
-              gap: 8,
+              gap: SPACING[2],
             }}
           >
             <input
@@ -102,7 +101,7 @@ export default function PendingEventCard({
               placeholder="Year"
             />
           </div>
-          <div style={{ display: "flex", gap: 8 }}>
+          <div style={{ display: "flex", gap: SPACING[2] }}>
             <div style={{ flex: 1 }}>
               <select
                 value={editForm.month}
@@ -131,7 +130,7 @@ export default function PendingEventCard({
               />
             </div>
           </div>
-          <div style={{ display: "flex", gap: 8 }}>
+          <div style={{ display: "flex", gap: SPACING[2] }}>
             <div style={{ width: 80 }}>
               <input
                 value={editForm.endYear}
@@ -184,15 +183,15 @@ export default function PendingEventCard({
               </option>
             ))}
           </select>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: SPACING[1] }}>
             {TAGS.map((tag) => (
               <button
                 key={tag}
                 type="button"
                 onClick={() => onToggleEditTag(tag)}
                 style={{
-                  padding: "3px 8px",
-                  borderRadius: 4,
+                  padding: `${SPACING[0.5] || "0.1875rem"} ${SPACING[2]}`,
+                  borderRadius: RADII.sm,
                   border: `1px solid ${
                     editForm.tags.includes(tag) ? theme.activeToggleBg : theme.inputBorder
                   }`,
@@ -200,7 +199,7 @@ export default function PendingEventCard({
                     ? theme.activeToggleBg
                     : theme.inputBg,
                   color: editForm.tags.includes(tag) ? theme.activeToggleText : theme.textSecondary,
-                  fontSize: 10,
+                  fontSize: FONT_SIZES.tiny,
                   fontFamily: FONT_MONO,
                   cursor: "pointer",
                 }}
@@ -255,15 +254,16 @@ export default function PendingEventCard({
             placeholder="Image URL (optional)"
             type="url"
           />
-          <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
+          <div style={{ display: "flex", gap: SPACING[1.5], justifyContent: "flex-end" }}>
             <button
               onClick={onCancelEdit}
+              aria-label="Cancel editing"
               style={{
-                padding: "6px 14px",
+                padding: `${SPACING[1.5]} ${SPACING[3]}`,
                 background: "none",
                 border: `1.5px solid ${theme.inputBorder}`,
-                borderRadius: 6,
-                fontSize: 11,
+                borderRadius: RADII.md,
+                fontSize: FONT_SIZES.micro,
                 fontFamily: FONT_MONO,
                 cursor: "pointer",
                 color: theme.textTertiary,
@@ -277,13 +277,14 @@ export default function PendingEventCard({
             <button
               onClick={() => onSaveEdit(event.id)}
               disabled={isProcessing}
+              aria-label="Save edits"
               style={{
-                padding: "6px 14px",
+                padding: `${SPACING[1.5]} ${SPACING[3]}`,
                 background: theme.activeToggleBg,
                 color: theme.activeToggleText,
                 border: "none",
-                borderRadius: 6,
-                fontSize: 11,
+                borderRadius: RADII.md,
+                fontSize: FONT_SIZES.micro,
                 fontFamily: FONT_MONO,
                 fontWeight: 700,
                 cursor: "pointer",
@@ -306,15 +307,15 @@ export default function PendingEventCard({
               <>
                 <div
                   style={{
-                    fontSize: 10,
+                    fontSize: FONT_SIZES.tiny,
                     fontWeight: 700,
                     fontFamily: FONT_MONO,
                     color: theme.feedbackAmber,
                     background: theme.feedbackAmberBg,
-                    padding: "3px 8px",
-                    borderRadius: 4,
+                    padding: `${SPACING[0.5] || "0.1875rem"} ${SPACING[2]}`,
+                    borderRadius: RADII.sm,
                     display: "inline-block",
-                    marginBottom: 6,
+                    marginBottom: SPACING[1.5],
                     textTransform: "uppercase",
                     letterSpacing: "0.05em",
                   }}
@@ -323,17 +324,17 @@ export default function PendingEventCard({
                 </div>
                 <div
                   style={{
-                    fontSize: 10,
+                    fontSize: FONT_SIZES.tiny,
                     color: theme.textSecondary,
                     fontFamily: FONT_MONO,
-                    marginBottom: 10,
+                    marginBottom: SPACING[2.5],
                   }}
                 >
                   by {event.addedBy} &middot; {getSectionName(event.section)}
                   {!original && <> &middot; <span style={{ color: theme.errorRed }}>Original event not found</span></>}
                 </div>
                 {original && (
-                  <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 10 }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: SPACING[1.5], marginBottom: SPACING[2.5] }}>
                     {diffFields.map(({ key, label, format, compare, inline }) => {
                       const oldVal = original[key];
                       const newVal = event[key];
@@ -343,24 +344,24 @@ export default function PendingEventCard({
                       const isTextField = inline && !format;
                       return (
                         <div key={key} style={{
-                          padding: "6px 10px",
+                          padding: `${SPACING[1.5]} ${SPACING[2.5]}`,
                           background: theme.warmSubtleBg,
-                          borderRadius: 6,
+                          borderRadius: RADII.md,
                           borderLeft: `3px solid ${theme.feedbackAmber}`,
                         }}>
                           <div style={{
-                            fontSize: 9,
+                            fontSize: FONT_SIZES.micro,
                             fontWeight: 700,
                             fontFamily: FONT_MONO,
                             color: theme.textTertiary,
                             textTransform: "uppercase",
                             letterSpacing: "0.05em",
-                            marginBottom: 3,
+                            marginBottom: SPACING[0.5] || "0.1875rem",
                           }}>
                             {label}
                           </div>
                           <div style={{
-                            fontSize: key === "description" ? 11 : 12,
+                            fontSize: key === "description" ? FONT_SIZES.micro : FONT_SIZES.tiny,
                             fontFamily: (key === "description" || key === "title") ? FONT_SERIF : FONT_MONO,
                             lineHeight: 1.5,
                           }}>
@@ -392,7 +393,7 @@ export default function PendingEventCard({
                                 }}>
                                   {fmt(oldVal)}
                                 </span>
-                                <span style={{ color: theme.textTertiary, margin: "0 6px" }}>{"\u2192"}</span>
+                                <span style={{ color: theme.textTertiary, margin: `0 ${SPACING[1.5]}` }}>{"\u2192"}</span>
                                 <span style={{
                                   color: theme.successGreen || "#16A34A",
                                   fontWeight: 600,
@@ -415,18 +416,18 @@ export default function PendingEventCard({
             style={{
               display: "flex",
               alignItems: "flex-start",
-              gap: 10,
-              marginBottom: 8,
+              gap: SPACING[2.5],
+              marginBottom: SPACING[2],
             }}
           >
             <div
               style={{
                 background: unit?.color || theme.textTertiary,
                 color: "#fff",
-                fontSize: 11,
+                fontSize: FONT_SIZES.micro,
                 fontWeight: 700,
-                padding: "3px 7px",
-                borderRadius: 4,
+                padding: `${SPACING[0.5] || "0.1875rem"} ${SPACING[2]}`,
+                borderRadius: RADII.sm,
                 fontFamily: FONT_MONO,
                 flexShrink: 0,
               }}
@@ -436,7 +437,7 @@ export default function PendingEventCard({
             <div style={{ flex: 1 }}>
               <div
                 style={{
-                  fontSize: 14,
+                  fontSize: FONT_SIZES.base,
                   fontWeight: 700,
                   color: theme.textPrimary,
                   fontFamily: FONT_SERIF,
@@ -446,10 +447,10 @@ export default function PendingEventCard({
               </div>
               <div
                 style={{
-                  fontSize: 10,
+                  fontSize: FONT_SIZES.tiny,
                   color: theme.textSecondary,
                   fontFamily: FONT_MONO,
-                  marginTop: 2,
+                  marginTop: SPACING["0.5"],
                 }}
               >
                 by {event.addedBy} &middot; {getSectionName(event.section)} &middot;{" "}
@@ -460,10 +461,10 @@ export default function PendingEventCard({
 
           <p
             style={{
-              fontSize: 12,
+              fontSize: FONT_SIZES.tiny,
               lineHeight: 1.6,
               color: theme.textDescription,
-              margin: "0 0 8px 0",
+              margin: `0 0 ${SPACING[2]} 0`,
               fontFamily: FONT_SERIF,
             }}
           >
@@ -471,14 +472,14 @@ export default function PendingEventCard({
           </p>
 
           {event.imageUrl && (
-            <div style={{ marginBottom: 8 }}>
+            <div style={{ marginBottom: SPACING[2] }}>
               <img
                 src={event.imageUrl}
                 alt={event.title}
                 style={{
                   maxWidth: "100%",
                   maxHeight: 200,
-                  borderRadius: 6,
+                  borderRadius: RADII.md,
                   objectFit: "contain",
                   background: theme.subtleBg,
                 }}
@@ -489,10 +490,10 @@ export default function PendingEventCard({
 
           <div
             style={{
-              fontSize: 10,
+              fontSize: FONT_SIZES.tiny,
               color: theme.textTertiary,
               fontFamily: FONT_MONO,
-              marginBottom: 10,
+              marginBottom: SPACING[2.5],
             }}
           >
             <strong>Source:</strong> {event.sourceNote}
@@ -517,7 +518,7 @@ export default function PendingEventCard({
 
           {/* Student self-service buttons (readOnly mode, own submissions only) */}
           {readOnly && user && event.addedByUid === user.uid && (
-            <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
+            <div style={{ display: "flex", gap: SPACING[1.5], justifyContent: "flex-end" }}>
               <IconButton
                 icon={cancelIcon}
                 onClick={() => {
@@ -527,7 +528,8 @@ export default function PendingEventCard({
                 size={13}
                 color={theme.errorRed}
                 hoverBg={(theme.errorRed || "#DC2626") + "10"}
-                style={{ padding: "6px 14px", border: `1.5px solid ${theme.errorRed}`, borderRadius: 6, fontSize: 11, fontFamily: FONT_MONO, fontWeight: 600 }}
+                aria-label="Withdraw submission"
+                style={{ padding: `${SPACING[1.5]} ${SPACING[3]}`, border: `1.5px solid ${theme.errorRed}`, borderRadius: RADII.md, fontSize: FONT_SIZES.micro, fontFamily: FONT_MONO, fontWeight: 600 }}
               >
                 Withdraw
               </IconButton>
@@ -537,7 +539,8 @@ export default function PendingEventCard({
                 size={13}
                 color={theme.textDescription}
                 hoverBg={theme.subtleBg}
-                style={{ padding: "6px 14px", border: `1.5px solid ${theme.inputBorder}`, borderRadius: 6, fontSize: 11, fontFamily: FONT_MONO, fontWeight: 600 }}
+                aria-label="Edit submission"
+                style={{ padding: `${SPACING[1.5]} ${SPACING[3]}`, border: `1.5px solid ${theme.inputBorder}`, borderRadius: RADII.md, fontSize: FONT_SIZES.micro, fontFamily: FONT_MONO, fontWeight: 600 }}
               >
                 Edit
               </IconButton>
@@ -547,7 +550,7 @@ export default function PendingEventCard({
           {/* Teacher action buttons */}
           {!readOnly && (
           <>
-          <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
+          <div style={{ display: "flex", gap: SPACING[1.5], justifyContent: "flex-end" }}>
             <IconButton
               icon={cancelIcon}
               onClick={() => onReject(event.id)}
@@ -555,7 +558,8 @@ export default function PendingEventCard({
               size={13}
               color={theme.errorRed}
               hoverBg={(theme.errorRed || "#DC2626") + "10"}
-              style={{ padding: "6px 14px", border: `1.5px solid ${theme.errorRed}`, borderRadius: 6, fontSize: 11, fontFamily: FONT_MONO, fontWeight: 600 }}
+              aria-label="Reject event"
+              style={{ padding: `${SPACING[1.5]} ${SPACING[3]}`, border: `1.5px solid ${theme.errorRed}`, borderRadius: RADII.md, fontSize: FONT_SIZES.micro, fontFamily: FONT_MONO, fontWeight: 600 }}
             >
               Reject
             </IconButton>
@@ -566,7 +570,8 @@ export default function PendingEventCard({
               size={13}
               color={theme.feedbackAmber}
               hoverBg={theme.feedbackAmber + "10"}
-              style={{ padding: "6px 14px", border: `1.5px solid ${theme.feedbackAmber}`, borderRadius: 6, fontSize: 11, fontFamily: FONT_MONO, fontWeight: 600 }}
+              aria-label="Request revision"
+              style={{ padding: `${SPACING[1.5]} ${SPACING[3]}`, border: `1.5px solid ${theme.feedbackAmber}`, borderRadius: RADII.md, fontSize: FONT_SIZES.micro, fontFamily: FONT_MONO, fontWeight: 600 }}
             >
               Revise
             </IconButton>
@@ -577,20 +582,22 @@ export default function PendingEventCard({
               size={13}
               color={theme.textDescription}
               hoverBg={theme.subtleBg}
-              style={{ padding: "6px 14px", border: `1.5px solid ${theme.inputBorder}`, borderRadius: 6, fontSize: 11, fontFamily: FONT_MONO, fontWeight: 600 }}
+              aria-label="Edit event"
+              style={{ padding: `${SPACING[1.5]} ${SPACING[3]}`, border: `1.5px solid ${theme.inputBorder}`, borderRadius: RADII.md, fontSize: FONT_SIZES.micro, fontFamily: FONT_MONO, fontWeight: 600 }}
             >
               Edit
             </IconButton>
             <button
               onClick={() => onApprove(event)}
               disabled={isProcessing}
+              aria-label="Approve event"
               style={{
-                padding: "6px 14px",
+                padding: `${SPACING[1.5]} ${SPACING[3]}`,
                 background: theme.successGreen,
                 color: "#fff",
                 border: "none",
-                borderRadius: 6,
-                fontSize: 11,
+                borderRadius: RADII.md,
+                fontSize: FONT_SIZES.micro,
                 fontFamily: FONT_MONO,
                 fontWeight: 700,
                 cursor: "pointer",
@@ -605,20 +612,20 @@ export default function PendingEventCard({
           {/* Inline feedback textarea */}
           {feedbackId === event.id && feedbackType === "event" && (
             <div style={{
-              marginTop: 10,
-              padding: "12px 14px",
+              marginTop: SPACING[2.5],
+              padding: `${SPACING[3]} ${SPACING[3]}`,
               background: theme.feedbackAmberBg,
-              borderRadius: 8,
+              borderRadius: RADII.lg,
               border: `1.5px solid ${theme.feedbackAmber}`,
             }}>
               <label style={{
-                fontSize: 10,
+                fontSize: FONT_SIZES.tiny,
                 fontWeight: 700,
                 fontFamily: FONT_MONO,
                 color: theme.feedbackAmberText,
                 textTransform: "uppercase",
                 letterSpacing: "0.05em",
-                marginBottom: 6,
+                marginBottom: SPACING[1.5],
                 display: "block",
               }}>
                 Feedback for Student
@@ -631,15 +638,16 @@ export default function PendingEventCard({
                 rows={3}
                 style={{ ...inputStyle, borderColor: theme.feedbackAmber }}
               />
-              <div style={{ display: "flex", gap: 6, justifyContent: "flex-end", marginTop: 8 }}>
+              <div style={{ display: "flex", gap: SPACING[1.5], justifyContent: "flex-end", marginTop: SPACING[2] }}>
                 <button
                   onClick={onFeedbackCancel}
+                  aria-label="Cancel feedback"
                   style={{
-                    padding: "6px 14px",
+                    padding: `${SPACING[1.5]} ${SPACING[3]}`,
                     background: "none",
                     border: `1.5px solid ${theme.inputBorder}`,
-                    borderRadius: 6,
-                    fontSize: 11,
+                    borderRadius: RADII.md,
+                    fontSize: FONT_SIZES.micro,
                     fontFamily: FONT_MONO,
                     cursor: "pointer",
                     color: theme.textTertiary,
@@ -653,13 +661,14 @@ export default function PendingEventCard({
                 <button
                   onClick={() => onFeedbackSubmit("event", event.id)}
                   disabled={!feedbackText.trim() || isProcessing}
+                  aria-label="Send feedback"
                   style={{
-                    padding: "6px 14px",
+                    padding: `${SPACING[1.5]} ${SPACING[3]}`,
                     background: feedbackText.trim() ? theme.feedbackAmber : theme.inputBorder,
                     color: "#fff",
                     border: "none",
-                    borderRadius: 6,
-                    fontSize: 11,
+                    borderRadius: RADII.md,
+                    fontSize: FONT_SIZES.micro,
                     fontFamily: FONT_MONO,
                     fontWeight: 700,
                     cursor: feedbackText.trim() ? "pointer" : "default",

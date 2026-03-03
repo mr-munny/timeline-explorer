@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useTheme, FONT_MONO, FONT_SERIF } from "../contexts/ThemeContext";
+import { useTheme, FONT_MONO, FONT_SERIF, FONT_SIZES, SPACING, RADII } from "../contexts/ThemeContext";
 import { Icon } from "@iconify/react";
 import accountPlus from "@iconify-icons/mdi/account-plus";
 import contentCopy from "@iconify-icons/mdi/content-copy";
@@ -101,39 +101,39 @@ export default function TeacherManagement({ user, teacherData, onImpersonate }) 
   };
 
   const labelStyle = {
-    fontSize: 9,
+    fontSize: FONT_SIZES.micro,
     fontWeight: 700,
     color: theme.textMuted,
     fontFamily: FONT_MONO,
     textTransform: "uppercase",
     letterSpacing: "0.1em",
-    marginBottom: 12,
+    marginBottom: SPACING[3],
   };
 
   const cardStyle = {
     background: theme.cardBg,
     border: `1.5px solid ${theme.cardBorder}`,
-    borderRadius: 10,
-    padding: "16px 18px",
-    marginBottom: 16,
+    borderRadius: RADII.xl,
+    padding: `${SPACING[4]} ${SPACING[5]}`,
+    marginBottom: SPACING[4],
   };
 
   return (
-    <div style={{ padding: "24px 32px", maxWidth: 640 }}>
+    <div style={{ padding: `${SPACING[6]} ${SPACING[8]}`, maxWidth: 640 }}>
       <h2 style={{
-        fontSize: 18,
+        fontSize: FONT_SIZES.lg,
         fontWeight: 700,
-        margin: "0 0 4px 0",
+        margin: `0 0 ${SPACING[1]} 0`,
         fontFamily: FONT_SERIF,
         color: theme.textPrimary,
       }}>
         Teacher Management
       </h2>
       <p style={{
-        fontSize: 11,
+        fontSize: FONT_SIZES.micro,
         color: theme.textMuted,
         fontFamily: FONT_MONO,
-        margin: "0 0 24px 0",
+        margin: `0 0 ${SPACING[6]} 0`,
       }}>
         Manage teacher accounts and join codes
       </p>
@@ -141,30 +141,31 @@ export default function TeacherManagement({ user, teacherData, onImpersonate }) 
       {/* Your Join Code */}
       <div style={cardStyle}>
         <div style={labelStyle}>Your Join Code</div>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: SPACING[3] }}>
           <span style={{
-            fontSize: 24,
+            fontSize: FONT_SIZES.xxl,
             fontWeight: 700,
             fontFamily: FONT_MONO,
             letterSpacing: "0.15em",
             color: theme.textPrimary,
           }}>
-            {teacherData?.joinCode || "—"}
+            {teacherData?.joinCode || "\u2014"}
           </span>
           <button
             onClick={() => handleCopyCode(teacherData?.joinCode)}
+            aria-label="Copy join code"
             style={{
               background: "none",
               border: `1px solid ${theme.inputBorder}`,
-              borderRadius: 4,
-              padding: "4px 8px",
+              borderRadius: RADII.sm,
+              padding: `${SPACING[1]} ${SPACING[2]}`,
               cursor: "pointer",
               color: copiedCode === teacherData?.joinCode ? theme.teacherGreen : theme.textSecondary,
-              fontSize: 11,
+              fontSize: FONT_SIZES.micro,
               fontFamily: FONT_MONO,
               display: "inline-flex",
               alignItems: "center",
-              gap: 4,
+              gap: SPACING[1],
               transition: "all 0.15s",
             }}
           >
@@ -173,14 +174,15 @@ export default function TeacherManagement({ user, teacherData, onImpersonate }) 
           </button>
           <button
             onClick={() => handleRegenerateCode(user.uid)}
+            aria-label="Regenerate join code"
             style={{
               background: "none",
               border: `1px solid ${theme.inputBorder}`,
-              borderRadius: 4,
-              padding: "4px 8px",
+              borderRadius: RADII.sm,
+              padding: `${SPACING[1]} ${SPACING[2]}`,
               cursor: "pointer",
               color: theme.textSecondary,
-              fontSize: 11,
+              fontSize: FONT_SIZES.micro,
               fontFamily: FONT_MONO,
               transition: "all 0.15s",
             }}
@@ -189,10 +191,10 @@ export default function TeacherManagement({ user, teacherData, onImpersonate }) 
           </button>
         </div>
         <p style={{
-          fontSize: 10,
+          fontSize: FONT_SIZES.tiny,
           color: theme.textMuted,
           fontFamily: FONT_MONO,
-          margin: "8px 0 0 0",
+          margin: `${SPACING[2]} 0 0 0`,
         }}>
           Share this code with students so they can join your class.
         </p>
@@ -201,37 +203,38 @@ export default function TeacherManagement({ user, teacherData, onImpersonate }) 
       {/* Add Teacher Account */}
       <div style={cardStyle}>
         <div style={labelStyle}>
-          <Icon icon={accountPlus} width={12} style={{ verticalAlign: "middle", marginRight: 4 }} />
+          <Icon icon={accountPlus} width={12} style={{ verticalAlign: "middle", marginRight: SPACING[1] }} />
           Add Teacher Account
         </div>
-        <div style={{ display: "flex", gap: 8 }}>
+        <div style={{ display: "flex", gap: SPACING[2] }}>
+          <label htmlFor="invite-teacher-email" style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0,0,0,0)" }}>Teacher email address</label>
           <input
+            id="invite-teacher-email"
             value={inviteEmail}
             onChange={(e) => { setInviteEmail(e.target.value); setInviteError(null); }}
             onKeyDown={(e) => { if (e.key === "Enter") handleInvite(); }}
             placeholder="teacher@school.edu"
             style={{
               flex: 1,
-              padding: "8px 12px",
+              padding: `${SPACING[2]} ${SPACING[3]}`,
               border: `1.5px solid ${inviteError ? theme.errorRed : theme.inputBorder}`,
-              borderRadius: 6,
-              fontSize: 12,
+              borderRadius: RADII.md,
+              fontSize: FONT_SIZES.tiny,
               fontFamily: FONT_MONO,
               background: theme.inputBg,
               color: theme.textPrimary,
-              outline: "none",
             }}
           />
           <button
             onClick={handleInvite}
             disabled={!inviteEmail.trim()}
             style={{
-              padding: "8px 16px",
+              padding: `${SPACING[2]} ${SPACING[4]}`,
               background: theme.teacherGreen,
               color: "#fff",
               border: "none",
-              borderRadius: 6,
-              fontSize: 11,
+              borderRadius: RADII.md,
+              fontSize: FONT_SIZES.micro,
               fontFamily: FONT_MONO,
               fontWeight: 700,
               cursor: inviteEmail.trim() ? "pointer" : "default",
@@ -242,12 +245,12 @@ export default function TeacherManagement({ user, teacherData, onImpersonate }) 
           </button>
         </div>
         {inviteError && (
-          <p style={{ fontSize: 11, color: theme.errorRed, fontFamily: FONT_MONO, margin: "6px 0 0" }}>
+          <p aria-live="polite" style={{ fontSize: FONT_SIZES.micro, color: theme.errorRed, fontFamily: FONT_MONO, margin: `${SPACING["1.5"]} 0 0` }}>
             {inviteError}
           </p>
         )}
         {inviteSuccess && (
-          <p style={{ fontSize: 11, color: theme.teacherGreen, fontFamily: FONT_MONO, margin: "6px 0 0" }}>
+          <p aria-live="polite" style={{ fontSize: FONT_SIZES.micro, color: theme.teacherGreen, fontFamily: FONT_MONO, margin: `${SPACING["1.5"]} 0 0` }}>
             {inviteSuccess}
           </p>
         )}
@@ -262,11 +265,11 @@ export default function TeacherManagement({ user, teacherData, onImpersonate }) 
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
-              padding: "6px 0",
+              padding: `${SPACING["1.5"]} 0`,
               borderBottom: `1px solid ${theme.cardBorder}`,
             }}>
               <span style={{
-                fontSize: 12,
+                fontSize: FONT_SIZES.tiny,
                 fontFamily: FONT_MONO,
                 color: theme.textPrimary,
               }}>
@@ -274,11 +277,12 @@ export default function TeacherManagement({ user, teacherData, onImpersonate }) 
               </span>
               <button
                 onClick={() => removeTeacherInvite(inv.email)}
+                aria-label={`Remove invite for ${inv.email}`}
                 style={{
                   background: "none",
                   border: "none",
                   color: theme.textMuted,
-                  fontSize: 10,
+                  fontSize: FONT_SIZES.tiny,
                   fontFamily: FONT_MONO,
                   cursor: "pointer",
                 }}
@@ -299,13 +303,13 @@ export default function TeacherManagement({ user, teacherData, onImpersonate }) 
             <div key={t.uid} style={{
               display: "flex",
               alignItems: "center",
-              gap: 12,
-              padding: "10px 0",
+              gap: SPACING[3],
+              padding: `${SPACING["2.5"]} 0`,
               borderBottom: `1px solid ${theme.cardBorder}`,
             }}>
               <div style={{ flex: 1 }}>
                 <div style={{
-                  fontSize: 13,
+                  fontSize: FONT_SIZES.sm,
                   fontWeight: 600,
                   fontFamily: FONT_MONO,
                   color: theme.textPrimary,
@@ -314,12 +318,12 @@ export default function TeacherManagement({ user, teacherData, onImpersonate }) 
                   {isYou && <span style={{ color: theme.textMuted, fontWeight: 400 }}> (you)</span>}
                   {t.isSuperAdmin && (
                     <span style={{
-                      fontSize: 9,
+                      fontSize: FONT_SIZES.micro,
                       background: "#7C3AED20",
                       color: "#7C3AED",
-                      padding: "1px 6px",
-                      borderRadius: 4,
-                      marginLeft: 8,
+                      padding: `1px ${SPACING["1.5"]}`,
+                      borderRadius: RADII.sm,
+                      marginLeft: SPACING[2],
                       fontWeight: 700,
                     }}>
                       ADMIN
@@ -327,15 +331,17 @@ export default function TeacherManagement({ user, teacherData, onImpersonate }) 
                   )}
                 </div>
                 <div style={{
-                  fontSize: 10,
+                  fontSize: FONT_SIZES.tiny,
                   color: theme.textMuted,
                   fontFamily: FONT_MONO,
                 }}>
                   {t.email}
                   {" \u00B7 "}
                   Code: {editingJoinCode === t.uid ? (
-                    <span style={{ display: "inline-flex", gap: 4, alignItems: "center" }}>
+                    <span style={{ display: "inline-flex", gap: SPACING[1], alignItems: "center" }}>
+                      <label htmlFor={`join-code-${t.uid}`} style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0,0,0,0)" }}>Join code</label>
                       <input
+                        id={`join-code-${t.uid}`}
                         autoFocus
                         value={newJoinCode}
                         onChange={(e) => setNewJoinCode(e.target.value.toUpperCase())}
@@ -346,17 +352,17 @@ export default function TeacherManagement({ user, teacherData, onImpersonate }) 
                         maxLength={6}
                         style={{
                           width: 60,
-                          padding: "1px 4px",
+                          padding: `1px ${SPACING[1]}`,
                           border: `1px solid ${theme.inputBorder}`,
-                          borderRadius: 3,
-                          fontSize: 10,
+                          borderRadius: RADII.sm,
+                          fontSize: FONT_SIZES.tiny,
                           fontFamily: FONT_MONO,
                           background: theme.inputBg,
                           color: theme.textPrimary,
                           textTransform: "uppercase",
                         }}
                       />
-                      <button onClick={() => handleSaveJoinCode(t.uid)} style={{ background: "none", border: "none", color: theme.teacherGreen, cursor: "pointer", padding: 0 }}>
+                      <button onClick={() => handleSaveJoinCode(t.uid)} aria-label="Save join code" style={{ background: "none", border: "none", color: theme.teacherGreen, cursor: "pointer", padding: 0 }}>
                         <Icon icon={checkIcon} width={12} />
                       </button>
                     </span>
@@ -365,7 +371,7 @@ export default function TeacherManagement({ user, teacherData, onImpersonate }) 
                       onClick={() => { setEditingJoinCode(t.uid); setNewJoinCode(t.joinCode || ""); }}
                       style={{ cursor: "pointer", borderBottom: `1px dashed ${theme.textMuted}` }}
                     >
-                      {t.joinCode || "—"}
+                      {t.joinCode || "\u2014"}
                     </span>
                   )}
                   {" \u00B7 "}
@@ -373,16 +379,17 @@ export default function TeacherManagement({ user, teacherData, onImpersonate }) 
                 </div>
               </div>
 
-              <div style={{ display: "flex", gap: 4 }}>
+              <div style={{ display: "flex", gap: SPACING[1] }}>
                 {!isYou && (
                   <button
                     onClick={() => onImpersonate({ uid: t.uid, displayName: t.displayName, email: t.email })}
                     title="View as this teacher"
+                    aria-label={`View as ${t.displayName || t.email}`}
                     style={{
                       background: "none",
                       border: `1px solid ${theme.inputBorder}`,
-                      borderRadius: 4,
-                      padding: "4px 6px",
+                      borderRadius: RADII.sm,
+                      padding: `${SPACING[1]} ${SPACING["1.5"]}`,
                       cursor: "pointer",
                       color: theme.textSecondary,
                       display: "inline-flex",
@@ -395,16 +402,16 @@ export default function TeacherManagement({ user, teacherData, onImpersonate }) 
                 )}
                 {!isYou && !t.isSuperAdmin && (
                   confirmDemote === t.uid ? (
-                    <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+                    <div style={{ display: "flex", gap: SPACING[1], alignItems: "center" }}>
                       <button
                         onClick={() => handleDemote(t.uid)}
                         style={{
                           background: theme.errorRed,
                           color: "#fff",
                           border: "none",
-                          borderRadius: 4,
-                          padding: "4px 8px",
-                          fontSize: 10,
+                          borderRadius: RADII.sm,
+                          padding: `${SPACING[1]} ${SPACING[2]}`,
+                          fontSize: FONT_SIZES.tiny,
                           fontFamily: FONT_MONO,
                           fontWeight: 700,
                           cursor: "pointer",
@@ -417,9 +424,9 @@ export default function TeacherManagement({ user, teacherData, onImpersonate }) 
                         style={{
                           background: "none",
                           border: `1px solid ${theme.inputBorder}`,
-                          borderRadius: 4,
-                          padding: "4px 8px",
-                          fontSize: 10,
+                          borderRadius: RADII.sm,
+                          padding: `${SPACING[1]} ${SPACING[2]}`,
+                          fontSize: FONT_SIZES.tiny,
                           fontFamily: FONT_MONO,
                           cursor: "pointer",
                           color: theme.textSecondary,
@@ -432,11 +439,12 @@ export default function TeacherManagement({ user, teacherData, onImpersonate }) 
                     <button
                       onClick={() => setConfirmDemote(t.uid)}
                       title="Remove teacher access"
+                      aria-label={`Remove teacher access for ${t.displayName || t.email}`}
                       style={{
                         background: "none",
                         border: `1px solid ${theme.inputBorder}`,
-                        borderRadius: 4,
-                        padding: "4px 6px",
+                        borderRadius: RADII.sm,
+                        padding: `${SPACING[1]} ${SPACING["1.5"]}`,
                         cursor: "pointer",
                         color: theme.textSecondary,
                         display: "inline-flex",

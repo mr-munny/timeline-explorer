@@ -1,5 +1,5 @@
 import { TAGS } from "../data/constants";
-import { useTheme, FONT_MONO } from "../contexts/ThemeContext";
+import { useTheme, FONT_MONO, FONT_SIZES, SPACING, RADII } from "../contexts/ThemeContext";
 import { Icon } from "@iconify/react";
 import magnifyIcon from "@iconify-icons/mdi/magnify";
 import sortAscending from "@iconify-icons/mdi/sort-ascending";
@@ -32,15 +32,24 @@ export default function FilterBar({
     selectedTags.length > 0 ||
     searchTerm;
 
+  const pillStyle = {
+    padding: `${SPACING[1]} ${SPACING["2.5"]}`,
+    borderRadius: RADII.pill,
+    fontSize: FONT_SIZES.tiny,
+    fontFamily: FONT_MONO,
+    cursor: "pointer",
+    transition: "all 0.15s",
+  };
+
   return (
-    <>
+    <section aria-label="Filters">
       {/* Row 1: Search + controls */}
       <div
         style={{
           display: "flex",
-          gap: 8,
+          gap: SPACING[2],
           flexWrap: "wrap",
-          marginBottom: 10,
+          marginBottom: SPACING["2.5"],
           alignItems: "center",
         }}
       >
@@ -48,9 +57,10 @@ export default function FilterBar({
           <Icon
             icon={magnifyIcon}
             width={14}
+            aria-hidden="true"
             style={{
               position: "absolute",
-              left: 10,
+              left: SPACING["2.5"],
               top: "50%",
               transform: "translateY(-50%)",
               color: theme.textSecondary,
@@ -60,29 +70,30 @@ export default function FilterBar({
           <input
             type="text"
             placeholder="Search events, people, regions..."
+            aria-label="Search events"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             style={{
               width: "100%",
-              padding: "9px 14px 9px 30px",
+              padding: `${SPACING[2]} ${SPACING[3]} ${SPACING[2]} 30px`,
               border: `1.5px solid ${theme.inputBorder}`,
-              borderRadius: 8,
-              fontSize: 12,
+              borderRadius: RADII.lg,
+              fontSize: FONT_SIZES.base,
               fontFamily: FONT_MONO,
               background: theme.inputBg,
               color: theme.textPrimary,
-              outline: "none",
               boxSizing: "border-box",
             }}
           />
         </div>
         <button
           onClick={() => setSortOrder((s) => (s === "chrono" ? "reverse" : "chrono"))}
+          aria-label={sortOrder === "chrono" ? "Sort: oldest first. Click for newest first" : "Sort: newest first. Click for oldest first"}
           style={{
-            padding: "9px 12px",
+            padding: `${SPACING[2]} ${SPACING[3]},`,
             border: `1.5px solid ${theme.inputBorder}`,
-            borderRadius: 8,
-            fontSize: 11,
+            borderRadius: RADII.lg,
+            fontSize: FONT_SIZES.sm,
             fontFamily: FONT_MONO,
             background: theme.inputBg,
             cursor: "pointer",
@@ -92,16 +103,17 @@ export default function FilterBar({
           onMouseEnter={(e) => { e.currentTarget.style.borderColor = theme.textTertiary; e.currentTarget.style.color = theme.textPrimary; }}
           onMouseLeave={(e) => { e.currentTarget.style.borderColor = theme.inputBorder; e.currentTarget.style.color = theme.textTertiary; }}
         >
-          <Icon icon={sortOrder === "chrono" ? sortAscending : sortDescending} width={14} style={{ verticalAlign: "middle", marginRight: 3 }} />
+          <Icon icon={sortOrder === "chrono" ? sortAscending : sortDescending} width={14} style={{ verticalAlign: "middle", marginRight: SPACING["0.5"] }} aria-hidden="true" />
           {sortOrder === "chrono" ? "Oldest" : "Newest"}
         </button>
         <button
           onClick={() => setShowContributors((s) => !s)}
+          aria-pressed={showContributors}
           style={{
-            padding: "9px 12px",
+            padding: `${SPACING[2]} ${SPACING[3]}`,
             border: `1.5px solid ${showContributors ? theme.activeToggleBg : theme.inputBorder}`,
-            borderRadius: 8,
-            fontSize: 11,
+            borderRadius: RADII.lg,
+            fontSize: FONT_SIZES.sm,
             fontFamily: FONT_MONO,
             background: showContributors ? theme.activeToggleBg : theme.inputBg,
             color: showContributors ? theme.activeToggleText : theme.textTertiary,
@@ -112,7 +124,7 @@ export default function FilterBar({
           onMouseEnter={(e) => { if (!showContributors) { e.currentTarget.style.borderColor = theme.textTertiary; e.currentTarget.style.color = theme.textPrimary; } }}
           onMouseLeave={(e) => { if (!showContributors) { e.currentTarget.style.borderColor = theme.inputBorder; e.currentTarget.style.color = theme.textTertiary; } }}
         >
-          <Icon icon={accountGroup} width={14} style={{ verticalAlign: "middle", marginRight: 4 }} />
+          <Icon icon={accountGroup} width={14} style={{ verticalAlign: "middle", marginRight: SPACING[1] }} aria-hidden="true" />
           Contributors
         </button>
       </div>
@@ -122,19 +134,19 @@ export default function FilterBar({
         <div
           style={{
             display: "flex",
-            gap: 5,
+            gap: SPACING["1.5"],
             flexWrap: "wrap",
-            marginBottom: 8,
+            marginBottom: SPACING[2],
             alignItems: "center",
           }}
         >
           <span
             style={{
-              fontSize: 10,
+              fontSize: FONT_SIZES.tiny,
               fontFamily: FONT_MONO,
               color: theme.textMuted,
               fontWeight: 600,
-              marginRight: 2,
+              marginRight: SPACING["0.5"],
             }}
           >
             Periods:
@@ -145,17 +157,13 @@ export default function FilterBar({
               <button
                 key={p.id}
                 onClick={() => togglePeriod(p.id)}
+                aria-pressed={isSelected}
                 style={{
-                  padding: "4px 10px",
-                  borderRadius: 12,
+                  ...pillStyle,
                   border: `1.5px solid ${isSelected ? p.color : theme.inputBorder}`,
                   background: isSelected ? (getThemedPeriodBg(p) || p.bg) : "transparent",
                   color: isSelected ? p.color : theme.textTertiary,
-                  fontSize: 10,
-                  fontFamily: FONT_MONO,
                   fontWeight: isSelected ? 700 : 500,
-                  cursor: "pointer",
-                  transition: "all 0.15s",
                 }}
               >
                 {p.label}
@@ -169,19 +177,19 @@ export default function FilterBar({
       <div
         style={{
           display: "flex",
-          gap: 5,
+          gap: SPACING["1.5"],
           flexWrap: "wrap",
-          marginBottom: 12,
+          marginBottom: SPACING[3],
           alignItems: "center",
         }}
       >
         <span
           style={{
-            fontSize: 10,
+            fontSize: FONT_SIZES.tiny,
             fontFamily: FONT_MONO,
             color: theme.textMuted,
             fontWeight: 600,
-            marginRight: 2,
+            marginRight: SPACING["0.5"],
           }}
         >
           Tags:
@@ -192,17 +200,13 @@ export default function FilterBar({
             <button
               key={tag}
               onClick={() => toggleTag(tag)}
+              aria-pressed={isSelected}
               style={{
-                padding: "4px 10px",
-                borderRadius: 12,
+                ...pillStyle,
                 border: `1.5px solid ${isSelected ? theme.textDescription : theme.inputBorder}`,
                 background: isSelected ? theme.subtleBg : "transparent",
                 color: isSelected ? theme.textDescription : theme.textTertiary,
-                fontSize: 10,
-                fontFamily: FONT_MONO,
                 fontWeight: isSelected ? 700 : 500,
-                cursor: "pointer",
-                transition: "all 0.15s",
               }}
             >
               {tag}
@@ -212,19 +216,19 @@ export default function FilterBar({
         {selectedTags.length >= 2 && (
           <button
             onClick={() => setTagMatchMode((m) => (m === "or" ? "and" : "or"))}
-            title={
+            aria-label={
               tagMatchMode === "or"
-                ? "OR mode: events with ANY selected tag"
-                : "AND mode: events with ALL selected tags"
+                ? "OR mode: events with ANY selected tag. Click to switch to AND mode"
+                : "AND mode: events with ALL selected tags. Click to switch to OR mode"
             }
             style={{
-              marginLeft: 4,
-              padding: "3px 8px",
-              borderRadius: 10,
+              marginLeft: SPACING[1],
+              padding: `${SPACING[1]} ${SPACING[2]}`,
+              borderRadius: RADII.xl,
               border: `1.5px solid ${theme.inputBorder}`,
               background: tagMatchMode === "and" ? theme.subtleBg : "transparent",
               color: theme.textDescription,
-              fontSize: 9,
+              fontSize: FONT_SIZES.micro,
               fontFamily: FONT_MONO,
               fontWeight: 700,
               cursor: "pointer",
@@ -242,15 +246,15 @@ export default function FilterBar({
         <div
           style={{
             display: "flex",
-            gap: 6,
+            gap: SPACING["1.5"],
             alignItems: "center",
-            marginBottom: 12,
+            marginBottom: SPACING[3],
             flexWrap: "wrap",
           }}
         >
           <span
             style={{
-              fontSize: 10,
+              fontSize: FONT_SIZES.tiny,
               color: theme.textMuted,
               fontFamily: FONT_MONO,
             }}
@@ -261,22 +265,24 @@ export default function FilterBar({
             const p = findPeriod(pId);
             if (!p) return null;
             return (
-              <span
+              <button
                 key={pId}
                 onClick={() => togglePeriod(pId)}
+                aria-label={`Remove ${p.label} filter`}
                 style={{
-                  fontSize: 10,
+                  fontSize: FONT_SIZES.tiny,
                   background: getThemedPeriodBg(p) || p.bg,
                   color: p.color,
-                  padding: "3px 8px",
-                  borderRadius: 4,
+                  padding: `${SPACING[1]} ${SPACING[2]}`,
+                  borderRadius: RADII.sm,
                   fontFamily: FONT_MONO,
                   fontWeight: 700,
                   cursor: "pointer",
+                  border: "none",
                 }}
               >
                 {p.label} &times;
-              </span>
+              </button>
             );
           })}
           {selectedTags.length > 0 && (
@@ -284,7 +290,7 @@ export default function FilterBar({
               {selectedTags.length >= 2 && (
                 <span
                   style={{
-                    fontSize: 9,
+                    fontSize: FONT_SIZES.micro,
                     color: theme.textMuted,
                     fontFamily: FONT_MONO,
                     fontWeight: 600,
@@ -294,33 +300,35 @@ export default function FilterBar({
                 </span>
               )}
               {selectedTags.map((tag) => (
-                <span
+                <button
                   key={tag}
                   onClick={() => toggleTag(tag)}
+                  aria-label={`Remove ${tag} filter`}
                   style={{
-                    fontSize: 10,
+                    fontSize: FONT_SIZES.tiny,
                     background: theme.subtleBg,
                     color: theme.textDescription,
-                    padding: "3px 8px",
-                    borderRadius: 4,
+                    padding: `${SPACING[1]} ${SPACING[2]}`,
+                    borderRadius: RADII.sm,
                     fontFamily: FONT_MONO,
                     fontWeight: 600,
                     cursor: "pointer",
+                    border: "none",
                   }}
                 >
                   {tag} &times;
-                </span>
+                </button>
               ))}
             </>
           )}
           {searchTerm && (
             <span
               style={{
-                fontSize: 10,
+                fontSize: FONT_SIZES.tiny,
                 background: theme.subtleBg,
                 color: theme.textDescription,
-                padding: "3px 8px",
-                borderRadius: 4,
+                padding: `${SPACING[1]} ${SPACING[2]}`,
+                borderRadius: RADII.sm,
                 fontFamily: FONT_MONO,
               }}
             >
@@ -329,8 +337,9 @@ export default function FilterBar({
           )}
           <button
             onClick={clearAllFilters}
+            aria-label="Clear all filters"
             style={{
-              fontSize: 10,
+              fontSize: FONT_SIZES.tiny,
               color: theme.errorRed,
               background: "none",
               border: "none",
@@ -342,13 +351,14 @@ export default function FilterBar({
             onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.7"; }}
             onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
           >
-            <Icon icon={filterRemoveOutline} width={12} style={{ verticalAlign: "middle", marginRight: 2 }} />
+            <Icon icon={filterRemoveOutline} width={12} style={{ verticalAlign: "middle", marginRight: SPACING["0.5"] }} aria-hidden="true" />
             Clear
           </button>
           <span
+            aria-live="polite"
             style={{
               marginLeft: "auto",
-              fontSize: 11,
+              fontSize: FONT_SIZES.sm,
               color: theme.textSecondary,
               fontFamily: FONT_MONO,
             }}
@@ -357,6 +367,6 @@ export default function FilterBar({
           </span>
         </div>
       )}
-    </>
+    </section>
   );
 }

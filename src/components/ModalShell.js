@@ -1,9 +1,13 @@
+import { useRef } from "react";
 import { Icon } from "@iconify/react";
 import closeIcon from "@iconify-icons/mdi/close";
-import { useTheme } from "../contexts/ThemeContext";
+import { useTheme, SPACING, RADII, Z_INDEX } from "../contexts/ThemeContext";
+import useFocusTrap from "../hooks/useFocusTrap";
 
-export default function ModalShell({ onClose, maxWidth = 640, closeOnBackdrop = true, children }) {
+export default function ModalShell({ onClose, maxWidth = 640, closeOnBackdrop = true, ariaLabelledBy, children }) {
   const { theme } = useTheme();
+  const contentRef = useRef(null);
+  useFocusTrap(contentRef, true, onClose);
 
   return (
     <div
@@ -15,15 +19,20 @@ export default function ModalShell({ onClose, maxWidth = 640, closeOnBackdrop = 
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        zIndex: 1000,
-        padding: 20,
+        zIndex: Z_INDEX.modal,
+        padding: SPACING[5],
       }}
       onClick={closeOnBackdrop ? (e) => { if (e.target === e.currentTarget) onClose(); } : undefined}
     >
       <div
+        ref={contentRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={ariaLabelledBy}
+        tabIndex={-1}
         style={{
           background: theme.cardBg,
-          borderRadius: 14,
+          borderRadius: RADII["2xl"],
           width: "100%",
           maxWidth,
           maxHeight: "90vh",
@@ -44,16 +53,17 @@ export function ModalCloseButton({ onClose }) {
   return (
     <button
       onClick={onClose}
+      aria-label="Close dialog"
       style={{
         position: "absolute",
-        top: 16,
-        right: 16,
+        top: SPACING[4],
+        right: SPACING[4],
         background: "none",
         border: "none",
         color: theme.textSecondary,
         cursor: "pointer",
-        padding: 4,
-        borderRadius: 6,
+        padding: SPACING[1],
+        borderRadius: RADII.md,
         zIndex: 1,
         transition: "all 0.15s",
       }}

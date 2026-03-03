@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { useTheme, FONT_MONO } from "../contexts/ThemeContext";
+import { useTheme, FONT_MONO, FONT_SIZES } from "../contexts/ThemeContext";
 import { PERIOD_COLORS } from "../data/constants";
 import { Icon } from "@iconify/react";
 import pencilOutline from "@iconify-icons/mdi/pencil-outline";
@@ -49,11 +49,10 @@ export default function TimePeriodsEditor({ draftPeriods, draftTimelineRange, on
     padding: "5px 6px",
     border: `1.5px solid ${theme.inputBorder}`,
     borderRadius: 4,
-    fontSize: 11,
+    fontSize: FONT_SIZES.micro,
     fontFamily: FONT_MONO,
     background: theme.inputBg,
     color: theme.textPrimary,
-    outline: "none",
     boxSizing: "border-box",
     textAlign: "center",
   };
@@ -63,7 +62,7 @@ export default function TimePeriodsEditor({ draftPeriods, draftTimelineRange, on
       <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
         {draftPeriods.length === 0 && (
           <div style={{
-            fontSize: 10,
+            fontSize: FONT_SIZES.tiny,
             color: theme.textMuted,
             fontStyle: "italic",
             padding: "4px 6px",
@@ -92,7 +91,7 @@ export default function TimePeriodsEditor({ draftPeriods, draftTimelineRange, on
                   flexShrink: 0,
                 }} />
                 <span style={{
-                  fontSize: 10,
+                  fontSize: FONT_SIZES.tiny,
                   color: theme.textPrimary,
                   flex: 1,
                   overflow: "hidden",
@@ -102,7 +101,7 @@ export default function TimePeriodsEditor({ draftPeriods, draftTimelineRange, on
                   {p.label}
                 </span>
                 <span style={{
-                  fontSize: 9,
+                  fontSize: FONT_SIZES.micro,
                   color: theme.textMuted,
                   flexShrink: 0,
                 }}>
@@ -141,7 +140,9 @@ export default function TimePeriodsEditor({ draftPeriods, draftTimelineRange, on
                   flexDirection: "column",
                   gap: 6,
                 }}>
+                  <label htmlFor={`period-label-${p.id}`} style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0,0,0,0)" }}>Period label</label>
                   <input
+                    id={`period-label-${p.id}`}
                     type="text"
                     value={p.label}
                     onChange={(e) => {
@@ -163,32 +164,39 @@ export default function TimePeriodsEditor({ draftPeriods, draftTimelineRange, on
                       padding: "5px 8px",
                       border: `1.5px solid ${theme.inputBorder}`,
                       borderRadius: 4,
-                      fontSize: 11,
+                      fontSize: FONT_SIZES.micro,
                       fontFamily: FONT_MONO,
                       background: theme.inputBg,
                       color: theme.textPrimary,
-                      outline: "none",
                       boxSizing: "border-box",
                     }}
                   />
                   <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                    <input
-                      type="number"
-                      value={draftEraStart}
-                      onChange={(e) => setDraftEraStart(e.target.value)}
-                      onKeyDown={(e) => { if (e.key === "Enter") e.target.blur(); }}
-                      onBlur={() => commitEra(p.id)}
-                      style={eraInputStyle}
-                    />
-                    <span style={{ fontSize: 10, color: theme.textMuted }}>&ndash;</span>
-                    <input
-                      type="number"
-                      value={draftEraEnd}
-                      onChange={(e) => setDraftEraEnd(e.target.value)}
-                      onKeyDown={(e) => { if (e.key === "Enter") e.target.blur(); }}
-                      onBlur={() => commitEra(p.id)}
-                      style={eraInputStyle}
-                    />
+                    <div style={{ flex: 1 }}>
+                      <label htmlFor={`period-era-start-${p.id}`} style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0,0,0,0)" }}>Era start year</label>
+                      <input
+                        id={`period-era-start-${p.id}`}
+                        type="number"
+                        value={draftEraStart}
+                        onChange={(e) => setDraftEraStart(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === "Enter") e.target.blur(); }}
+                        onBlur={() => commitEra(p.id)}
+                        style={eraInputStyle}
+                      />
+                    </div>
+                    <span style={{ fontSize: FONT_SIZES.tiny, color: theme.textMuted }}>&ndash;</span>
+                    <div style={{ flex: 1 }}>
+                      <label htmlFor={`period-era-end-${p.id}`} style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0,0,0,0)" }}>Era end year</label>
+                      <input
+                        id={`period-era-end-${p.id}`}
+                        type="number"
+                        value={draftEraEnd}
+                        onChange={(e) => setDraftEraEnd(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === "Enter") e.target.blur(); }}
+                        onBlur={() => commitEra(p.id)}
+                        style={eraInputStyle}
+                      />
+                    </div>
                   </div>
                   <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
                     {PERIOD_COLORS.map((c, i) => (
@@ -199,7 +207,7 @@ export default function TimePeriodsEditor({ draftPeriods, draftTimelineRange, on
                             draftPeriods.map((x) => x.id === p.id ? { ...x, color: c.color, bg: c.bg, accent: c.accent } : x)
                           );
                         }}
-                        title={`Color ${i + 1}`}
+                        aria-label={`Color ${i + 1}${p.color === c.color ? " (selected)" : ""}`}
                         style={{
                           width: 18,
                           height: 18,
@@ -245,7 +253,7 @@ export default function TimePeriodsEditor({ draftPeriods, draftTimelineRange, on
           borderRadius: 4,
           background: "transparent",
           color: theme.textSecondary,
-          fontSize: 10,
+          fontSize: FONT_SIZES.tiny,
           fontFamily: FONT_MONO,
           fontWeight: 600,
           cursor: "pointer",

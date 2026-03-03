@@ -3,17 +3,18 @@ import { Icon } from "@iconify/react";
 import closeIcon from "@iconify-icons/mdi/close";
 import sendIcon from "@iconify-icons/mdi/send";
 import arrowRightBold from "@iconify-icons/mdi/arrow-right-bold";
-import { useTheme, FONT_MONO, FONT_SERIF } from "../contexts/ThemeContext";
+import { useTheme, FONT_MONO, FONT_SERIF, FONT_SIZES, SPACING, RADII, Z_INDEX } from "../contexts/ThemeContext";
 import FeedbackBanner from "./FeedbackBanner";
 import ModalShell from "./ModalShell";
 import IconButton from "./IconButton";
 import { getPeriod } from "../data/constants";
 import { formatEventDate } from "../utils/dateUtils";
 
-function EventSearchDropdown({ label, events, selectedId, onSelect, excludeId, periods, error, theme }) {
+function EventSearchDropdown({ label, events, selectedId, onSelect, excludeId, periods, error, theme, inputId }) {
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
   const containerRef = useRef(null);
+  const listboxId = `${inputId}-listbox`;
 
   useEffect(() => {
     const handleClick = (e) => {
@@ -38,26 +39,25 @@ function EventSearchDropdown({ label, events, selectedId, onSelect, excludeId, p
 
   const fieldStyle = {
     width: "100%",
-    padding: "9px 12px",
+    padding: `9px ${SPACING["3"]}`,
     border: `1.5px solid ${error ? theme.errorRed : theme.inputBorder}`,
-    borderRadius: 7,
-    fontSize: 13,
+    borderRadius: RADII.md,
+    fontSize: FONT_SIZES.sm,
     fontFamily: FONT_MONO,
     background: theme.inputBg,
     color: theme.textPrimary,
-    outline: "none",
     boxSizing: "border-box",
     transition: "border-color 0.2s",
   };
 
   const labelStyle = {
-    fontSize: 11,
+    fontSize: FONT_SIZES.micro,
     fontWeight: 700,
     color: error ? theme.errorRed : theme.textTertiary,
     fontFamily: FONT_MONO,
     textTransform: "uppercase",
     letterSpacing: "0.05em",
-    marginBottom: 4,
+    marginBottom: SPACING["1"],
     display: "block",
   };
 
@@ -66,16 +66,16 @@ function EventSearchDropdown({ label, events, selectedId, onSelect, excludeId, p
     const color = period?.color || "#6B7280";
     return (
       <div>
-        <label style={labelStyle}>{label}</label>
+        <label htmlFor={inputId} style={labelStyle}>{label}</label>
         <div
           style={{
             display: "flex",
             alignItems: "center",
-            gap: 8,
-            padding: "8px 12px",
+            gap: SPACING["2"],
+            padding: `${SPACING["2"]} ${SPACING["3"]}`,
             background: theme.warmSubtleBg,
             border: `1.5px solid ${color}60`,
-            borderRadius: 7,
+            borderRadius: RADII.md,
             borderLeft: `4px solid ${color}`,
           }}
         >
@@ -83,10 +83,10 @@ function EventSearchDropdown({ label, events, selectedId, onSelect, excludeId, p
             style={{
               background: color,
               color: "#fff",
-              fontSize: 11,
+              fontSize: FONT_SIZES.micro,
               fontWeight: 700,
-              padding: "2px 6px",
-              borderRadius: 4,
+              padding: `${SPACING["0.5"]} ${SPACING["1.5"]}`,
+              borderRadius: RADII.sm,
               fontFamily: FONT_MONO,
               flexShrink: 0,
             }}
@@ -95,7 +95,7 @@ function EventSearchDropdown({ label, events, selectedId, onSelect, excludeId, p
           </span>
           <span
             style={{
-              fontSize: 13,
+              fontSize: FONT_SIZES.sm,
               fontFamily: FONT_SERIF,
               fontWeight: 600,
               color: theme.textPrimary,
@@ -115,16 +115,26 @@ function EventSearchDropdown({ label, events, selectedId, onSelect, excludeId, p
 
   return (
     <div ref={containerRef} style={{ position: "relative" }}>
-      <label style={labelStyle}>{label}</label>
+      <label htmlFor={inputId} style={labelStyle}>{label}</label>
       <input
+        id={inputId}
         value={search}
         onChange={(e) => { setSearch(e.target.value); setOpen(true); }}
         onFocus={() => setOpen(true)}
         placeholder="Search by title, year, or contributor..."
         style={fieldStyle}
+        aria-label={`Search for ${label.replace(" *", "").toLowerCase()}`}
+        aria-invalid={error ? "true" : undefined}
+        aria-expanded={open && filtered.length > 0}
+        aria-controls={listboxId}
+        role="combobox"
+        aria-autocomplete="list"
       />
       {open && filtered.length > 0 && (
         <div
+          id={listboxId}
+          role="listbox"
+          aria-label={`${label.replace(" *", "")} results`}
           style={{
             position: "absolute",
             top: "100%",
@@ -134,9 +144,9 @@ function EventSearchDropdown({ label, events, selectedId, onSelect, excludeId, p
             overflow: "auto",
             background: theme.cardBg,
             border: `1.5px solid ${theme.inputBorder}`,
-            borderRadius: 7,
-            marginTop: 4,
-            zIndex: 10,
+            borderRadius: RADII.md,
+            marginTop: SPACING["1"],
+            zIndex: Z_INDEX.dropdown,
             boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
           }}
         >
@@ -146,13 +156,15 @@ function EventSearchDropdown({ label, events, selectedId, onSelect, excludeId, p
             return (
               <div
                 key={event.id}
+                role="option"
+                aria-selected={false}
                 onClick={() => { onSelect(event.id); setSearch(""); setOpen(false); }}
                 style={{
-                  padding: "8px 12px",
+                  padding: `${SPACING["2"]} ${SPACING["3"]}`,
                   cursor: "pointer",
                   display: "flex",
                   alignItems: "center",
-                  gap: 8,
+                  gap: SPACING["2"],
                   borderBottom: `1px solid ${theme.inputBorder}40`,
                   transition: "background 0.1s",
                 }}
@@ -163,9 +175,9 @@ function EventSearchDropdown({ label, events, selectedId, onSelect, excludeId, p
                   style={{
                     background: color,
                     color: "#fff",
-                    fontSize: 10,
+                    fontSize: FONT_SIZES.tiny,
                     fontWeight: 700,
-                    padding: "2px 5px",
+                    padding: `${SPACING["0.5"]} 5px`,
                     borderRadius: 3,
                     fontFamily: FONT_MONO,
                     flexShrink: 0,
@@ -175,7 +187,7 @@ function EventSearchDropdown({ label, events, selectedId, onSelect, excludeId, p
                 </span>
                 <span
                   style={{
-                    fontSize: 12,
+                    fontSize: FONT_SIZES.tiny,
                     fontFamily: FONT_SERIF,
                     color: theme.textPrimary,
                     overflow: "hidden",
@@ -199,10 +211,10 @@ function EventSearchDropdown({ label, events, selectedId, onSelect, excludeId, p
             right: 0,
             background: theme.cardBg,
             border: `1.5px solid ${theme.inputBorder}`,
-            borderRadius: 7,
-            marginTop: 4,
-            padding: "12px 14px",
-            fontSize: 11,
+            borderRadius: RADII.md,
+            marginTop: SPACING["1"],
+            padding: `${SPACING["3"]} ${SPACING["3.5"] || "0.875rem"}`,
+            fontSize: FONT_SIZES.micro,
             fontFamily: FONT_MONO,
             color: theme.textSecondary,
             textAlign: "center",
@@ -250,31 +262,31 @@ export default function AddConnectionPanel({ onAdd, onClose, userName, approvedE
   };
 
   const labelStyle = {
-    fontSize: 11,
+    fontSize: FONT_SIZES.micro,
     fontWeight: 700,
     color: theme.textTertiary,
     fontFamily: FONT_MONO,
     textTransform: "uppercase",
     letterSpacing: "0.05em",
-    marginBottom: 4,
+    marginBottom: SPACING["1"],
     display: "block",
   };
 
   return (
     <ModalShell onClose={onClose} maxWidth={520} closeOnBackdrop={false}>
-      <div style={{ padding: "28px 28px 20px" }}>
+      <div style={{ padding: `${SPACING["8"]} ${SPACING["8"]} ${SPACING["5"]}` }}>
         <div
           style={{
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            marginBottom: 20,
+            marginBottom: SPACING["5"],
           }}
         >
           <div>
             <h2
               style={{
-                fontSize: 20,
+                fontSize: FONT_SIZES.lg,
                 fontWeight: 700,
                 margin: 0,
                 fontFamily: FONT_SERIF,
@@ -285,9 +297,9 @@ export default function AddConnectionPanel({ onAdd, onClose, userName, approvedE
             </h2>
             <p
               style={{
-                fontSize: 11,
+                fontSize: FONT_SIZES.micro,
                 color: theme.textSecondary,
-                margin: "4px 0 0",
+                margin: `${SPACING["1"]} 0 0`,
                 fontFamily: FONT_MONO,
               }}
             >
@@ -305,7 +317,7 @@ export default function AddConnectionPanel({ onAdd, onClose, userName, approvedE
 
         {revisionMode && <FeedbackBanner feedback={feedback} />}
 
-        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: SPACING["3.5"] || "0.875rem" }}>
           <EventSearchDropdown
             label="Cause Event *"
             events={approvedEvents}
@@ -315,9 +327,10 @@ export default function AddConnectionPanel({ onAdd, onClose, userName, approvedE
             periods={periods}
             error={errors.cause}
             theme={theme}
+            inputId="acp-cause-search"
           />
 
-          <div style={{ display: "flex", justifyContent: "center", padding: "2px 0" }}>
+          <div style={{ display: "flex", justifyContent: "center", padding: `${SPACING["0.5"]} 0` }}>
             <Icon icon={arrowRightBold} width={24} style={{ color: theme.accentGold, transform: "rotate(90deg)" }} />
           </div>
 
@@ -330,32 +343,34 @@ export default function AddConnectionPanel({ onAdd, onClose, userName, approvedE
             periods={periods}
             error={errors.effect}
             theme={theme}
+            inputId="acp-effect-search"
           />
 
           <div>
-            <label style={{ ...labelStyle, color: errors.description ? theme.errorRed : theme.textTertiary }}>
+            <label htmlFor="acp-description" style={{ ...labelStyle, color: errors.description ? theme.errorRed : theme.textTertiary }}>
               Describe the Connection *
             </label>
             <textarea
+              id="acp-description"
               value={description}
               onChange={(e) => { setDescription(e.target.value); setErrors((err) => ({ ...err, description: undefined })); }}
               placeholder="How does the cause event lead to the effect event? What is the connection?"
               rows={3}
               style={{
                 width: "100%",
-                padding: "9px 12px",
+                padding: `9px ${SPACING["3"]}`,
                 border: `1.5px solid ${errors.description ? theme.errorRed : theme.inputBorder}`,
-                borderRadius: 7,
-                fontSize: 13,
+                borderRadius: RADII.md,
+                fontSize: FONT_SIZES.sm,
                 fontFamily: FONT_MONO,
                 background: theme.inputBg,
                 color: theme.textPrimary,
-                outline: "none",
                 boxSizing: "border-box",
                 transition: "border-color 0.2s",
                 resize: "vertical",
                 lineHeight: 1.5,
               }}
+              aria-invalid={errors.description ? "true" : undefined}
             />
           </div>
 
@@ -363,9 +378,9 @@ export default function AddConnectionPanel({ onAdd, onClose, userName, approvedE
             style={{
               background: theme.warmSubtleBg,
               border: `1px solid ${theme.inputBorder}`,
-              borderRadius: 8,
-              padding: "10px 14px",
-              fontSize: 11,
+              borderRadius: RADII.lg,
+              padding: `${SPACING["2.5"]} ${SPACING["3.5"] || "0.875rem"}`,
+              fontSize: FONT_SIZES.micro,
               fontFamily: FONT_MONO,
               color: theme.textTertiary,
               lineHeight: 1.5,
@@ -380,14 +395,15 @@ export default function AddConnectionPanel({ onAdd, onClose, userName, approvedE
 
           {submitError && (
             <div
+              role="alert"
               style={{
-                background: "#FEE2E2",
-                border: "1px solid #EF4444",
-                borderRadius: 6,
-                padding: "8px 12px",
-                fontSize: 11,
+                background: theme.errorRedBg,
+                border: `1px solid ${theme.errorRed}`,
+                borderRadius: RADII.md,
+                padding: `${SPACING["2"]} ${SPACING["3"]}`,
+                fontSize: FONT_SIZES.micro,
                 fontFamily: FONT_MONO,
-                color: "#991B1B",
+                color: theme.errorRedText,
                 lineHeight: 1.4,
               }}
             >
@@ -399,12 +415,12 @@ export default function AddConnectionPanel({ onAdd, onClose, userName, approvedE
             onClick={handleSubmit}
             disabled={submitting}
             style={{
-              padding: "12px 20px",
+              padding: `${SPACING["3"]} ${SPACING["5"]}`,
               background: submitting ? theme.textSecondary : theme.activeToggleBg,
               color: theme.activeToggleText,
               border: "none",
-              borderRadius: 8,
-              fontSize: 13,
+              borderRadius: RADII.lg,
+              fontSize: FONT_SIZES.sm,
               fontFamily: FONT_MONO,
               fontWeight: 700,
               cursor: submitting ? "default" : "pointer",

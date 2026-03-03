@@ -1,21 +1,21 @@
-import { useTheme, FONT_MONO, FONT_SERIF } from "../contexts/ThemeContext";
+import { useTheme, FONT_MONO, FONT_SERIF, FONT_SIZES, SPACING, RADII } from "../contexts/ThemeContext";
 
 export default function FeedbackBanner({ feedback, title = "Teacher Feedback", compact = false }) {
   const { theme } = useTheme();
   if (!feedback) return null;
 
   const sizes = compact
-    ? { label: 9, body: 12, meta: 9, padding: "10px 14px", gap: 4 }
-    : { label: 10, body: 13, meta: 10, padding: "12px 16px", gap: 6 };
+    ? { label: FONT_SIZES.micro, body: FONT_SIZES.tiny, meta: FONT_SIZES.micro, padding: `${SPACING["2.5"]} ${SPACING["3.5"] || "0.875rem"}`, gap: SPACING["1"] }
+    : { label: FONT_SIZES.tiny, body: FONT_SIZES.sm, meta: FONT_SIZES.tiny, padding: `${SPACING["3"]} ${SPACING["4"]}`, gap: SPACING["1.5"] };
 
   return (
-    <div style={{
+    <div role="alert" style={{
       background: theme.feedbackAmberBg,
       border: `1.5px solid ${theme.feedbackAmber}`,
       borderLeft: `4px solid ${theme.feedbackAmber}`,
-      borderRadius: 8,
+      borderRadius: RADII.lg,
       padding: sizes.padding,
-      marginBottom: compact ? 10 : 4,
+      marginBottom: compact ? SPACING["2.5"] : SPACING["1"],
     }}>
       <div style={{
         fontSize: sizes.label, fontWeight: 700, fontFamily: FONT_MONO,

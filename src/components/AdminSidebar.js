@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useTheme, FONT_MONO } from "../contexts/ThemeContext";
+import { useTheme, FONT_MONO, FONT_SIZES, SPACING, RADII } from "../contexts/ThemeContext";
 import { Icon } from "@iconify/react";
 import inboxArrowDown from "@iconify-icons/mdi/inbox-arrow-down";
 import plusIcon from "@iconify-icons/mdi/plus";
@@ -32,23 +32,24 @@ export default function AdminSidebar({ sections, selectedTab, onSelectTab, pendi
       fontFamily: FONT_MONO,
     }}>
       {/* Moderation tab */}
-      <div style={{ padding: "16px 12px 8px" }}>
+      <nav aria-label="Admin navigation" style={{ padding: `${SPACING[4]} ${SPACING[3]} ${SPACING[2]}` }}>
         <button
           onClick={() => onSelectTab("moderation")}
+          aria-current={selectedTab === "moderation" ? "page" : undefined}
           style={{
             width: "100%",
-            padding: "10px 12px",
-            borderRadius: 6,
+            padding: `${SPACING["2.5"]} ${SPACING[3]}`,
+            borderRadius: RADII.md,
             border: selectedTab === "moderation" ? `1.5px solid ${theme.accentGold}` : `1.5px solid transparent`,
             background: selectedTab === "moderation" ? theme.accentGold + "15" : "transparent",
             color: selectedTab === "moderation" ? theme.accentGold : theme.textPrimary,
-            fontSize: 11,
+            fontSize: FONT_SIZES.micro,
             fontFamily: FONT_MONO,
             fontWeight: 700,
             cursor: "pointer",
             display: "flex",
             alignItems: "center",
-            gap: 8,
+            gap: SPACING[2],
             transition: "all 0.15s",
             textAlign: "left",
           }}
@@ -62,10 +63,10 @@ export default function AdminSidebar({ sections, selectedTab, onSelectTab, pendi
               marginLeft: "auto",
               background: theme.errorRed,
               color: "#fff",
-              fontSize: 9,
+              fontSize: "9px",
               fontWeight: 700,
-              padding: "2px 6px",
-              borderRadius: 10,
+              padding: `${SPACING["0.5"]} ${SPACING["1.5"]}`,
+              borderRadius: RADII.xl,
               minWidth: 18,
               textAlign: "center",
             }}>
@@ -76,23 +77,24 @@ export default function AdminSidebar({ sections, selectedTab, onSelectTab, pendi
         {isSuperAdmin && (
           <button
             onClick={() => onSelectTab("teachers")}
+            aria-current={selectedTab === "teachers" ? "page" : undefined}
             style={{
               width: "100%",
-              padding: "10px 12px",
-              borderRadius: 6,
+              padding: `${SPACING["2.5"]} ${SPACING[3]}`,
+              borderRadius: RADII.md,
               border: selectedTab === "teachers" ? `1.5px solid ${theme.accentGold}` : `1.5px solid transparent`,
               background: selectedTab === "teachers" ? theme.accentGold + "15" : "transparent",
               color: selectedTab === "teachers" ? theme.accentGold : theme.textPrimary,
-              fontSize: 11,
+              fontSize: FONT_SIZES.micro,
               fontFamily: FONT_MONO,
               fontWeight: 700,
               cursor: "pointer",
               display: "flex",
               alignItems: "center",
-              gap: 8,
+              gap: SPACING[2],
               transition: "all 0.15s",
               textAlign: "left",
-              marginTop: 4,
+              marginTop: SPACING[1],
             }}
             onMouseEnter={(e) => { if (selectedTab !== "teachers") e.currentTarget.style.background = theme.subtleBg; }}
             onMouseLeave={(e) => { if (selectedTab !== "teachers") e.currentTarget.style.background = "transparent"; }}
@@ -101,15 +103,15 @@ export default function AdminSidebar({ sections, selectedTab, onSelectTab, pendi
             Teachers
           </button>
         )}
-      </div>
+      </nav>
 
       {/* Divider */}
-      <div style={{ height: 1, background: theme.cardBorder, margin: "4px 12px" }} />
+      <div style={{ height: 1, background: theme.cardBorder, margin: `${SPACING[1]} ${SPACING[3]}` }} />
 
       {/* Sections heading */}
       <div style={{
-        padding: "12px 16px 6px",
-        fontSize: 9,
+        padding: `${SPACING[3]} ${SPACING[4]} ${SPACING["1.5"]}`,
+        fontSize: "9px",
         fontWeight: 700,
         color: theme.textMuted,
         textTransform: "uppercase",
@@ -119,28 +121,29 @@ export default function AdminSidebar({ sections, selectedTab, onSelectTab, pendi
       </div>
 
       {/* Section list */}
-      <div style={{ flex: 1, overflowY: "auto", padding: "0 12px" }}>
+      <div style={{ flex: 1, overflowY: "auto", padding: `0 ${SPACING[3]}` }}>
         {sections.map((s) => {
           const isActive = selectedTab === s.id;
           return (
             <button
               key={s.id}
               onClick={() => onSelectTab(s.id)}
+              aria-current={isActive ? "page" : undefined}
               style={{
                 width: "100%",
-                padding: "8px 12px",
-                borderRadius: 6,
+                padding: `${SPACING[2]} ${SPACING[3]}`,
+                borderRadius: RADII.md,
                 border: isActive ? `1.5px solid ${theme.accentGold}` : `1.5px solid transparent`,
                 background: isActive ? theme.accentGold + "15" : "transparent",
                 color: isActive ? theme.accentGold : theme.textPrimary,
-                fontSize: 11,
+                fontSize: FONT_SIZES.micro,
                 fontFamily: FONT_MONO,
                 fontWeight: isActive ? 700 : 500,
                 cursor: "pointer",
                 display: "block",
                 textAlign: "left",
                 transition: "all 0.15s",
-                marginBottom: 2,
+                marginBottom: SPACING["0.5"],
               }}
               onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.background = theme.subtleBg; }}
               onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.background = "transparent"; }}
@@ -152,10 +155,12 @@ export default function AdminSidebar({ sections, selectedTab, onSelectTab, pendi
       </div>
 
       {/* Add Section */}
-      <div style={{ padding: "8px 12px 16px" }}>
+      <div style={{ padding: `${SPACING[2]} ${SPACING[3]} ${SPACING[4]}` }}>
         {addingNew ? (
-          <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+          <div style={{ display: "flex", gap: SPACING[1], alignItems: "center" }}>
+            <label htmlFor="new-section-name" className="sr-only" style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0,0,0,0)" }}>New section name</label>
             <input
+              id="new-section-name"
               autoFocus
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
@@ -169,25 +174,25 @@ export default function AdminSidebar({ sections, selectedTab, onSelectTab, pendi
               placeholder="Section name"
               style={{
                 flex: 1,
-                padding: "6px 8px",
+                padding: `${SPACING["1.5"]} ${SPACING[2]}`,
                 border: `1.5px solid ${theme.inputBorder}`,
-                borderRadius: 4,
-                fontSize: 11,
+                borderRadius: RADII.sm,
+                fontSize: FONT_SIZES.micro,
                 fontFamily: FONT_MONO,
                 background: theme.inputBg,
                 color: theme.textPrimary,
-                outline: "none",
                 boxSizing: "border-box",
               }}
             />
             <button
               onClick={handleAddSubmit}
+              aria-label="Confirm add section"
               style={{
                 background: theme.teacherGreen,
                 color: "#fff",
                 border: "none",
-                borderRadius: 4,
-                padding: "6px 8px",
+                borderRadius: RADII.sm,
+                padding: `${SPACING["1.5"]} ${SPACING[2]}`,
                 cursor: "pointer",
                 display: "inline-flex",
                 alignItems: "center",
@@ -201,19 +206,19 @@ export default function AdminSidebar({ sections, selectedTab, onSelectTab, pendi
             onClick={() => setAddingNew(true)}
             style={{
               width: "100%",
-              padding: "8px 0",
+              padding: `${SPACING[2]} 0`,
               border: `1.5px dashed ${theme.inputBorder}`,
-              borderRadius: 6,
+              borderRadius: RADII.md,
               background: "transparent",
               color: theme.textSecondary,
-              fontSize: 10,
+              fontSize: FONT_SIZES.tiny,
               fontFamily: FONT_MONO,
               fontWeight: 600,
               cursor: "pointer",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              gap: 4,
+              gap: SPACING[1],
               transition: "all 0.15s",
             }}
             onMouseEnter={(e) => { e.currentTarget.style.borderColor = theme.textSecondary; e.currentTarget.style.color = theme.textPrimary; }}

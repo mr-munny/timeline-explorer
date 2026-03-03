@@ -7,7 +7,7 @@ import cancelIcon from "@iconify-icons/mdi/cancel";
 import contentSave from "@iconify-icons/mdi/content-save";
 import arrowRightBold from "@iconify-icons/mdi/arrow-right-bold";
 import commentAlertOutline from "@iconify-icons/mdi/comment-alert-outline";
-import { useTheme, FONT_MONO, FONT_SERIF } from "../contexts/ThemeContext";
+import { useTheme, FONT_MONO, FONT_SERIF, FONT_SIZES, SPACING, RADII } from "../contexts/ThemeContext";
 import IconButton from "./IconButton";
 
 export default function PendingConnectionCard({
@@ -29,14 +29,13 @@ export default function PendingConnectionCard({
 
   const inputStyle = {
     width: "100%",
-    padding: "7px 10px",
+    padding: `${SPACING[1.5] || "0.4375rem"} ${SPACING[2.5]}`,
     border: `1.5px solid ${theme.inputBorder}`,
-    borderRadius: 6,
-    fontSize: 12,
+    borderRadius: RADII.md,
+    fontSize: FONT_SIZES.tiny,
     fontFamily: FONT_MONO,
     background: theme.inputBg,
     color: theme.textPrimary,
-    outline: "none",
     boxSizing: "border-box",
   };
 
@@ -44,26 +43,26 @@ export default function PendingConnectionCard({
     <div
       style={{
         border: `1.5px solid ${theme.inputBorder}`,
-        borderRadius: 10,
-        padding: "16px 18px",
+        borderRadius: RADII.xl,
+        padding: `${SPACING[4]} ${SPACING[4]}`,
         borderLeft: `4px solid ${theme.accentGold || "#F59E0B"}`,
       }}
     >
       {/* Cause → Effect display */}
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: SPACING[2], marginBottom: SPACING[2.5], flexWrap: "wrap" }}>
         <div style={{
-          display: "flex", alignItems: "center", gap: 6,
-          padding: "4px 10px", background: theme.warmSubtleBg, borderRadius: 6,
+          display: "flex", alignItems: "center", gap: SPACING[1.5],
+          padding: `${SPACING[1]} ${SPACING[2.5]}`, background: theme.warmSubtleBg, borderRadius: RADII.md,
           borderLeft: `3px solid ${causeUnit?.color || theme.textSecondary}`,
         }}>
           <span style={{
-            fontSize: 10, fontWeight: 700, fontFamily: FONT_MONO,
+            fontSize: FONT_SIZES.tiny, fontWeight: 700, fontFamily: FONT_MONO,
             color: causeUnit?.color || theme.textSecondary,
           }}>
             {causeEvent?.year || "?"}
           </span>
           <span style={{
-            fontSize: 12, fontFamily: FONT_SERIF, fontWeight: 600,
+            fontSize: FONT_SIZES.tiny, fontFamily: FONT_SERIF, fontWeight: 600,
             color: theme.textPrimary,
           }}>
             {causeEvent?.title || "Unknown event"}
@@ -71,18 +70,18 @@ export default function PendingConnectionCard({
         </div>
         <Icon icon={arrowRightBold} width={18} style={{ color: theme.accentGold || "#F59E0B", flexShrink: 0 }} />
         <div style={{
-          display: "flex", alignItems: "center", gap: 6,
-          padding: "4px 10px", background: theme.warmSubtleBg, borderRadius: 6,
+          display: "flex", alignItems: "center", gap: SPACING[1.5],
+          padding: `${SPACING[1]} ${SPACING[2.5]}`, background: theme.warmSubtleBg, borderRadius: RADII.md,
           borderLeft: `3px solid ${effectUnit?.color || theme.textSecondary}`,
         }}>
           <span style={{
-            fontSize: 10, fontWeight: 700, fontFamily: FONT_MONO,
+            fontSize: FONT_SIZES.tiny, fontWeight: 700, fontFamily: FONT_MONO,
             color: effectUnit?.color || theme.textSecondary,
           }}>
             {effectEvent?.year || "?"}
           </span>
           <span style={{
-            fontSize: 12, fontFamily: FONT_SERIF, fontWeight: 600,
+            fontSize: FONT_SIZES.tiny, fontFamily: FONT_SERIF, fontWeight: 600,
             color: theme.textPrimary,
           }}>
             {effectEvent?.title || "Unknown event"}
@@ -91,20 +90,21 @@ export default function PendingConnectionCard({
       </div>
 
       {!readOnly && isEditing ? (
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: SPACING[2] }}>
           <textarea
             value={editConnDesc}
             onChange={(e) => onSetEditConnDesc(e.target.value)}
             style={{ ...inputStyle, resize: "vertical" }}
             rows={3}
           />
-          <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
+          <div style={{ display: "flex", gap: SPACING[1.5], justifyContent: "flex-end" }}>
             <button
               onClick={onCancelConnEdit}
+              aria-label="Cancel editing"
               style={{
-                padding: "6px 14px", background: "none",
-                border: `1.5px solid ${theme.inputBorder}`, borderRadius: 6,
-                fontSize: 11, fontFamily: FONT_MONO,
+                padding: `${SPACING[1.5]} ${SPACING[3]}`, background: "none",
+                border: `1.5px solid ${theme.inputBorder}`, borderRadius: RADII.md,
+                fontSize: FONT_SIZES.micro, fontFamily: FONT_MONO,
                 cursor: "pointer", color: theme.textTertiary,
                 transition: "all 0.15s",
               }}
@@ -116,10 +116,11 @@ export default function PendingConnectionCard({
             <button
               onClick={() => onSaveConnEdit(conn.id)}
               disabled={isProcessing}
+              aria-label="Save connection edits"
               style={{
-                padding: "6px 14px", background: theme.activeToggleBg,
-                color: theme.activeToggleText, border: "none", borderRadius: 6,
-                fontSize: 11, fontFamily: FONT_MONO,
+                padding: `${SPACING[1.5]} ${SPACING[3]}`, background: theme.activeToggleBg,
+                color: theme.activeToggleText, border: "none", borderRadius: RADII.md,
+                fontSize: FONT_SIZES.micro, fontFamily: FONT_MONO,
                 fontWeight: 700, cursor: "pointer",
                 transition: "filter 0.15s",
               }}
@@ -136,22 +137,22 @@ export default function PendingConnectionCard({
           {conn.deleteOf ? (
             <>
               <div style={{
-                display: "inline-block", padding: "2px 8px", borderRadius: 4,
-                background: "#FEE2E2", color: "#991B1B", fontSize: 10,
+                display: "inline-block", padding: `${SPACING["0.5"]} ${SPACING[2]}`, borderRadius: RADII.sm,
+                background: "#FEE2E2", color: "#991B1B", fontSize: FONT_SIZES.tiny,
                 fontFamily: FONT_MONO, fontWeight: 700,
-                marginBottom: 8,
+                marginBottom: SPACING[2],
               }}>
                 Suggested Deletion
               </div>
               <p style={{
-                fontSize: 12, lineHeight: 1.6, color: theme.textDescription,
-                margin: "0 0 8px 0", fontFamily: FONT_SERIF,
+                fontSize: FONT_SIZES.tiny, lineHeight: 1.6, color: theme.textDescription,
+                margin: `0 0 ${SPACING[2]} 0`, fontFamily: FONT_SERIF,
               }}>
                 {conn.description}
               </p>
               <div style={{
-                fontSize: 10, color: theme.textTertiary,
-                fontFamily: FONT_MONO, marginBottom: 10,
+                fontSize: FONT_SIZES.tiny, color: theme.textTertiary,
+                fontFamily: FONT_MONO, marginBottom: SPACING[2.5],
               }}>
                 by {conn.addedBy} &middot; {getSectionName(conn.section)}
                 {!findConnection(conn.deleteOf) && <> &middot; <span style={{ color: theme.errorRed }}>Original connection already deleted</span></>}
@@ -162,34 +163,34 @@ export default function PendingConnectionCard({
             return (
               <>
                 <div style={{
-                  display: "inline-block", padding: "2px 8px", borderRadius: 4,
-                  background: theme.feedbackAmberBg, color: theme.feedbackAmberText, fontSize: 10,
+                  display: "inline-block", padding: `${SPACING["0.5"]} ${SPACING[2]}`, borderRadius: RADII.sm,
+                  background: theme.feedbackAmberBg, color: theme.feedbackAmberText, fontSize: FONT_SIZES.tiny,
                   fontFamily: FONT_MONO, fontWeight: 700,
-                  marginBottom: 8,
+                  marginBottom: SPACING[2],
                 }}>
                   Suggested Edit
                 </div>
                 <div style={{
-                  fontSize: 10, color: theme.textTertiary,
-                  fontFamily: FONT_MONO, marginBottom: 10,
+                  fontSize: FONT_SIZES.tiny, color: theme.textTertiary,
+                  fontFamily: FONT_MONO, marginBottom: SPACING[2.5],
                 }}>
                   by {conn.addedBy} &middot; {getSectionName(conn.section)}
                   {!originalConn && <> &middot; <span style={{ color: theme.errorRed }}>Original connection not found</span></>}
                 </div>
                 {originalConn && (
-                  <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 10 }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: SPACING[1.5], marginBottom: SPACING[2.5] }}>
                     {String(originalConn.description ?? "") !== String(conn.description ?? "") && (
                       <div style={{
-                        padding: "6px 10px", background: theme.warmSubtleBg,
-                        borderRadius: 6, borderLeft: `3px solid ${theme.feedbackAmber}`,
+                        padding: `${SPACING[1.5]} ${SPACING[2.5]}`, background: theme.warmSubtleBg,
+                        borderRadius: RADII.md, borderLeft: `3px solid ${theme.feedbackAmber}`,
                       }}>
                         <div style={{
-                          fontSize: 9, fontWeight: 700, fontFamily: FONT_MONO,
-                          color: theme.textTertiary, textTransform: "uppercase", marginBottom: 4,
+                          fontSize: FONT_SIZES.micro, fontWeight: 700, fontFamily: FONT_MONO,
+                          color: theme.textTertiary, textTransform: "uppercase", marginBottom: SPACING[1],
                         }}>
                           Description
                         </div>
-                        <div style={{ fontSize: 11, fontFamily: FONT_SERIF, lineHeight: 1.5 }}>
+                        <div style={{ fontSize: FONT_SIZES.micro, fontFamily: FONT_SERIF, lineHeight: 1.5 }}>
                           {computeWordDiff(originalConn.description, conn.description).map((part, i) => (
                             <span key={i} style={{
                               color: part.type === "del" ? (theme.errorRed || "#DC2626") : part.type === "add" ? "#16A34A" : theme.textDescription,
@@ -198,7 +199,7 @@ export default function PendingConnectionCard({
                               opacity: part.type === "del" ? 0.7 : 1,
                               background: part.type === "add" ? "#DCFCE7" : part.type === "del" ? "#FEE2E2" : "transparent",
                               borderRadius: part.type !== "same" ? 2 : 0,
-                              padding: part.type !== "same" ? "0 2px" : 0,
+                              padding: part.type !== "same" ? `0 ${SPACING["0.5"]}` : 0,
                             }}>{part.text}</span>
                           ))}
                         </div>
@@ -206,20 +207,20 @@ export default function PendingConnectionCard({
                     )}
                     {originalConn.causeEventId !== conn.causeEventId && (
                       <div style={{
-                        padding: "6px 10px", background: theme.warmSubtleBg,
-                        borderRadius: 6, borderLeft: `3px solid ${theme.feedbackAmber}`,
+                        padding: `${SPACING[1.5]} ${SPACING[2.5]}`, background: theme.warmSubtleBg,
+                        borderRadius: RADII.md, borderLeft: `3px solid ${theme.feedbackAmber}`,
                       }}>
                         <div style={{
-                          fontSize: 9, fontWeight: 700, fontFamily: FONT_MONO,
-                          color: theme.textTertiary, textTransform: "uppercase", marginBottom: 4,
+                          fontSize: FONT_SIZES.micro, fontWeight: 700, fontFamily: FONT_MONO,
+                          color: theme.textTertiary, textTransform: "uppercase", marginBottom: SPACING[1],
                         }}>
                           Cause Event
                         </div>
-                        <div style={{ fontSize: 11, fontFamily: FONT_SERIF }}>
+                        <div style={{ fontSize: FONT_SIZES.micro, fontFamily: FONT_SERIF }}>
                           <span style={{ color: theme.errorRed || "#DC2626", textDecoration: "line-through", opacity: 0.7 }}>
                             {findEvent(originalConn.causeEventId)?.title || "Unknown"}
                           </span>
-                          <span style={{ margin: "0 6px", color: theme.textTertiary }}>{"\u2192"}</span>
+                          <span style={{ margin: `0 ${SPACING[1.5]}`, color: theme.textTertiary }}>{"\u2192"}</span>
                           <span style={{ color: "#16A34A", fontWeight: 600 }}>
                             {findEvent(conn.causeEventId)?.title || "Unknown"}
                           </span>
@@ -228,20 +229,20 @@ export default function PendingConnectionCard({
                     )}
                     {originalConn.effectEventId !== conn.effectEventId && (
                       <div style={{
-                        padding: "6px 10px", background: theme.warmSubtleBg,
-                        borderRadius: 6, borderLeft: `3px solid ${theme.feedbackAmber}`,
+                        padding: `${SPACING[1.5]} ${SPACING[2.5]}`, background: theme.warmSubtleBg,
+                        borderRadius: RADII.md, borderLeft: `3px solid ${theme.feedbackAmber}`,
                       }}>
                         <div style={{
-                          fontSize: 9, fontWeight: 700, fontFamily: FONT_MONO,
-                          color: theme.textTertiary, textTransform: "uppercase", marginBottom: 4,
+                          fontSize: FONT_SIZES.micro, fontWeight: 700, fontFamily: FONT_MONO,
+                          color: theme.textTertiary, textTransform: "uppercase", marginBottom: SPACING[1],
                         }}>
                           Effect Event
                         </div>
-                        <div style={{ fontSize: 11, fontFamily: FONT_SERIF }}>
+                        <div style={{ fontSize: FONT_SIZES.micro, fontFamily: FONT_SERIF }}>
                           <span style={{ color: theme.errorRed || "#DC2626", textDecoration: "line-through", opacity: 0.7 }}>
                             {findEvent(originalConn.effectEventId)?.title || "Unknown"}
                           </span>
-                          <span style={{ margin: "0 6px", color: theme.textTertiary }}>{"\u2192"}</span>
+                          <span style={{ margin: `0 ${SPACING[1.5]}`, color: theme.textTertiary }}>{"\u2192"}</span>
                           <span style={{ color: "#16A34A", fontWeight: 600 }}>
                             {findEvent(conn.effectEventId)?.title || "Unknown"}
                           </span>
@@ -255,14 +256,14 @@ export default function PendingConnectionCard({
           })() : (
             <>
               <p style={{
-                fontSize: 12, lineHeight: 1.6, color: theme.textDescription,
-                margin: "0 0 8px 0", fontFamily: FONT_SERIF,
+                fontSize: FONT_SIZES.tiny, lineHeight: 1.6, color: theme.textDescription,
+                margin: `0 0 ${SPACING[2]} 0`, fontFamily: FONT_SERIF,
               }}>
                 {conn.description}
               </p>
               <div style={{
-                fontSize: 10, color: theme.textTertiary,
-                fontFamily: FONT_MONO, marginBottom: 10,
+                fontSize: FONT_SIZES.tiny, color: theme.textTertiary,
+                fontFamily: FONT_MONO, marginBottom: SPACING[2.5],
               }}>
                 by {conn.addedBy} &middot; {getSectionName(conn.section)}
               </div>
@@ -270,7 +271,7 @@ export default function PendingConnectionCard({
           )}
           {/* Student self-service buttons (readOnly mode, own submissions only) */}
           {readOnly && user && conn.addedByUid === user.uid && (
-            <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
+            <div style={{ display: "flex", gap: SPACING[1.5], justifyContent: "flex-end" }}>
               <IconButton
                 icon={cancelIcon}
                 onClick={() => {
@@ -280,7 +281,8 @@ export default function PendingConnectionCard({
                 size={13}
                 color={theme.errorRed}
                 hoverBg={(theme.errorRed || "#DC2626") + "10"}
-                style={{ padding: "6px 14px", border: `1.5px solid ${theme.errorRed}`, borderRadius: 6, fontSize: 11, fontFamily: FONT_MONO, fontWeight: 600 }}
+                aria-label="Withdraw connection"
+                style={{ padding: `${SPACING[1.5]} ${SPACING[3]}`, border: `1.5px solid ${theme.errorRed}`, borderRadius: RADII.md, fontSize: FONT_SIZES.micro, fontFamily: FONT_MONO, fontWeight: 600 }}
               >
                 Withdraw
               </IconButton>
@@ -291,7 +293,8 @@ export default function PendingConnectionCard({
                   size={13}
                   color={theme.textDescription}
                   hoverBg={theme.subtleBg}
-                  style={{ padding: "6px 14px", border: `1.5px solid ${theme.inputBorder}`, borderRadius: 6, fontSize: 11, fontFamily: FONT_MONO, fontWeight: 600 }}
+                  aria-label="Edit connection"
+                  style={{ padding: `${SPACING[1.5]} ${SPACING[3]}`, border: `1.5px solid ${theme.inputBorder}`, borderRadius: RADII.md, fontSize: FONT_SIZES.micro, fontFamily: FONT_MONO, fontWeight: 600 }}
                 >
                   Edit
                 </IconButton>
@@ -301,7 +304,7 @@ export default function PendingConnectionCard({
 
           {!readOnly && (
           <>
-          <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
+          <div style={{ display: "flex", gap: SPACING[1.5], justifyContent: "flex-end" }}>
             <IconButton
               icon={cancelIcon}
               onClick={() => onReject(conn.id)}
@@ -309,7 +312,8 @@ export default function PendingConnectionCard({
               size={13}
               color={theme.errorRed}
               hoverBg={(theme.errorRed || "#DC2626") + "10"}
-              style={{ padding: "6px 14px", border: `1.5px solid ${theme.errorRed}`, borderRadius: 6, fontSize: 11, fontFamily: FONT_MONO, fontWeight: 600 }}
+              aria-label="Reject connection"
+              style={{ padding: `${SPACING[1.5]} ${SPACING[3]}`, border: `1.5px solid ${theme.errorRed}`, borderRadius: RADII.md, fontSize: FONT_SIZES.micro, fontFamily: FONT_MONO, fontWeight: 600 }}
             >
               Reject
             </IconButton>
@@ -321,7 +325,8 @@ export default function PendingConnectionCard({
                 size={13}
                 color={theme.feedbackAmber}
                 hoverBg={theme.feedbackAmber + "10"}
-                style={{ padding: "6px 14px", border: `1.5px solid ${theme.feedbackAmber}`, borderRadius: 6, fontSize: 11, fontFamily: FONT_MONO, fontWeight: 600 }}
+                aria-label="Request revision"
+                style={{ padding: `${SPACING[1.5]} ${SPACING[3]}`, border: `1.5px solid ${theme.feedbackAmber}`, borderRadius: RADII.md, fontSize: FONT_SIZES.micro, fontFamily: FONT_MONO, fontWeight: 600 }}
               >
                 Revise
               </IconButton>
@@ -334,7 +339,8 @@ export default function PendingConnectionCard({
                 size={13}
                 color={theme.textDescription}
                 hoverBg={theme.subtleBg}
-                style={{ padding: "6px 14px", border: `1.5px solid ${theme.inputBorder}`, borderRadius: 6, fontSize: 11, fontFamily: FONT_MONO, fontWeight: 600 }}
+                aria-label="Edit connection"
+                style={{ padding: `${SPACING[1.5]} ${SPACING[3]}`, border: `1.5px solid ${theme.inputBorder}`, borderRadius: RADII.md, fontSize: FONT_SIZES.micro, fontFamily: FONT_MONO, fontWeight: 600 }}
               >
                 Edit
               </IconButton>
@@ -342,10 +348,11 @@ export default function PendingConnectionCard({
             <button
               onClick={() => onApprove(conn)}
               disabled={isProcessing}
+              aria-label={conn.deleteOf ? "Approve deletion" : "Approve connection"}
               style={{
-                padding: "6px 14px", background: conn.deleteOf ? (theme.errorRed || "#DC2626") : theme.successGreen,
-                color: "#fff", border: "none", borderRadius: 6,
-                fontSize: 11, fontFamily: FONT_MONO,
+                padding: `${SPACING[1.5]} ${SPACING[3]}`, background: conn.deleteOf ? (theme.errorRed || "#DC2626") : theme.successGreen,
+                color: "#fff", border: "none", borderRadius: RADII.md,
+                fontSize: FONT_SIZES.micro, fontFamily: FONT_MONO,
                 fontWeight: 700, cursor: "pointer",
                 transition: "filter 0.15s",
               }}
@@ -358,14 +365,14 @@ export default function PendingConnectionCard({
           {/* Inline feedback textarea for connections */}
           {feedbackId === conn.id && feedbackType === "connection" && (
             <div style={{
-              marginTop: 10, padding: "12px 14px",
+              marginTop: SPACING[2.5], padding: `${SPACING[3]} ${SPACING[3]}`,
               background: theme.feedbackAmberBg,
-              borderRadius: 8, border: `1.5px solid ${theme.feedbackAmber}`,
+              borderRadius: RADII.lg, border: `1.5px solid ${theme.feedbackAmber}`,
             }}>
               <label style={{
-                fontSize: 10, fontWeight: 700, fontFamily: FONT_MONO,
+                fontSize: FONT_SIZES.tiny, fontWeight: 700, fontFamily: FONT_MONO,
                 color: theme.feedbackAmberText, textTransform: "uppercase", letterSpacing: "0.05em",
-                marginBottom: 6, display: "block",
+                marginBottom: SPACING[1.5], display: "block",
               }}>
                 Feedback for Student
               </label>
@@ -377,13 +384,14 @@ export default function PendingConnectionCard({
                 rows={3}
                 style={{ ...inputStyle, borderColor: theme.feedbackAmber }}
               />
-              <div style={{ display: "flex", gap: 6, justifyContent: "flex-end", marginTop: 8 }}>
+              <div style={{ display: "flex", gap: SPACING[1.5], justifyContent: "flex-end", marginTop: SPACING[2] }}>
                 <button
                   onClick={onFeedbackCancel}
+                  aria-label="Cancel feedback"
                   style={{
-                    padding: "6px 14px", background: "none",
-                    border: `1.5px solid ${theme.inputBorder}`, borderRadius: 6,
-                    fontSize: 11, fontFamily: FONT_MONO,
+                    padding: `${SPACING[1.5]} ${SPACING[3]}`, background: "none",
+                    border: `1.5px solid ${theme.inputBorder}`, borderRadius: RADII.md,
+                    fontSize: FONT_SIZES.micro, fontFamily: FONT_MONO,
                     cursor: "pointer", color: theme.textTertiary, transition: "all 0.15s",
                   }}
                   onMouseEnter={(e) => { e.currentTarget.style.background = theme.subtleBg; }}
@@ -394,11 +402,12 @@ export default function PendingConnectionCard({
                 <button
                   onClick={() => onFeedbackSubmit("connection", conn.id)}
                   disabled={!feedbackText.trim() || isProcessing}
+                  aria-label="Send feedback"
                   style={{
-                    padding: "6px 14px",
+                    padding: `${SPACING[1.5]} ${SPACING[3]}`,
                     background: feedbackText.trim() ? theme.feedbackAmber : theme.inputBorder,
-                    color: "#fff", border: "none", borderRadius: 6,
-                    fontSize: 11, fontFamily: FONT_MONO,
+                    color: "#fff", border: "none", borderRadius: RADII.md,
+                    fontSize: FONT_SIZES.micro, fontFamily: FONT_MONO,
                     fontWeight: 700, cursor: feedbackText.trim() ? "pointer" : "default",
                     transition: "filter 0.15s",
                   }}

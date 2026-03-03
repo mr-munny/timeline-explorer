@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { useTheme, FONT_MONO } from "../contexts/ThemeContext";
+import { useTheme, FONT_MONO, FONT_SIZES, SPACING } from "../contexts/ThemeContext";
 import EventCard from "./EventCard";
 import ConnectionLines from "./ConnectionLines";
 import ContributorSidebar from "./ContributorSidebar";
@@ -29,15 +29,17 @@ export default function EventList({
   const [hoveredEvent, setHoveredEvent] = useState(null);
 
   return (
-    <div style={{ display: "flex", gap: 20, alignItems: "flex-start" }}>
+    <div style={{ display: "flex", gap: SPACING[5], alignItems: "flex-start" }}>
       {/* Event list */}
       <div
         ref={eventListRef}
+        role="list"
+        aria-label="Timeline events"
         style={{
           flex: 1,
           display: "flex",
           flexDirection: "column",
-          gap: 8,
+          gap: SPACING[2],
           minWidth: 0,
           position: "relative",
         }}
@@ -46,10 +48,10 @@ export default function EventList({
           <div
             style={{
               textAlign: "center",
-              padding: "48px 20px",
+              padding: `${SPACING[10]} ${SPACING[5]}`,
               color: theme.textSecondary,
               fontFamily: FONT_MONO,
-              fontSize: 12,
+              fontSize: FONT_SIZES.base,
             }}
           >
             No events match your filters.
@@ -58,6 +60,7 @@ export default function EventList({
           filteredEvents.map((event) => (
             <div
               key={event.id}
+              role="listitem"
               data-event-id={event.id}
               onMouseEnter={() => setHoveredEvent(event.id)}
               onMouseLeave={() => setHoveredEvent(null)}
@@ -100,9 +103,9 @@ export default function EventList({
 
       {/* Contributors sidebar */}
       {showContributors && (
-        <div style={{ width: 220, flexShrink: 0 }}>
+        <aside style={{ width: 220, flexShrink: 0 }} aria-label="Contributors">
           <ContributorSidebar events={approvedEvents} teacherEmail={teacherEmail} />
-        </div>
+        </aside>
       )}
     </div>
   );

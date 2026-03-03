@@ -1,12 +1,12 @@
 {
   "files": {
-    "main.js": "/timeline-explorer/static/js/main.1ab44f28.js",
+    "main.js": "/timeline-explorer/static/js/main.5f9193ec.js",
     "static/js/89.d2fdb7ee.chunk.js": "/timeline-explorer/static/js/89.d2fdb7ee.chunk.js",
     "index.html": "/timeline-explorer/index.html",
-    "main.1ab44f28.js.map": "/timeline-explorer/static/js/main.1ab44f28.js.map",
+    "main.5f9193ec.js.map": "/timeline-explorer/static/js/main.5f9193ec.js.map",
     "89.d2fdb7ee.chunk.js.map": "/timeline-explorer/static/js/89.d2fdb7ee.chunk.js.map"
   },
   "entrypoints": [
-    "static/js/main.1ab44f28.js"
+    "static/js/main.5f9193ec.js"
   ]
 }

@@ -1,4 +1,4 @@
-import { useTheme, FONT_MONO } from "../contexts/ThemeContext";
+import { useTheme, FONT_MONO, FONT_SIZES } from "../contexts/ThemeContext";
 
 const FIELD_DEFINITIONS = [
   { key: "title", label: "Event Title" },
@@ -20,7 +20,7 @@ export default function FieldConfigEditor({ draftFieldConfig, onFieldConfigChang
   const { theme } = useTheme();
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 3 }} role="group" aria-label="Entry field visibility settings">
       {FIELD_DEFINITIONS.map(({ key, label }) => {
         const mode = draftFieldConfig[key] || "mandatory";
         const allowedModes = key === "endDate"
@@ -39,22 +39,28 @@ export default function FieldConfigEditor({ draftFieldConfig, onFieldConfigChang
               borderRadius: 4,
             }}
           >
-            <span style={{
-              fontSize: 10,
-              color: mode === "hidden" ? theme.textMuted : theme.textPrimary,
-              flex: 1,
-              textDecoration: mode === "hidden" ? "line-through" : "none",
-              opacity: mode === "hidden" ? 0.5 : 1,
-            }}>
+            <span
+              id={`field-label-${key}`}
+              style={{
+                fontSize: FONT_SIZES.tiny,
+                color: mode === "hidden" ? theme.textMuted : theme.textPrimary,
+                flex: 1,
+                textDecoration: mode === "hidden" ? "line-through" : "none",
+                opacity: mode === "hidden" ? 0.5 : 1,
+              }}
+            >
               {label}
             </span>
-            <div style={{ display: "flex", gap: 2 }}>
+            <div style={{ display: "flex", gap: 2 }} role="radiogroup" aria-labelledby={`field-label-${key}`}>
               {allowedModes.map((m) => (
                 <button
                   key={m}
                   onClick={() => onFieldConfigChange({ ...draftFieldConfig, [key]: m })}
+                  role="radio"
+                  aria-checked={mode === m}
+                  aria-label={`${label}: ${m}`}
                   style={{
-                    fontSize: 8,
+                    fontSize: FONT_SIZES.micro,
                     fontWeight: mode === m ? 700 : 500,
                     fontFamily: FONT_MONO,
                     padding: "2px 5px",

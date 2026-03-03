@@ -6,7 +6,7 @@ import pencilIcon from "@iconify-icons/mdi/pencil";
 import arrowRightBold from "@iconify-icons/mdi/arrow-right-bold";
 import chevronDown from "@iconify-icons/mdi/chevron-down";
 import chevronUp from "@iconify-icons/mdi/chevron-up";
-import { useTheme, FONT_MONO, FONT_SERIF } from "../contexts/ThemeContext";
+import { useTheme, FONT_MONO, FONT_SERIF, FONT_SIZES, SPACING, RADII } from "../contexts/ThemeContext";
 import FeedbackBanner from "./FeedbackBanner";
 import ModalShell, { ModalCloseButton } from "./ModalShell";
 
@@ -28,16 +28,16 @@ export default function RevisionPanel({
     <ModalShell onClose={onClose} maxWidth={640}>
       <ModalCloseButton onClose={onClose} />
 
-        <div style={{ padding: "24px 32px", fontFamily: FONT_MONO }}>
+        <div style={{ padding: `${SPACING[6]} ${SPACING[8]}`, fontFamily: FONT_MONO }}>
           <h2 style={{
-            fontSize: 20, fontWeight: 700, margin: 0,
+            fontSize: FONT_SIZES.lg, fontWeight: 700, margin: 0,
             fontFamily: FONT_SERIF,
             color: theme.textPrimary,
           }}>
             Revisions Needed
           </h2>
           <p style={{
-            fontSize: 11, color: theme.textSecondary, margin: "4px 0 16px",
+            fontSize: FONT_SIZES.micro, color: theme.textSecondary, margin: `${SPACING[1]} 0 ${SPACING[4]}`,
             fontFamily: FONT_MONO,
           }}>
             {revisionEvents.length + revisionConnections.length} item
@@ -47,7 +47,7 @@ export default function RevisionPanel({
 
           {/* Revision Events */}
           {revisionEvents.length > 0 && (
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: SPACING[3] }}>
               {revisionEvents.map((event) => {
                 const unit = getPeriod(periods, event.period);
                 const hasHistory = event.feedbackHistory && event.feedbackHistory.length > 0;
@@ -57,29 +57,29 @@ export default function RevisionPanel({
                     key={event.id}
                     style={{
                       border: `1.5px solid ${theme.inputBorder}`,
-                      borderRadius: 10,
-                      padding: "16px 18px",
+                      borderRadius: RADII.xl,
+                      padding: `${SPACING[4]} ${SPACING[4]}`,
                       borderLeft: `4px solid ${unit?.color || theme.textSecondary}`,
                     }}
                   >
-                    <div style={{ display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 8 }}>
+                    <div style={{ display: "flex", alignItems: "flex-start", gap: SPACING[2.5], marginBottom: SPACING[2] }}>
                       <div style={{
                         background: unit?.color || theme.textTertiary, color: "#fff",
-                        fontSize: 11, fontWeight: 700, padding: "3px 7px", borderRadius: 4,
+                        fontSize: FONT_SIZES.micro, fontWeight: 700, padding: `${SPACING["0.5"]} ${SPACING[2]}`, borderRadius: RADII.sm,
                         fontFamily: FONT_MONO, flexShrink: 0,
                       }}>
                         {formatEventDate(event)}
                       </div>
                       <div style={{ flex: 1 }}>
                         <div style={{
-                          fontSize: 14, fontWeight: 700, color: theme.textPrimary,
+                          fontSize: FONT_SIZES.base, fontWeight: 700, color: theme.textPrimary,
                           fontFamily: FONT_SERIF,
                         }}>
                           {event.title}
                         </div>
                         <div style={{
-                          fontSize: 10, color: theme.textSecondary,
-                          fontFamily: FONT_MONO, marginTop: 2,
+                          fontSize: FONT_SIZES.tiny, color: theme.textSecondary,
+                          fontFamily: FONT_MONO, marginTop: SPACING["0.5"],
                         }}>
                           {unit?.label || event.period}
                         </div>
@@ -87,8 +87,8 @@ export default function RevisionPanel({
                     </div>
 
                     <p style={{
-                      fontSize: 12, lineHeight: 1.6, color: theme.textDescription,
-                      margin: "0 0 10px 0", fontFamily: FONT_SERIF,
+                      fontSize: FONT_SIZES.tiny, lineHeight: 1.6, color: theme.textDescription,
+                      margin: `0 0 ${SPACING[2.5]} 0`, fontFamily: FONT_SERIF,
                     }}>
                       {event.description?.length > 200 ? event.description.slice(0, 200) + "..." : event.description}
                     </p>
@@ -99,11 +99,12 @@ export default function RevisionPanel({
                     {hasHistory && (
                       <button
                         onClick={() => setExpandedHistory(historyExpanded ? null : event.id)}
+                        aria-expanded={historyExpanded}
                         style={{
                           background: "none", border: "none", cursor: "pointer",
-                          fontSize: 10, fontFamily: FONT_MONO,
-                          color: theme.textTertiary, padding: "2px 0", marginBottom: 8,
-                          display: "flex", alignItems: "center", gap: 4,
+                          fontSize: FONT_SIZES.tiny, fontFamily: FONT_MONO,
+                          color: theme.textTertiary, padding: `${SPACING["0.5"]} 0`, marginBottom: SPACING[2],
+                          display: "flex", alignItems: "center", gap: SPACING[1],
                         }}
                       >
                         <Icon icon={historyExpanded ? chevronUp : chevronDown} width={14} />
@@ -111,21 +112,21 @@ export default function RevisionPanel({
                       </button>
                     )}
                     {hasHistory && historyExpanded && (
-                      <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 10 }}>
+                      <div style={{ display: "flex", flexDirection: "column", gap: SPACING[1.5], marginBottom: SPACING[2.5] }}>
                         {event.feedbackHistory.map((fb, i) => (
                           <div key={i} style={{
-                            padding: "8px 12px", background: theme.subtleBg,
-                            borderRadius: 6, borderLeft: `3px solid ${theme.inputBorder}`,
+                            padding: `${SPACING[2]} ${SPACING[3]}`, background: theme.subtleBg,
+                            borderRadius: RADII.md, borderLeft: `3px solid ${theme.inputBorder}`,
                           }}>
                             <p style={{
-                              fontSize: 11, fontFamily: FONT_SERIF,
+                              fontSize: FONT_SIZES.micro, fontFamily: FONT_SERIF,
                               color: theme.textSecondary, lineHeight: 1.5, margin: 0,
                             }}>
                               {fb.text}
                             </p>
                             <div style={{
-                              fontSize: 9, fontFamily: FONT_MONO,
-                              color: theme.textTertiary, marginTop: 3,
+                              fontSize: FONT_SIZES.micro, fontFamily: FONT_MONO,
+                              color: theme.textTertiary, marginTop: SPACING["0.5"],
                             }}>
                               {fb.givenBy} &middot; {new Date(fb.date).toLocaleDateString()}
                               {fb.resolvedAt && <> &middot; resolved {new Date(fb.resolvedAt).toLocaleDateString()}</>}
@@ -138,13 +139,14 @@ export default function RevisionPanel({
                     <div style={{ display: "flex", justifyContent: "flex-end" }}>
                       <button
                         onClick={() => onReviseEvent(event)}
+                        aria-label="Revise and resubmit event"
                         style={{
-                          padding: "8px 18px",
+                          padding: `${SPACING[2]} ${SPACING[4]}`,
                           background: theme.feedbackAmber,
                           color: "#fff",
                           border: "none",
-                          borderRadius: 6,
-                          fontSize: 11,
+                          borderRadius: RADII.md,
+                          fontSize: FONT_SIZES.micro,
                           fontFamily: FONT_MONO,
                           fontWeight: 700,
                           cursor: "pointer",
@@ -168,15 +170,15 @@ export default function RevisionPanel({
             <>
               {revisionEvents.length > 0 && (
                 <div style={{
-                  padding: "10px 0 6px", marginTop: 12,
+                  padding: `${SPACING[2.5]} 0 ${SPACING[1.5]}`, marginTop: SPACING[3],
                   borderTop: `1px solid ${theme.inputBorder}`,
-                  fontSize: 10, fontWeight: 700, fontFamily: FONT_MONO,
+                  fontSize: FONT_SIZES.tiny, fontWeight: 700, fontFamily: FONT_MONO,
                   color: theme.textSecondary, textTransform: "uppercase", letterSpacing: "0.08em",
                 }}>
                   Connections
                 </div>
               )}
-              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: SPACING[3] }}>
                 {revisionConnections.map((conn) => {
                   const causeEvent = findEvent(conn.causeEventId);
                   const effectEvent = findEvent(conn.effectEventId);
@@ -189,42 +191,42 @@ export default function RevisionPanel({
                       key={conn.id}
                       style={{
                         border: `1.5px solid ${theme.inputBorder}`,
-                        borderRadius: 10,
-                        padding: "16px 18px",
+                        borderRadius: RADII.xl,
+                        padding: `${SPACING[4]} ${SPACING[4]}`,
                         borderLeft: `4px solid ${theme.accentGold || "#F59E0B"}`,
                       }}
                     >
-                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: SPACING[2], marginBottom: SPACING[2.5], flexWrap: "wrap" }}>
                         <div style={{
-                          display: "flex", alignItems: "center", gap: 6,
-                          padding: "4px 10px", background: theme.warmSubtleBg, borderRadius: 6,
+                          display: "flex", alignItems: "center", gap: SPACING[1.5],
+                          padding: `${SPACING[1]} ${SPACING[2.5]}`, background: theme.warmSubtleBg, borderRadius: RADII.md,
                           borderLeft: `3px solid ${causeUnit?.color || theme.textSecondary}`,
                         }}>
-                          <span style={{ fontSize: 10, fontWeight: 700, fontFamily: FONT_MONO, color: causeUnit?.color || theme.textSecondary }}>
+                          <span style={{ fontSize: FONT_SIZES.tiny, fontWeight: 700, fontFamily: FONT_MONO, color: causeUnit?.color || theme.textSecondary }}>
                             {causeEvent?.year || "?"}
                           </span>
-                          <span style={{ fontSize: 12, fontFamily: FONT_SERIF, fontWeight: 600, color: theme.textPrimary }}>
+                          <span style={{ fontSize: FONT_SIZES.tiny, fontFamily: FONT_SERIF, fontWeight: 600, color: theme.textPrimary }}>
                             {causeEvent?.title || "Unknown event"}
                           </span>
                         </div>
                         <Icon icon={arrowRightBold} width={18} style={{ color: theme.accentGold || "#F59E0B", flexShrink: 0 }} />
                         <div style={{
-                          display: "flex", alignItems: "center", gap: 6,
-                          padding: "4px 10px", background: theme.warmSubtleBg, borderRadius: 6,
+                          display: "flex", alignItems: "center", gap: SPACING[1.5],
+                          padding: `${SPACING[1]} ${SPACING[2.5]}`, background: theme.warmSubtleBg, borderRadius: RADII.md,
                           borderLeft: `3px solid ${effectUnit?.color || theme.textSecondary}`,
                         }}>
-                          <span style={{ fontSize: 10, fontWeight: 700, fontFamily: FONT_MONO, color: effectUnit?.color || theme.textSecondary }}>
+                          <span style={{ fontSize: FONT_SIZES.tiny, fontWeight: 700, fontFamily: FONT_MONO, color: effectUnit?.color || theme.textSecondary }}>
                             {effectEvent?.year || "?"}
                           </span>
-                          <span style={{ fontSize: 12, fontFamily: FONT_SERIF, fontWeight: 600, color: theme.textPrimary }}>
+                          <span style={{ fontSize: FONT_SIZES.tiny, fontFamily: FONT_SERIF, fontWeight: 600, color: theme.textPrimary }}>
                             {effectEvent?.title || "Unknown event"}
                           </span>
                         </div>
                       </div>
 
                       <p style={{
-                        fontSize: 12, lineHeight: 1.6, color: theme.textDescription,
-                        margin: "0 0 10px 0", fontFamily: FONT_SERIF,
+                        fontSize: FONT_SIZES.tiny, lineHeight: 1.6, color: theme.textDescription,
+                        margin: `0 0 ${SPACING[2.5]} 0`, fontFamily: FONT_SERIF,
                       }}>
                         {conn.description}
                       </p>
@@ -234,11 +236,12 @@ export default function RevisionPanel({
                       {hasHistory && (
                         <button
                           onClick={() => setExpandedHistory(historyExpanded ? null : conn.id)}
+                          aria-expanded={historyExpanded}
                           style={{
                             background: "none", border: "none", cursor: "pointer",
-                            fontSize: 10, fontFamily: FONT_MONO,
-                            color: theme.textTertiary, padding: "2px 0", marginBottom: 8,
-                            display: "flex", alignItems: "center", gap: 4,
+                            fontSize: FONT_SIZES.tiny, fontFamily: FONT_MONO,
+                            color: theme.textTertiary, padding: `${SPACING["0.5"]} 0`, marginBottom: SPACING[2],
+                            display: "flex", alignItems: "center", gap: SPACING[1],
                           }}
                         >
                           <Icon icon={historyExpanded ? chevronUp : chevronDown} width={14} />
@@ -246,21 +249,21 @@ export default function RevisionPanel({
                         </button>
                       )}
                       {hasHistory && historyExpanded && (
-                        <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 10 }}>
+                        <div style={{ display: "flex", flexDirection: "column", gap: SPACING[1.5], marginBottom: SPACING[2.5] }}>
                           {conn.feedbackHistory.map((fb, i) => (
                             <div key={i} style={{
-                              padding: "8px 12px", background: theme.subtleBg,
-                              borderRadius: 6, borderLeft: `3px solid ${theme.inputBorder}`,
+                              padding: `${SPACING[2]} ${SPACING[3]}`, background: theme.subtleBg,
+                              borderRadius: RADII.md, borderLeft: `3px solid ${theme.inputBorder}`,
                             }}>
                               <p style={{
-                                fontSize: 11, fontFamily: FONT_SERIF,
+                                fontSize: FONT_SIZES.micro, fontFamily: FONT_SERIF,
                                 color: theme.textSecondary, lineHeight: 1.5, margin: 0,
                               }}>
                                 {fb.text}
                               </p>
                               <div style={{
-                                fontSize: 9, fontFamily: FONT_MONO,
-                                color: theme.textTertiary, marginTop: 3,
+                                fontSize: FONT_SIZES.micro, fontFamily: FONT_MONO,
+                                color: theme.textTertiary, marginTop: SPACING["0.5"],
                               }}>
                                 {fb.givenBy} &middot; {new Date(fb.date).toLocaleDateString()}
                                 {fb.resolvedAt && <> &middot; resolved {new Date(fb.resolvedAt).toLocaleDateString()}</>}
@@ -273,13 +276,14 @@ export default function RevisionPanel({
                       <div style={{ display: "flex", justifyContent: "flex-end" }}>
                         <button
                           onClick={() => onReviseConnection(conn)}
+                          aria-label="Revise and resubmit connection"
                           style={{
-                            padding: "8px 18px",
+                            padding: `${SPACING[2]} ${SPACING[4]}`,
                             background: theme.feedbackAmber,
                             color: "#fff",
                             border: "none",
-                            borderRadius: 6,
-                            fontSize: 11,
+                            borderRadius: RADII.md,
+                            fontSize: FONT_SIZES.micro,
                             fontFamily: FONT_MONO,
                             fontWeight: 700,
                             cursor: "pointer",
@@ -301,8 +305,8 @@ export default function RevisionPanel({
 
           {revisionEvents.length === 0 && revisionConnections.length === 0 && (
             <div style={{
-              textAlign: "center", padding: "32px 20px",
-              color: theme.textSecondary, fontFamily: FONT_MONO, fontSize: 12,
+              textAlign: "center", padding: `${SPACING[8]} ${SPACING[5]}`,
+              color: theme.textSecondary, fontFamily: FONT_MONO, fontSize: FONT_SIZES.tiny,
             }}>
               No revisions needed. You're all set!
             </div>

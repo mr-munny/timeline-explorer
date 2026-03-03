@@ -5,6 +5,7 @@ export default function IconButton({
   icon,
   onClick,
   title,
+  "aria-label": ariaLabel,
   size = 14,
   color,
   hoverColor,
@@ -24,6 +25,7 @@ export default function IconButton({
     <button
       onClick={onClick}
       title={title}
+      aria-label={ariaLabel || title}
       disabled={disabled}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
@@ -42,7 +44,7 @@ export default function IconButton({
       }}
       {...rest}
     >
-      <Icon icon={icon} width={size} height={size} />
+      <Icon icon={icon} width={size} height={size} aria-hidden="true" />
       {children}
     </button>
   );

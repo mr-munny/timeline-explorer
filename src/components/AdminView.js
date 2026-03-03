@@ -43,7 +43,7 @@ export default function AdminView({
   const effectiveTab = (selectedSection || selectedTab === "moderation" || selectedTab === "teachers") ? selectedTab : "moderation";
 
   return (
-    <div style={{
+    <div role="region" aria-label="Administration" style={{
       display: "flex",
       height: "calc(100vh - 140px)",
       background: theme.bg,

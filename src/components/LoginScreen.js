@@ -3,13 +3,13 @@ import { Icon } from "@iconify/react";
 import chartTimelineVariantShimmer from "@iconify-icons/mdi/chart-timeline-variant-shimmer";
 import googleIcon from "@iconify-icons/mdi/google";
 import alertCircleOutline from "@iconify-icons/mdi/alert-circle-outline";
-import { useTheme, FONT_MONO, FONT_SERIF } from "../contexts/ThemeContext";
+import { useTheme, FONT_MONO, FONT_SERIF, FONT_SIZES, SPACING, RADII } from "../contexts/ThemeContext";
 
 export default function LoginScreen({ onLogin, error }) {
   const { theme } = useTheme();
 
   return (
-    <div
+    <main
       style={{
         fontFamily: FONT_SERIF,
         background: theme.pageBg,
@@ -30,8 +30,8 @@ export default function LoginScreen({ onLogin, error }) {
       <div
         style={{
           background: theme.cardBg,
-          borderRadius: 14,
-          padding: "40px 36px",
+          borderRadius: RADII["2xl"],
+          padding: `${SPACING[10]} ${SPACING[8]}`,
           maxWidth: 400,
           width: "100%",
           textAlign: "center",
@@ -41,17 +41,17 @@ export default function LoginScreen({ onLogin, error }) {
       >
         <div
           style={{
-            fontSize: 10,
+            fontSize: FONT_SIZES.tiny,
             fontWeight: 700,
             color: theme.accentGold,
             fontFamily: FONT_MONO,
             letterSpacing: "0.1em",
             textTransform: "uppercase",
             background: theme.accentGoldSubtle,
-            padding: "3px 8px",
-            borderRadius: 4,
+            padding: `${SPACING[1]} ${SPACING[2]}`,
+            borderRadius: RADII.sm,
             display: "inline-block",
-            marginBottom: 12,
+            marginBottom: SPACING[3],
           }}
         >
           Historian's Workshop
@@ -59,26 +59,26 @@ export default function LoginScreen({ onLogin, error }) {
 
         <h1
           style={{
-            fontSize: 28,
+            fontSize: FONT_SIZES.xxl,
             fontWeight: 700,
-            margin: "0 0 6px 0",
+            margin: `0 0 ${SPACING["1.5"]} 0`,
             fontFamily: FONT_SERIF,
             letterSpacing: "-0.01em",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            gap: 8,
+            gap: SPACING[2],
           }}
         >
-          <Icon icon={chartTimelineVariantShimmer} width={28} style={{ color: "#F59E0B" }} />
+          <Icon icon={chartTimelineVariantShimmer} width={28} style={{ color: "#F59E0B" }} aria-hidden="true" />
           Timeline Explorer
         </h1>
 
         <p
           style={{
-            fontSize: 12,
+            fontSize: FONT_SIZES.base,
             color: theme.textSecondary,
-            margin: "0 0 28px 0",
+            margin: `0 0 ${SPACING[8]} 0`,
             fontFamily: FONT_MONO,
           }}
         >
@@ -87,21 +87,22 @@ export default function LoginScreen({ onLogin, error }) {
 
         {error && (
           <div
+            role="alert"
             style={{
               background: theme.errorRedBg,
               border: `1px solid ${theme.errorRedBorder}`,
-              borderRadius: 8,
-              padding: "10px 14px",
-              marginBottom: 16,
-              fontSize: 12,
+              borderRadius: RADII.lg,
+              padding: `${SPACING["2.5"]} ${SPACING[3]}`,
+              marginBottom: SPACING[4],
+              fontSize: FONT_SIZES.base,
               color: theme.errorRedText,
               fontFamily: FONT_MONO,
               display: "flex",
               alignItems: "center",
-              gap: 6,
+              gap: SPACING["1.5"],
             }}
           >
-            <Icon icon={alertCircleOutline} width={16} style={{ flexShrink: 0 }} />
+            <Icon icon={alertCircleOutline} width={16} style={{ flexShrink: 0 }} aria-hidden="true" />
             {error}
           </div>
         )}
@@ -109,12 +110,12 @@ export default function LoginScreen({ onLogin, error }) {
         <button
           onClick={onLogin}
           style={{
-            padding: "12px 24px",
+            padding: `${SPACING[3]} ${SPACING[6]}`,
             background: theme.activeToggleBg,
             color: theme.activeToggleText,
             border: "none",
-            borderRadius: 8,
-            fontSize: 13,
+            borderRadius: RADII.lg,
+            fontSize: FONT_SIZES.sm,
             fontFamily: FONT_MONO,
             fontWeight: 700,
             cursor: "pointer",
@@ -123,21 +124,21 @@ export default function LoginScreen({ onLogin, error }) {
             transition: "all 0.15s",
           }}
         >
-          <Icon icon={googleIcon} width={16} style={{ verticalAlign: "middle", marginRight: 6 }} />
+          <Icon icon={googleIcon} width={16} style={{ verticalAlign: "middle", marginRight: SPACING["1.5"] }} aria-hidden="true" />
           Sign in with Google
         </button>
 
         <p
           style={{
-            fontSize: 10,
+            fontSize: FONT_SIZES.micro,
             color: theme.textMuted,
-            margin: "16px 0 0 0",
+            margin: `${SPACING[4]} 0 0 0`,
             fontFamily: FONT_MONO,
           }}
         >
           {ALLOW_ALL_DOMAINS ? "Any Google account can sign in" : `Requires an @${SCHOOL_DOMAIN} account`}
         </p>
       </div>
-    </div>
+    </main>
   );
 }

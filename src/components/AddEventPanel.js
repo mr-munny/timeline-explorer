@@ -5,7 +5,7 @@ import { Icon } from "@iconify/react";
 import closeIcon from "@iconify-icons/mdi/close";
 import sendIcon from "@iconify-icons/mdi/send";
 import lightbulbOutline from "@iconify-icons/mdi/lightbulb-outline";
-import { useTheme, FONT_MONO, FONT_SERIF } from "../contexts/ThemeContext";
+import { useTheme, FONT_MONO, FONT_SERIF, FONT_SIZES, SPACING, RADII } from "../contexts/ThemeContext";
 import FeedbackBanner from "./FeedbackBanner";
 import ModalShell from "./ModalShell";
 import IconButton from "./IconButton";
@@ -161,44 +161,43 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
 
   const fieldStyle = (field) => ({
     width: "100%",
-    padding: "9px 12px",
+    padding: `9px ${SPACING["3"]}`,
     border: `1.5px solid ${errors[field] ? theme.errorRed : theme.inputBorder}`,
-    borderRadius: 7,
-    fontSize: 13,
+    borderRadius: RADII.md,
+    fontSize: FONT_SIZES.sm,
     fontFamily: FONT_MONO,
     background: theme.inputBg,
     color: theme.textPrimary,
-    outline: "none",
     boxSizing: "border-box",
     transition: "border-color 0.2s",
   });
 
   const labelStyle = {
-    fontSize: 11,
+    fontSize: FONT_SIZES.micro,
     fontWeight: 700,
     color: theme.textTertiary,
     fontFamily: FONT_MONO,
     textTransform: "uppercase",
     letterSpacing: "0.05em",
-    marginBottom: 4,
+    marginBottom: SPACING["1"],
     display: "block",
   };
 
   return (
     <ModalShell onClose={onClose} maxWidth={520} closeOnBackdrop={false}>
-      <div style={{ padding: "28px 28px 20px" }}>
+      <div style={{ padding: `${SPACING["8"]} ${SPACING["8"]} ${SPACING["5"]}` }}>
         <div
           style={{
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            marginBottom: 20,
+            marginBottom: SPACING["5"],
           }}
         >
           <div>
             <h2
               style={{
-                fontSize: 20,
+                fontSize: FONT_SIZES.lg,
                 fontWeight: 700,
                 margin: 0,
                 fontFamily: FONT_SERIF,
@@ -209,9 +208,9 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
             </h2>
             <p
               style={{
-                fontSize: 11,
+                fontSize: FONT_SIZES.micro,
                 color: theme.textSecondary,
-                margin: "4px 0 0",
+                margin: `${SPACING["1"]} 0 0`,
                 fontFamily: FONT_MONO,
               }}
             >
@@ -228,24 +227,28 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
 
         {revisionMode && <FeedbackBanner feedback={feedback} />}
 
-        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: SPACING["3.5"] || "0.875rem" }}>
           {/* Title + Year row */}
-          <div style={{ display: "grid", gridTemplateColumns: fc.year !== "hidden" ? "1fr 100px" : "1fr", gap: 10 }}>
+          <div style={{ display: "grid", gridTemplateColumns: fc.year !== "hidden" ? "1fr 100px" : "1fr", gap: SPACING["2.5"] }}>
             {fc.title !== "hidden" && (
             <div>
-              <label style={labelStyle}>Event Title{fc.title === "mandatory" ? " *" : ""}</label>
+              <label htmlFor="aep-title" style={labelStyle}>Event Title{fc.title === "mandatory" ? " *" : ""}</label>
               <input
+                id="aep-title"
                 value={form.title}
                 onChange={(e) => update("title", e.target.value)}
                 placeholder="What happened?"
                 style={fieldStyle("title")}
+                aria-invalid={errors.title ? "true" : undefined}
+                aria-describedby={errors.title ? "aep-validation-hint" : undefined}
               />
             </div>
             )}
             {fc.year !== "hidden" && (
             <div>
-              <label style={labelStyle}>Year{fc.year === "mandatory" ? " *" : ""}</label>
+              <label htmlFor="aep-year" style={labelStyle}>Year{fc.year === "mandatory" ? " *" : ""}</label>
               <input
+                id="aep-year"
                 value={form.year}
                 onChange={(e) => update("year", e.target.value)}
                 placeholder={String(Math.round((timelineStart + timelineEnd) / 2))}
@@ -254,6 +257,8 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
                   ...fieldStyle("year"),
                   borderColor: warnings.year ? theme.feedbackAmber : (errors.year ? theme.errorRed : theme.inputBorder),
                 }}
+                aria-invalid={errors.year ? "true" : undefined}
+                aria-describedby={warnings.year ? "aep-year-warning" : (errors.year ? "aep-validation-hint" : undefined)}
               />
             </div>
             )}
@@ -262,16 +267,18 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
           {/* Year out-of-range warning */}
           {warnings.year && (
             <div
+              id="aep-year-warning"
+              role="alert"
               style={{
                 background: theme.feedbackAmberBg,
                 border: `1px solid ${theme.feedbackAmber}`,
-                borderRadius: 6,
-                padding: "8px 12px",
-                fontSize: 11,
+                borderRadius: RADII.md,
+                padding: `${SPACING["2"]} ${SPACING["3"]}`,
+                fontSize: FONT_SIZES.micro,
                 fontFamily: FONT_MONO,
                 color: theme.feedbackAmberText,
                 lineHeight: 1.4,
-                marginTop: -6,
+                marginTop: `-${SPACING["1.5"]}`,
               }}
             >
               {warnings.year}
@@ -280,14 +287,16 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
 
           {/* Month + Day row */}
           {(fc.month !== "hidden" || fc.day !== "hidden") && (
-            <div style={{ display: "flex", gap: 10 }}>
+            <div style={{ display: "flex", gap: SPACING["2.5"] }}>
               {fc.month !== "hidden" && (
                 <div style={{ flex: 1 }}>
-                  <label style={labelStyle}>Month{fc.month === "mandatory" ? " *" : ""}</label>
+                  <label htmlFor="aep-month" style={labelStyle}>Month{fc.month === "mandatory" ? " *" : ""}</label>
                   <select
+                    id="aep-month"
                     value={form.month}
                     onChange={(e) => update("month", e.target.value)}
                     style={fieldStyle("month")}
+                    aria-invalid={errors.month ? "true" : undefined}
                   >
                     <option value="">—</option>
                     {MONTHS.map((m, i) => (
@@ -298,8 +307,9 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
               )}
               {fc.day !== "hidden" && (
                 <div style={{ width: 80 }}>
-                  <label style={labelStyle}>Day{fc.day === "mandatory" ? " *" : ""}</label>
+                  <label htmlFor="aep-day" style={labelStyle}>Day{fc.day === "mandatory" ? " *" : ""}</label>
                   <input
+                    id="aep-day"
                     value={form.day}
                     onChange={(e) => update("day", e.target.value)}
                     placeholder="—"
@@ -307,6 +317,7 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
                     min={1}
                     max={maxDaysInMonth(Number(form.month), Number(form.year))}
                     style={fieldStyle("day")}
+                    aria-invalid={errors.day ? "true" : undefined}
                   />
                 </div>
               )}
@@ -320,13 +331,13 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
                 style={{
                   display: "flex",
                   alignItems: "center",
-                  gap: 8,
-                  fontSize: 12,
+                  gap: SPACING["2"],
+                  fontSize: FONT_SIZES.tiny,
                   fontFamily: FONT_MONO,
                   color: theme.textSecondary,
                   cursor: "pointer",
                   userSelect: "none",
-                  marginTop: -4,
+                  marginTop: `-${SPACING["1"]}`,
                 }}
               >
                 <input
@@ -338,24 +349,29 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
                 This event spans a date range
               </label>
               {showEndDate && (
-                <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                <div style={{ display: "flex", gap: SPACING["2.5"], flexWrap: "wrap" }}>
                   <div style={{ width: 100 }}>
-                    <label style={labelStyle}>End Year *</label>
+                    <label htmlFor="aep-end-year" style={labelStyle}>End Year *</label>
                     <input
+                      id="aep-end-year"
                       value={form.endYear}
                       onChange={(e) => update("endYear", e.target.value)}
                       placeholder={form.year || "—"}
                       type="number"
                       style={fieldStyle("endYear")}
+                      aria-invalid={errors.endYear ? "true" : undefined}
+                      aria-describedby={warnings.endDate ? "aep-enddate-warning" : undefined}
                     />
                   </div>
                   {fc.month !== "hidden" && (
                     <div style={{ flex: 1, minWidth: 100 }}>
-                      <label style={labelStyle}>End Month{fc.month === "mandatory" ? " *" : ""}</label>
+                      <label htmlFor="aep-end-month" style={labelStyle}>End Month{fc.month === "mandatory" ? " *" : ""}</label>
                       <select
+                        id="aep-end-month"
                         value={form.endMonth}
                         onChange={(e) => update("endMonth", e.target.value)}
                         style={fieldStyle("endMonth")}
+                        aria-invalid={errors.endMonth ? "true" : undefined}
                       >
                         <option value="">—</option>
                         {MONTHS.map((m, i) => (
@@ -366,8 +382,9 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
                   )}
                   {fc.day !== "hidden" && (
                     <div style={{ width: 80 }}>
-                      <label style={labelStyle}>End Day{fc.day === "mandatory" ? " *" : ""}</label>
+                      <label htmlFor="aep-end-day" style={labelStyle}>End Day{fc.day === "mandatory" ? " *" : ""}</label>
                       <input
+                        id="aep-end-day"
                         value={form.endDay}
                         onChange={(e) => update("endDay", e.target.value)}
                         placeholder="—"
@@ -375,6 +392,7 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
                         min={1}
                         max={maxDaysInMonth(Number(form.endMonth), Number(form.endYear))}
                         style={fieldStyle("endDay")}
+                        aria-invalid={errors.endDay ? "true" : undefined}
                       />
                     </div>
                   )}
@@ -382,16 +400,18 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
               )}
               {warnings.endDate && (
                 <div
+                  id="aep-enddate-warning"
+                  role="alert"
                   style={{
                     background: theme.feedbackAmberBg,
                     border: `1px solid ${theme.feedbackAmber}`,
-                    borderRadius: 6,
-                    padding: "8px 12px",
-                    fontSize: 11,
+                    borderRadius: RADII.md,
+                    padding: `${SPACING["2"]} ${SPACING["3"]}`,
+                    fontSize: FONT_SIZES.micro,
                     fontFamily: FONT_MONO,
                     color: theme.feedbackAmberText,
                     lineHeight: 1.4,
-                    marginTop: -6,
+                    marginTop: `-${SPACING["1.5"]}`,
                   }}
                 >
                   {warnings.endDate}
@@ -403,11 +423,13 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
           {/* Period */}
           {fc.period !== "hidden" && (
           <div>
-            <label style={labelStyle}>Time Period{fc.period === "mandatory" ? " *" : ""}</label>
+            <label htmlFor="aep-period" style={labelStyle}>Time Period{fc.period === "mandatory" ? " *" : ""}</label>
             <select
+              id="aep-period"
               value={form.period}
               onChange={(e) => update("period", e.target.value)}
               style={fieldStyle("period")}
+              aria-invalid={errors.period ? "true" : undefined}
             >
               <option value="">Select a time period...</option>
               {periods.map((p) => (
@@ -423,6 +445,7 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
           {fc.tags !== "hidden" && (
           <div>
             <label
+              id="aep-tags-label"
               style={{
                 ...labelStyle,
                 color: errors.tags ? theme.errorRed : theme.textTertiary,
@@ -430,19 +453,20 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
             >
               Tags{fc.tags === "mandatory" ? " (select at least 1) *" : ""}
             </label>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }} role="group" aria-labelledby="aep-tags-label">
               {TAGS.map((tag) => (
                 <button
                   key={tag}
                   type="button"
                   onClick={() => toggleTag(tag)}
+                  aria-pressed={form.tags.includes(tag)}
                   style={{
-                    padding: "5px 10px",
-                    borderRadius: 5,
+                    padding: `5px ${SPACING["2.5"]}`,
+                    borderRadius: RADII.sm,
                     border: `1.5px solid ${form.tags.includes(tag) ? theme.activeToggleBg : theme.inputBorder}`,
                     background: form.tags.includes(tag) ? theme.activeToggleBg : theme.inputBg,
                     color: form.tags.includes(tag) ? theme.activeToggleText : theme.textTertiary,
-                    fontSize: 11,
+                    fontSize: FONT_SIZES.micro,
                     fontFamily: FONT_MONO,
                     fontWeight: 600,
                     cursor: "pointer",
@@ -459,8 +483,8 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
           {/* Source Type */}
           {fc.sourceType !== "hidden" && (
           <div>
-            <label style={labelStyle}>Source Type{fc.sourceType === "mandatory" ? " *" : ""}</label>
-            <div style={{ display: "flex", gap: 8 }}>
+            <label id="aep-sourcetype-label" style={labelStyle}>Source Type{fc.sourceType === "mandatory" ? " *" : ""}</label>
+            <div style={{ display: "flex", gap: SPACING["2"] }} role="group" aria-labelledby="aep-sourcetype-label">
               {SOURCE_TYPES.map((st) => {
                 const isSelected =
                   form.sourceType === (st.id === "primary" ? "Primary" : "Secondary");
@@ -471,16 +495,17 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
                     onClick={() =>
                       update("sourceType", st.id === "primary" ? "Primary" : "Secondary")
                     }
+                    aria-pressed={isSelected}
                     style={{
                       flex: 1,
-                      padding: "8px 12px",
-                      borderRadius: 7,
+                      padding: `${SPACING["2"]} ${SPACING["3"]}`,
+                      borderRadius: RADII.md,
                       border: `1.5px solid ${isSelected ? st.color : theme.inputBorder}`,
                       background: isSelected
                         ? (getThemedSourceTypeBg(st.id) || st.bg)
                         : theme.inputBg,
                       color: isSelected ? st.color : theme.textSecondary,
-                      fontSize: 12,
+                      fontSize: FONT_SIZES.tiny,
                       fontFamily: FONT_MONO,
                       fontWeight: 700,
                       cursor: "pointer",
@@ -498,8 +523,9 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
           {/* Description */}
           {fc.description !== "hidden" && (
           <div>
-            <label style={labelStyle}>Description{fc.description === "mandatory" ? " *" : ""}</label>
+            <label htmlFor="aep-description" style={labelStyle}>Description{fc.description === "mandatory" ? " *" : ""}</label>
             <textarea
+              id="aep-description"
               value={form.description}
               onChange={(e) => update("description", e.target.value)}
               placeholder="What happened and why does it matter? Use evidence from your sources."
@@ -509,6 +535,7 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
                 resize: "vertical",
                 lineHeight: 1.5,
               }}
+              aria-invalid={errors.description ? "true" : undefined}
             />
           </div>
           )}
@@ -516,12 +543,14 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
           {/* Source Note */}
           {fc.sourceNote !== "hidden" && (
           <div>
-            <label style={labelStyle}>Source Citation{fc.sourceNote === "mandatory" ? " *" : ""}</label>
+            <label htmlFor="aep-source-note" style={labelStyle}>Source Citation{fc.sourceNote === "mandatory" ? " *" : ""}</label>
             <input
+              id="aep-source-note"
               value={form.sourceNote}
               onChange={(e) => update("sourceNote", e.target.value)}
               placeholder="Where did you learn about this?"
               style={fieldStyle("sourceNote")}
+              aria-invalid={errors.sourceNote ? "true" : undefined}
             />
           </div>
           )}
@@ -529,13 +558,15 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
           {/* Source URL */}
           {fc.sourceUrl !== "hidden" && (
           <div>
-            <label style={labelStyle}>Source URL{fc.sourceUrl === "optional" ? " (optional)" : fc.sourceUrl === "mandatory" ? " *" : ""}</label>
+            <label htmlFor="aep-source-url" style={labelStyle}>Source URL{fc.sourceUrl === "optional" ? " (optional)" : fc.sourceUrl === "mandatory" ? " *" : ""}</label>
             <input
+              id="aep-source-url"
               value={form.sourceUrl}
               onChange={(e) => update("sourceUrl", e.target.value)}
               placeholder="https://..."
               type="url"
               style={fieldStyle("sourceUrl")}
+              aria-invalid={errors.sourceUrl ? "true" : undefined}
             />
           </div>
           )}
@@ -543,13 +574,15 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
           {/* Image URL */}
           {fc.imageUrl !== "hidden" && (
           <div>
-            <label style={labelStyle}>Image URL{fc.imageUrl === "optional" ? " (optional)" : fc.imageUrl === "mandatory" ? " *" : ""}</label>
+            <label htmlFor="aep-image-url" style={labelStyle}>Image URL{fc.imageUrl === "optional" ? " (optional)" : fc.imageUrl === "mandatory" ? " *" : ""}</label>
             <input
+              id="aep-image-url"
               value={form.imageUrl}
               onChange={(e) => update("imageUrl", e.target.value)}
               placeholder="https://upload.wikimedia.org/..."
               type="url"
               style={fieldStyle("imageUrl")}
+              aria-invalid={errors.imageUrl ? "true" : undefined}
             />
             {form.imageUrl && !errors.imageUrl && (
               <img
@@ -558,9 +591,9 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
                 style={{
                   maxWidth: "100%",
                   maxHeight: 150,
-                  borderRadius: 6,
+                  borderRadius: RADII.md,
                   objectFit: "contain",
-                  marginTop: 6,
+                  marginTop: SPACING["1.5"],
                   background: theme.subtleBg,
                 }}
                 onError={(e) => { e.currentTarget.style.display = "none"; }}
@@ -572,12 +605,14 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
           {/* Region */}
           {fc.region !== "hidden" && (
           <div>
-            <label style={labelStyle}>Region{fc.region === "optional" ? " (optional)" : fc.region === "mandatory" ? " *" : ""}</label>
+            <label htmlFor="aep-region" style={labelStyle}>Region{fc.region === "optional" ? " (optional)" : fc.region === "mandatory" ? " *" : ""}</label>
             <input
+              id="aep-region"
               value={form.region}
               onChange={(e) => update("region", e.target.value)}
               placeholder="e.g. Europe, Pacific, National..."
               style={fieldStyle("region")}
+              aria-invalid={errors.region ? "true" : undefined}
             />
           </div>
           )}
@@ -587,15 +622,15 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
             style={{
               background: theme.warmSubtleBg,
               border: `1px solid ${theme.inputBorder}`,
-              borderRadius: 8,
-              padding: "10px 14px",
-              fontSize: 11,
+              borderRadius: RADII.lg,
+              padding: `${SPACING["2.5"]} ${SPACING["3.5"] || "0.875rem"}`,
+              fontSize: FONT_SIZES.micro,
               fontFamily: FONT_MONO,
               color: theme.textTertiary,
               lineHeight: 1.5,
             }}
           >
-            <span style={{ fontWeight: 700, color: theme.textDescription, display: "inline-flex", alignItems: "center", gap: 4 }}>
+            <span style={{ fontWeight: 700, color: theme.textDescription, display: "inline-flex", alignItems: "center", gap: SPACING["1"] }}>
               <Icon icon={lightbulbOutline} width={14} style={{ color: "#F59E0B" }} />
               Historian's Tip:
             </span>{" "}
@@ -608,12 +643,14 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
           {/* Validation hint */}
           {showValidationHint && Object.keys(errors).length > 0 && (
             <div
+              id="aep-validation-hint"
+              role="alert"
               style={{
                 background: theme.errorRed + "12",
                 border: `1px solid ${theme.errorRed}40`,
-                borderRadius: 6,
-                padding: "8px 12px",
-                fontSize: 11,
+                borderRadius: RADII.md,
+                padding: `${SPACING["2"]} ${SPACING["3"]}`,
+                fontSize: FONT_SIZES.micro,
                 fontFamily: FONT_MONO,
                 color: theme.errorRed,
                 lineHeight: 1.4,
@@ -631,12 +668,12 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
             onClick={handleSubmit}
             disabled={submitting}
             style={{
-              padding: "12px 20px",
+              padding: `${SPACING["3"]} ${SPACING["5"]}`,
               background: submitting ? theme.textSecondary : theme.activeToggleBg,
               color: theme.activeToggleText,
               border: "none",
-              borderRadius: 8,
-              fontSize: 13,
+              borderRadius: RADII.lg,
+              fontSize: FONT_SIZES.sm,
               fontFamily: FONT_MONO,
               fontWeight: 700,
               cursor: submitting ? "default" : "pointer",

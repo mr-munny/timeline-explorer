@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { approveEvent, rejectEvent, updateEvent, approveEdit, approveConnection, rejectConnection, updateConnection, approveConnectionEdit, approveConnectionDeletion, requestRevision } from "../services/database";
 import { writeToSheet } from "../services/sheets";
-import { useTheme, FONT_MONO, FONT_SERIF } from "../contexts/ThemeContext";
+import { useTheme, FONT_MONO, FONT_SERIF, FONT_SIZES, SPACING } from "../contexts/ThemeContext";
 import PendingEventCard from "./PendingEventCard";
 import PendingConnectionCard from "./PendingConnectionCard";
 import AwaitingRevisionSection from "./AwaitingRevisionSection";
@@ -211,7 +211,7 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
   return (
       <div
         style={{
-          padding: "24px 32px",
+          padding: `${SPACING[6]} ${SPACING[8]}`,
           maxWidth: 640,
           fontFamily: FONT_MONO,
         }}
@@ -221,13 +221,13 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            marginBottom: 20,
+            marginBottom: SPACING[5],
           }}
         >
           <div>
             <h2
               style={{
-                fontSize: 20,
+                fontSize: FONT_SIZES.lg,
                 fontWeight: 700,
                 margin: 0,
                 fontFamily: FONT_SERIF,
@@ -238,9 +238,9 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
             </h2>
             <p
               style={{
-                fontSize: 11,
+                fontSize: FONT_SIZES.micro,
                 color: theme.textSecondary,
-                margin: "4px 0 0",
+                margin: `${SPACING[1]} 0 0`,
                 fontFamily: FONT_MONO,
               }}
             >
@@ -253,21 +253,23 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
         </div>
 
         {/* Tabs */}
-        <div style={{ display: "flex", gap: 0, marginBottom: 16, borderBottom: `1.5px solid ${theme.inputBorder}` }}>
+        <div role="tablist" style={{ display: "flex", gap: 0, marginBottom: SPACING[4], borderBottom: `1.5px solid ${theme.inputBorder}` }}>
           {[
             { id: "events", label: `Events (${pendingEvents.length + needsRevisionEvents.length})` },
             { id: "connections", label: `Connections (${pendingConnections.length + needsRevisionConnections.length})` },
           ].map((tab) => (
             <button
               key={tab.id}
+              role="tab"
+              aria-selected={activeTab === tab.id}
               onClick={() => setActiveTab(tab.id)}
               style={{
-                padding: "8px 16px",
+                padding: `${SPACING[2]} ${SPACING[4]}`,
                 background: "none",
                 border: "none",
                 borderBottom: activeTab === tab.id ? `2px solid ${theme.textPrimary}` : "2px solid transparent",
                 color: activeTab === tab.id ? theme.textPrimary : theme.textSecondary,
-                fontSize: 12,
+                fontSize: FONT_SIZES.tiny,
                 fontFamily: FONT_MONO,
                 fontWeight: 700,
                 cursor: "pointer",
@@ -283,18 +285,19 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
 
         {activeTab === "events" && ((pendingEvents.length === 0 && needsRevisionEvents.length === 0) ? (
           <div
+            role="tabpanel"
             style={{
               textAlign: "center",
-              padding: "32px 20px",
+              padding: `${SPACING[8]} ${SPACING[5]}`,
               color: theme.textSecondary,
               fontFamily: FONT_MONO,
-              fontSize: 12,
+              fontSize: FONT_SIZES.tiny,
             }}
           >
             {readOnly ? "No pending submissions right now." : "No pending submissions. All caught up!"}
           </div>
         ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div role="tabpanel" style={{ display: "flex", flexDirection: "column", gap: SPACING[3] }}>
             {pendingEvents.map((event) => (
               <PendingEventCard
                 key={event.id}
@@ -344,18 +347,19 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
 
         {activeTab === "connections" && ((pendingConnections.length === 0 && needsRevisionConnections.length === 0) ? (
           <div
+            role="tabpanel"
             style={{
               textAlign: "center",
-              padding: "32px 20px",
+              padding: `${SPACING[8]} ${SPACING[5]}`,
               color: theme.textSecondary,
               fontFamily: FONT_MONO,
-              fontSize: 12,
+              fontSize: FONT_SIZES.tiny,
             }}
           >
             {readOnly ? "No pending connections right now." : "No pending connections. All caught up!"}
           </div>
         ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div role="tabpanel" style={{ display: "flex", flexDirection: "column", gap: SPACING[3] }}>
             {pendingConnections.map((conn) => (
               <PendingConnectionCard
                 key={conn.id}

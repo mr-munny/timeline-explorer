@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useTheme, FONT_MONO } from "../contexts/ThemeContext";
+import { useTheme, FONT_MONO, FONT_SIZES, SPACING, RADII, Z_INDEX } from "../contexts/ThemeContext";
 import { savePeriods, saveCompellingQuestion, saveTimelineRange, saveFieldConfig } from "../services/database";
 import { Icon } from "@iconify/react";
 import contentCopy from "@iconify-icons/mdi/content-copy";
@@ -91,27 +91,32 @@ export default function CopySettingsDialog({ sourceSection, sourceName, sections
     flexShrink: 0,
     transition: "all 0.15s",
     color: checked ? theme.bg : "transparent",
-    fontSize: 11,
+    fontSize: FONT_SIZES.micro,
     fontWeight: 700,
     padding: 0,
   });
 
   return (
-    <div style={{
-      position: "fixed",
-      inset: 0,
-      zIndex: 10000,
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      background: "rgba(0,0,0,0.5)",
-      backdropFilter: "blur(4px)",
-    }}>
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Copy settings to other sections"
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: Z_INDEX.toast,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "rgba(0,0,0,0.5)",
+        backdropFilter: "blur(4px)",
+      }}
+    >
       <div style={{
         background: theme.cardBg,
         border: `1px solid ${theme.cardBorder}`,
-        borderRadius: 12,
-        padding: "24px 28px",
+        borderRadius: RADII["2xl"],
+        padding: `${SPACING[6]} ${SPACING[8]}`,
         minWidth: 360,
         maxWidth: 440,
         fontFamily: FONT_MONO,
@@ -122,10 +127,10 @@ export default function CopySettingsDialog({ sourceSection, sourceName, sections
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          marginBottom: 20,
+          marginBottom: SPACING[5],
         }}>
           <div style={{
-            fontSize: 13,
+            fontSize: FONT_SIZES.sm,
             fontWeight: 700,
             color: theme.textPrimary,
           }}>
@@ -135,23 +140,23 @@ export default function CopySettingsDialog({ sourceSection, sourceName, sections
         </div>
 
         <div style={{
-          fontSize: 10,
+          fontSize: FONT_SIZES.tiny,
           color: theme.textSecondary,
-          marginBottom: 16,
+          marginBottom: SPACING[4],
         }}>
           Copy settings from <strong style={{ color: theme.textPrimary }}>{sourceName}</strong> to:
         </div>
 
         {/* Target sections */}
-        <div style={{ marginBottom: 16 }}>
+        <div style={{ marginBottom: SPACING[4] }}>
           <div style={{
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            marginBottom: 8,
+            marginBottom: SPACING[2],
           }}>
             <span style={{
-              fontSize: 9,
+              fontSize: FONT_SIZES.micro,
               fontWeight: 700,
               color: theme.textMuted,
               textTransform: "uppercase",
@@ -160,7 +165,7 @@ export default function CopySettingsDialog({ sourceSection, sourceName, sections
             <button
               onClick={toggleAllSections}
               style={{
-                fontSize: 8,
+                fontSize: FONT_SIZES.micro,
                 color: theme.accentGold,
                 background: "none",
                 border: "none",
@@ -175,7 +180,7 @@ export default function CopySettingsDialog({ sourceSection, sourceName, sections
             </button>
           </div>
           {targetSections.length === 0 && (
-            <div style={{ fontSize: 10, color: theme.textMuted, fontStyle: "italic" }}>
+            <div style={{ fontSize: FONT_SIZES.tiny, color: theme.textMuted, fontStyle: "italic" }}>
               No other sections to copy to
             </div>
           )}
@@ -185,10 +190,10 @@ export default function CopySettingsDialog({ sourceSection, sourceName, sections
               style={{
                 display: "flex",
                 alignItems: "center",
-                gap: 8,
-                padding: "4px 0",
+                gap: SPACING[2],
+                padding: `${SPACING[1]} 0`,
                 cursor: "pointer",
-                fontSize: 11,
+                fontSize: FONT_SIZES.micro,
                 color: theme.textPrimary,
               }}
             >
@@ -204,15 +209,15 @@ export default function CopySettingsDialog({ sourceSection, sourceName, sections
         </div>
 
         {/* Setting categories */}
-        <div style={{ marginBottom: 20 }}>
+        <div style={{ marginBottom: SPACING[5] }}>
           <div style={{
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            marginBottom: 8,
+            marginBottom: SPACING[2],
           }}>
             <span style={{
-              fontSize: 9,
+              fontSize: FONT_SIZES.micro,
               fontWeight: 700,
               color: theme.textMuted,
               textTransform: "uppercase",
@@ -221,7 +226,7 @@ export default function CopySettingsDialog({ sourceSection, sourceName, sections
             <button
               onClick={toggleAllSettings}
               style={{
-                fontSize: 8,
+                fontSize: FONT_SIZES.micro,
                 color: theme.accentGold,
                 background: "none",
                 border: "none",
@@ -241,10 +246,10 @@ export default function CopySettingsDialog({ sourceSection, sourceName, sections
               style={{
                 display: "flex",
                 alignItems: "center",
-                gap: 8,
-                padding: "4px 0",
+                gap: SPACING[2],
+                padding: `${SPACING[1]} 0`,
                 cursor: "pointer",
-                fontSize: 11,
+                fontSize: FONT_SIZES.micro,
                 color: theme.textPrimary,
               }}
             >
@@ -262,10 +267,10 @@ export default function CopySettingsDialog({ sourceSection, sourceName, sections
         {/* Warning */}
         {selectedSections.size > 0 && selectedSettings.size > 0 && (
           <div style={{
-            fontSize: 9,
+            fontSize: FONT_SIZES.micro,
             color: theme.textMuted,
             fontStyle: "italic",
-            marginBottom: 12,
+            marginBottom: SPACING[3],
             letterSpacing: "0.03em",
           }}>
             This will overwrite the selected settings for {selectedSections.size} section{selectedSections.size > 1 ? "s" : ""}.
@@ -273,16 +278,16 @@ export default function CopySettingsDialog({ sourceSection, sourceName, sections
         )}
 
         {/* Actions */}
-        <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+        <div style={{ display: "flex", gap: SPACING[2], justifyContent: "flex-end" }}>
           <button
             onClick={onClose}
             style={{
-              padding: "8px 16px",
-              borderRadius: 6,
+              padding: `${SPACING[2]} ${SPACING[4]}`,
+              borderRadius: RADII.md,
               border: `1px solid ${theme.inputBorder}`,
               background: "transparent",
               color: theme.textSecondary,
-              fontSize: 11,
+              fontSize: FONT_SIZES.micro,
               fontFamily: FONT_MONO,
               fontWeight: 600,
               cursor: "pointer",
@@ -297,18 +302,18 @@ export default function CopySettingsDialog({ sourceSection, sourceName, sections
             onClick={handleCopy}
             disabled={!canCopy}
             style={{
-              padding: "8px 20px",
-              borderRadius: 6,
+              padding: `${SPACING[2]} ${SPACING[5]}`,
+              borderRadius: RADII.md,
               border: "none",
               background: done ? theme.teacherGreen : canCopy ? theme.accentGold : theme.inputBorder,
               color: done ? "#fff" : canCopy ? theme.bg : theme.textMuted,
-              fontSize: 11,
+              fontSize: FONT_SIZES.micro,
               fontFamily: FONT_MONO,
               fontWeight: 700,
               cursor: canCopy ? "pointer" : "not-allowed",
               display: "inline-flex",
               alignItems: "center",
-              gap: 6,
+              gap: SPACING["1.5"],
               textTransform: "uppercase",
               letterSpacing: "0.05em",
               transition: "all 0.15s",

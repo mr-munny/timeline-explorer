@@ -96,6 +96,7 @@ export default function ConnectionLines({ connections, containerRef, expandedEve
 
   return (
     <svg
+      aria-hidden="true"
       style={{
         position: "absolute",
         top: 0,

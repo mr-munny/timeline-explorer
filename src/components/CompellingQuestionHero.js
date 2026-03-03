@@ -1,4 +1,4 @@
-import { useTheme, FONT_MONO, FONT_SERIF } from "../contexts/ThemeContext";
+import { useTheme, FONT_MONO, FONT_SERIF, FONT_SIZES, SPACING } from "../contexts/ThemeContext";
 
 export default function CompellingQuestionHero({ compellingQuestion }) {
   const { theme } = useTheme();
@@ -9,25 +9,29 @@ export default function CompellingQuestionHero({ compellingQuestion }) {
 
   return (
     <div style={{ background: theme.cardBg, borderBottom: `1px solid ${theme.cardBorder}` }}>
-      <div style={{
-        maxWidth: 960,
-        margin: "0 auto",
-        padding: "24px 28px 20px",
-        textAlign: "center",
-      }}>
+      <div
+        role="region"
+        aria-label="Compelling question"
+        style={{
+          maxWidth: 960,
+          margin: "0 auto",
+          padding: `${SPACING[6]} ${SPACING[8]} ${SPACING[5]}`,
+          textAlign: "center",
+        }}
+      >
         <div style={{
-          fontSize: 9,
+          fontSize: FONT_SIZES.micro,
           fontWeight: 700,
           color: theme.textMuted,
           fontFamily: FONT_MONO,
           letterSpacing: "0.1em",
           textTransform: "uppercase",
-          marginBottom: 8,
+          marginBottom: SPACING[2],
         }}>
           Compelling Question
         </div>
         <p style={{
-          fontSize: 20,
+          fontSize: FONT_SIZES.lg,
           fontWeight: 600,
           fontFamily: FONT_SERIF,
           color: theme.textPrimary,

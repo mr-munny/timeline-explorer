@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Icon } from "@iconify/react";
 import chartTimelineVariantShimmer from "@iconify-icons/mdi/chart-timeline-variant-shimmer";
 import arrowLeft from "@iconify-icons/mdi/arrow-left";
-import { useTheme, FONT_MONO, FONT_SERIF } from "../contexts/ThemeContext";
+import { useTheme, FONT_MONO, FONT_SERIF, FONT_SIZES, SPACING, RADII } from "../contexts/ThemeContext";
 import { lookupTeacherByJoinCode, getSections } from "../services/database";
 
 export default function SectionPicker({ sections, onSelect, userName }) {
@@ -52,8 +52,8 @@ export default function SectionPicker({ sections, onSelect, userName }) {
 
   const cardStyle = {
     background: theme.cardBg,
-    borderRadius: 14,
-    padding: "40px 36px",
+    borderRadius: RADII["2xl"],
+    padding: `${SPACING[10]} ${SPACING[8]}`,
     maxWidth: 400,
     width: "100%",
     textAlign: "center",
@@ -62,7 +62,7 @@ export default function SectionPicker({ sections, onSelect, userName }) {
   };
 
   return (
-    <div
+    <main
       style={{
         fontFamily: FONT_SERIF,
         background: theme.pageBg,
@@ -82,17 +82,17 @@ export default function SectionPicker({ sections, onSelect, userName }) {
       <div style={cardStyle}>
         <div
           style={{
-            fontSize: 10,
+            fontSize: FONT_SIZES.tiny,
             fontWeight: 700,
             color: theme.accentGold,
             fontFamily: FONT_MONO,
             letterSpacing: "0.1em",
             textTransform: "uppercase",
             background: theme.accentGoldSubtle,
-            padding: "3px 8px",
-            borderRadius: 4,
+            padding: `${SPACING[1]} ${SPACING[2]}`,
+            borderRadius: RADII.sm,
             display: "inline-block",
-            marginBottom: 12,
+            marginBottom: SPACING[3],
           }}
         >
           Historian's Workshop
@@ -100,26 +100,26 @@ export default function SectionPicker({ sections, onSelect, userName }) {
 
         <h1
           style={{
-            fontSize: 28,
+            fontSize: FONT_SIZES.xxl,
             fontWeight: 700,
-            margin: "0 0 6px 0",
+            margin: `0 0 ${SPACING["1.5"]} 0`,
             fontFamily: FONT_SERIF,
             letterSpacing: "-0.01em",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            gap: 8,
+            gap: SPACING[2],
           }}
         >
-          <Icon icon={chartTimelineVariantShimmer} width={28} style={{ color: "#F59E0B" }} />
+          <Icon icon={chartTimelineVariantShimmer} width={28} style={{ color: "#F59E0B" }} aria-hidden="true" />
           Timeline Explorer
         </h1>
 
         <p
           style={{
-            fontSize: 13,
+            fontSize: FONT_SIZES.sm,
             color: theme.textSecondary,
-            margin: "0 0 6px 0",
+            margin: `0 0 ${SPACING["1.5"]} 0`,
             fontFamily: FONT_SERIF,
           }}
         >
@@ -130,36 +130,39 @@ export default function SectionPicker({ sections, onSelect, userName }) {
           <>
             <p
               style={{
-                fontSize: 12,
+                fontSize: FONT_SIZES.base,
                 color: theme.textMuted,
-                margin: "0 0 20px 0",
+                margin: `0 0 ${SPACING[5]} 0`,
                 fontFamily: FONT_MONO,
               }}
             >
               Enter your teacher's class code to get started
             </p>
 
-            <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+            <div style={{ display: "flex", gap: SPACING[2], marginBottom: SPACING[3] }}>
               <input
                 autoFocus
+                id="join-code"
+                aria-label="Teacher join code"
                 value={joinCode}
                 onChange={(e) => { setJoinCode(e.target.value.toUpperCase()); setCodeError(null); }}
                 onKeyDown={(e) => { if (e.key === "Enter") handleCodeSubmit(); }}
                 placeholder="e.g. MUNNY"
                 maxLength={6}
+                aria-invalid={codeError ? "true" : undefined}
+                aria-describedby={codeError ? "code-error" : undefined}
                 style={{
                   flex: 1,
-                  padding: "12px 14px",
+                  padding: `${SPACING[3]} ${SPACING[3]}`,
                   border: `1.5px solid ${codeError ? theme.errorRed : theme.inputBorder}`,
-                  borderRadius: 8,
-                  fontSize: 16,
+                  borderRadius: RADII.lg,
+                  fontSize: FONT_SIZES.md,
                   fontFamily: FONT_MONO,
                   fontWeight: 700,
                   letterSpacing: "0.15em",
                   textAlign: "center",
                   background: theme.inputBg,
                   color: theme.textPrimary,
-                  outline: "none",
                   textTransform: "uppercase",
                 }}
               />
@@ -167,12 +170,12 @@ export default function SectionPicker({ sections, onSelect, userName }) {
                 onClick={handleCodeSubmit}
                 disabled={lookingUp || !joinCode.trim()}
                 style={{
-                  padding: "12px 20px",
+                  padding: `${SPACING[3]} ${SPACING[5]}`,
                   background: theme.activeToggleBg,
                   color: theme.activeToggleText,
                   border: "none",
-                  borderRadius: 8,
-                  fontSize: 13,
+                  borderRadius: RADII.lg,
+                  fontSize: FONT_SIZES.sm,
                   fontFamily: FONT_MONO,
                   fontWeight: 700,
                   cursor: lookingUp || !joinCode.trim() ? "default" : "pointer",
@@ -185,10 +188,10 @@ export default function SectionPicker({ sections, onSelect, userName }) {
             </div>
 
             {codeError && (
-              <p style={{
-                fontSize: 11,
+              <p id="code-error" role="alert" style={{
+                fontSize: FONT_SIZES.sm,
                 color: theme.errorRed,
-                margin: "0 0 0 0",
+                margin: 0,
                 fontFamily: FONT_MONO,
               }}>
                 {codeError}
@@ -203,44 +206,44 @@ export default function SectionPicker({ sections, onSelect, userName }) {
                 background: "none",
                 border: "none",
                 color: theme.textSecondary,
-                fontSize: 11,
+                fontSize: FONT_SIZES.sm,
                 fontFamily: FONT_MONO,
                 cursor: "pointer",
                 display: "inline-flex",
                 alignItems: "center",
-                gap: 4,
-                padding: "4px 0",
-                marginBottom: 12,
+                gap: SPACING[1],
+                padding: `${SPACING[1]} 0`,
+                marginBottom: SPACING[3],
               }}
             >
-              <Icon icon={arrowLeft} width={14} />
+              <Icon icon={arrowLeft} width={14} aria-hidden="true" />
               Different teacher
             </button>
 
             <p
               style={{
-                fontSize: 12,
+                fontSize: FONT_SIZES.base,
                 color: theme.textMuted,
-                margin: "0 0 20px 0",
+                margin: `0 0 ${SPACING[5]} 0`,
                 fontFamily: FONT_MONO,
               }}
             >
               Select your period in {teacher?.displayName || "your teacher"}'s class
             </p>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: SPACING[2] }}>
               {teacherSections.map((s) => (
                 <button
                   key={s.id}
                   onClick={() => handleSelect(s.id)}
                   disabled={selecting}
                   style={{
-                    padding: "14px 20px",
+                    padding: `${SPACING[3]} ${SPACING[5]}`,
                     background: theme.activeToggleBg,
                     color: theme.activeToggleText,
                     border: "none",
-                    borderRadius: 8,
-                    fontSize: 13,
+                    borderRadius: RADII.lg,
+                    fontSize: FONT_SIZES.sm,
                     fontFamily: FONT_MONO,
                     fontWeight: 700,
                     cursor: selecting ? "default" : "pointer",
@@ -257,9 +260,9 @@ export default function SectionPicker({ sections, onSelect, userName }) {
             {teacherSections.length === 0 && (
               <p
                 style={{
-                  fontSize: 12,
+                  fontSize: FONT_SIZES.base,
                   color: theme.textMuted,
-                  margin: "16px 0 0 0",
+                  margin: `${SPACING[4]} 0 0 0`,
                   fontFamily: FONT_MONO,
                 }}
               >
@@ -269,6 +272,6 @@ export default function SectionPicker({ sections, onSelect, userName }) {
           </>
         )}
       </div>
-    </div>
+    </main>
   );
 }

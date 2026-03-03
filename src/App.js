@@ -1,6 +1,6 @@
 import { useState, useReducer, useMemo, useCallback, useEffect } from "react";
 import { useAuth } from "./contexts/AuthContext";
-import { useTheme, FONT_MONO, FONT_SERIF } from "./contexts/ThemeContext";
+import { useTheme, FONT_MONO, FONT_SERIF, FONT_SIZES, SPACING } from "./contexts/ThemeContext";
 import { getPeriod, DEFAULT_PERIODS, DEFAULT_FIELD_CONFIG } from "./data/constants";
 import { compareEventDates } from "./utils/dateUtils";
 import { savePeriods, saveSections, saveCompellingQuestion, saveTimelineRange, saveFieldConfig, assignStudentSection, reassignStudentSection, removeStudentSection } from "./services/database";
@@ -356,7 +356,7 @@ export default function App() {
           minHeight: "100vh",
           fontFamily: FONT_MONO,
           color: theme.textSecondary,
-          fontSize: 13,
+          fontSize: FONT_SIZES.sm,
           background: theme.pageBg,
         }}
       >
@@ -392,26 +392,56 @@ export default function App() {
         color: theme.pageText,
         colorScheme: mode,
       }}
+      data-theme={mode}
     >
       <link
         href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,600;6..72,700&family=Overpass+Mono:wght@400;500;600;700&display=swap"
         rel="stylesheet"
       />
-      <style>{`* { transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease; }`}</style>
+      <style>{`
+        * { transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease; }
+        :root { --focus-ring: #2563EB; }
+        [data-theme="dark"] { --focus-ring: #60A5FA; }
+        :focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+        :focus:not(:focus-visible) { outline: none; }
+      `}</style>
+
+      {/* Skip navigation link */}
+      <a
+        href="#main-content"
+        style={{
+          position: "absolute",
+          left: "-9999px",
+          top: 0,
+          zIndex: 10001,
+          padding: SPACING[3],
+          background: theme.activeToggleBg,
+          color: theme.activeToggleText,
+          fontFamily: FONT_MONO,
+          fontSize: FONT_SIZES.base,
+          fontWeight: 700,
+          textDecoration: "none",
+          borderRadius: 4,
+        }}
+        onFocus={(e) => { e.currentTarget.style.left = "8px"; e.currentTarget.style.top = "8px"; }}
+        onBlur={(e) => { e.currentTarget.style.left = "-9999px"; e.currentTarget.style.top = "0"; }}
+      >
+        Skip to main content
+      </a>
 
       {/* Impersonation Banner */}
       {impersonatingTeacher && (
         <div style={{
           background: "#7C3AED",
           color: "#fff",
-          padding: "8px 16px",
-          fontSize: 12,
+          padding: `${SPACING[2]} ${SPACING[4]}`,
+          fontSize: FONT_SIZES.tiny,
           fontFamily: FONT_MONO,
           fontWeight: 600,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          gap: 12,
+          gap: SPACING[3],
         }}>
           <span>Viewing as {impersonatingTeacher.displayName || impersonatingTeacher.email}</span>
           <button
@@ -421,8 +451,8 @@ export default function App() {
               color: "#fff",
               border: "none",
               borderRadius: 4,
-              padding: "3px 10px",
-              fontSize: 11,
+              padding: `${SPACING[1]} ${SPACING["2.5"]}`,
+              fontSize: FONT_SIZES.micro,
               fontFamily: FONT_MONO,
               fontWeight: 700,
               cursor: "pointer",
@@ -488,7 +518,7 @@ export default function App() {
 
       {/* Timeline Content (hidden when admin view is open) */}
       {!showAdminView && (
-        <>
+        <main id="main-content">
       <CompellingQuestionHero compellingQuestion={compellingQuestion} />
 
       {/* Visual Timeline */}
@@ -511,7 +541,7 @@ export default function App() {
       </div>
 
       {/* Main Content */}
-      <div style={{ maxWidth: 960, margin: "0 auto", padding: "20px 28px" }}>
+      <div style={{ maxWidth: 960, margin: "0 auto", padding: `${SPACING[5]} ${SPACING[8]}` }}>
         <FilterBar
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}
@@ -554,17 +584,17 @@ export default function App() {
         />
 
         {/* Footer */}
-        <div
+        <footer
           style={{
-            marginTop: 32,
-            padding: "16px 0",
+            marginTop: SPACING[8],
+            padding: `${SPACING[4]} 0`,
             borderTop: `1px solid ${theme.cardBorder}`,
             textAlign: "center",
           }}
         >
           <p
             style={{
-              fontSize: 10,
+              fontSize: FONT_SIZES.micro,
               color: theme.textMuted,
               fontFamily: FONT_MONO,
               margin: 0,
@@ -575,9 +605,9 @@ export default function App() {
             <br />
             Signed in as {user.displayName || user.email}
           </p>
-        </div>
+        </footer>
       </div>
-        </>
+        </main>
       )}
 
       {/* Add Event Modal */}

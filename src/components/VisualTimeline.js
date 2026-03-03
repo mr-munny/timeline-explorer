@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { getPeriod } from "../data/constants";
-import { useTheme, FONT_MONO, FONT_SERIF } from "../contexts/ThemeContext";
+import { useTheme, FONT_MONO, FONT_SERIF, FONT_SIZES, SPACING, RADII, Z_INDEX } from "../contexts/ThemeContext";
 import { eventStartFraction, eventEndFraction, formatEventDate } from "../utils/dateUtils";
 
 const MIN_ZOOM = 1;
@@ -411,34 +411,35 @@ export default function VisualTimeline({
     : null;
 
   return (
-    <div ref={wrapperRef} style={{ padding: "12px 24px 8px", position: "relative" }}>
+    <div ref={wrapperRef} style={{ padding: `${SPACING[3]} ${SPACING[6]} ${SPACING[2]}`, position: "relative" }}>
       {/* Zoom controls */}
       <div
         style={{
           display: "flex",
           alignItems: "center",
           justifyContent: "flex-end",
-          gap: 4,
-          marginBottom: 6,
-          height: 22,
+          gap: SPACING[1],
+          marginBottom: SPACING["1.5"],
+          height: 24,
         }}
       >
         <button
           onClick={() => handleZoom(zoomLevel - ZOOM_STEP, undefined, true)}
           disabled={zoomLevel <= MIN_ZOOM}
+          aria-label="Zoom out"
           title="Zoom out"
           style={{
-            width: 22,
-            height: 22,
+            width: 24,
+            height: 24,
             border: `1px solid ${theme.inputBorder}`,
-            borderRadius: 4,
+            borderRadius: RADII.sm,
             background: theme.inputBg,
             color: zoomLevel <= MIN_ZOOM ? theme.textMuted : theme.textPrimary,
             cursor: zoomLevel <= MIN_ZOOM ? "not-allowed" : "pointer",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            fontSize: 14,
+            fontSize: FONT_SIZES.base,
             fontWeight: 700,
             fontFamily: FONT_MONO,
             padding: 0,
@@ -449,32 +450,35 @@ export default function VisualTimeline({
         </button>
         <span
           style={{
-            fontSize: 9,
+            fontSize: FONT_SIZES.micro,
             fontFamily: FONT_MONO,
             color: theme.textMuted,
             minWidth: 36,
             textAlign: "center",
             fontWeight: 600,
           }}
+          aria-live="polite"
+          aria-label={`Zoom level ${Math.round(zoomLevel * 100)} percent`}
         >
           {Math.round(zoomLevel * 100)}%
         </span>
         <button
           onClick={() => handleZoom(zoomLevel + ZOOM_STEP, undefined, true)}
           disabled={zoomLevel >= MAX_ZOOM}
+          aria-label="Zoom in"
           title="Zoom in"
           style={{
-            width: 22,
-            height: 22,
+            width: 24,
+            height: 24,
             border: `1px solid ${theme.inputBorder}`,
-            borderRadius: 4,
+            borderRadius: RADII.sm,
             background: theme.inputBg,
             color: zoomLevel >= MAX_ZOOM ? theme.textMuted : theme.textPrimary,
             cursor: zoomLevel >= MAX_ZOOM ? "not-allowed" : "pointer",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            fontSize: 14,
+            fontSize: FONT_SIZES.base,
             fontWeight: 700,
             fontFamily: FONT_MONO,
             padding: 0,
@@ -486,17 +490,18 @@ export default function VisualTimeline({
         <button
           onClick={() => handleZoom(1, undefined, true)}
           disabled={zoomLevel === 1}
+          aria-label="Fit entire timeline range"
           title="Fit entire range"
           style={{
-            marginLeft: 4,
-            height: 22,
-            padding: "0 8px",
+            marginLeft: SPACING[1],
+            height: 24,
+            padding: `0 ${SPACING[2]}`,
             border: `1px solid ${theme.inputBorder}`,
-            borderRadius: 4,
+            borderRadius: RADII.sm,
             background: zoomLevel === 1 ? theme.subtleBg : theme.inputBg,
             color: zoomLevel === 1 ? theme.textMuted : theme.textPrimary,
             cursor: zoomLevel === 1 ? "default" : "pointer",
-            fontSize: 9,
+            fontSize: FONT_SIZES.micro,
             fontFamily: FONT_MONO,
             fontWeight: 600,
             transition: "all 0.15s",
@@ -552,7 +557,12 @@ export default function VisualTimeline({
                 <div
                   key={u.id}
                   data-era
+                  role="button"
+                  tabIndex={0}
+                  aria-pressed={selectedPeriods.includes(u.id)}
+                  aria-label={u.label}
                   onClick={() => onEraClick(u.id)}
+                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onEraClick(u.id); } }}
                   title={u.label}
                   style={{
                     position: "absolute",
@@ -571,8 +581,9 @@ export default function VisualTimeline({
                   }}
                 >
                   <span
+                    aria-hidden="true"
                     style={{
-                      fontSize: 9,
+                      fontSize: FONT_SIZES.micro,
                       fontWeight: 700,
                       color: isActive ? u.color : theme.textSecondary,
                       fontFamily: FONT_MONO,
@@ -781,8 +792,9 @@ export default function VisualTimeline({
                     }}
                   >
                     <span
+                      aria-hidden="true"
                       style={{
-                        fontSize: 8,
+                        fontSize: FONT_SIZES.micro,
                         fontWeight: 800,
                         color: "#fff",
                         fontFamily: FONT_MONO,
@@ -819,7 +831,7 @@ export default function VisualTimeline({
                     position: "absolute",
                     left: `${pct}%`,
                     transform: `translateX(-${pct}%)`,
-                    fontSize: isMajor ? 9 : 8,
+                    fontSize: FONT_SIZES.micro,
                     color: theme.textMuted,
                     fontFamily: FONT_MONO,
                     fontWeight: isMajor ? 600 : 400,
@@ -845,17 +857,19 @@ export default function VisualTimeline({
       {openCluster && (
         <div
           data-dropdown
+          role="listbox"
+          aria-label="Events at this point"
           style={{
             position: "absolute",
             top: dropdownPos.top,
             left: dropdownPos.left,
             transform: "translateX(-50%)",
-            zIndex: 100,
+            zIndex: Z_INDEX.overlay,
             background: theme.cardBg,
             border: `1.5px solid ${theme.cardBorder}`,
-            borderRadius: 8,
+            borderRadius: RADII.lg,
             boxShadow: `0 8px 24px rgba(0,0,0,0.15)`,
-            padding: "6px 0",
+            padding: `${SPACING["1.5"]} 0`,
             minWidth: 200,
             maxWidth: 280,
             maxHeight: 200,
@@ -864,8 +878,8 @@ export default function VisualTimeline({
         >
           <div
             style={{
-              padding: "4px 12px 6px",
-              fontSize: 9,
+              padding: `${SPACING[1]} ${SPACING[3]} ${SPACING["1.5"]}`,
+              fontSize: FONT_SIZES.micro,
               fontFamily: FONT_MONO,
               color: theme.textMuted,
               fontWeight: 600,
@@ -884,11 +898,13 @@ export default function VisualTimeline({
                 setOpenClusterId(null);
                 onEventSelect?.(event.id);
               }}
+              role="option"
+              aria-selected={false}
               style={{
-                padding: "6px 12px",
+                padding: `${SPACING["1.5"]} ${SPACING[3]}`,
                 display: "flex",
                 alignItems: "center",
-                gap: 8,
+                gap: SPACING[2],
                 cursor: onEventSelect ? "pointer" : "default",
                 transition: "background 0.15s",
               }}
@@ -901,7 +917,7 @@ export default function VisualTimeline({
             >
               <span
                 style={{
-                  fontSize: 10,
+                  fontSize: FONT_SIZES.tiny,
                   fontWeight: 700,
                   fontFamily: FONT_MONO,
                   color: period.color,
@@ -913,7 +929,7 @@ export default function VisualTimeline({
               </span>
               <span
                 style={{
-                  fontSize: 11,
+                  fontSize: FONT_SIZES.sm,
                   color: theme.textPrimary,
                   fontFamily: FONT_SERIF,
                   overflow: "hidden",
@@ -926,8 +942,9 @@ export default function VisualTimeline({
               </span>
               {onEventSelect && (
                 <span
+                  aria-hidden="true"
                   style={{
-                    fontSize: 9,
+                    fontSize: FONT_SIZES.micro,
                     color: theme.textMuted,
                     fontFamily: FONT_MONO,
                     flexShrink: 0,

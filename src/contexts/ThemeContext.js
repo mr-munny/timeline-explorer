@@ -6,6 +6,60 @@ const STORAGE_KEY = "timeline-explorer-theme";
 export const FONT_MONO = "'Overpass Mono', monospace";
 export const FONT_SERIF = "'Newsreader', 'Georgia', serif";
 
+// --- Design Tokens (theme-independent) ---
+
+export const FONT_SIZES = {
+  micro: "0.6875rem", // 11px — labels, timestamps, micro-metadata
+  tiny: "0.75rem",    // 12px — filter labels, tag pills, sidebar headings
+  sm: "0.8125rem",    // 13px — form labels, button text, metadata
+  base: "0.875rem",   // 14px — body text, inputs, descriptions
+  md: "1rem",         // 16px — card titles, modal subtitles
+  lg: "1.25rem",      // 20px — compelling question, section headers
+  xl: "1.375rem",     // 22px — modal titles, admin section name
+  xxl: "1.75rem",     // 28px — page titles, h1s
+};
+
+export const LINE_HEIGHTS = {
+  tight: 1.2,    // headings, badges
+  snug: 1.35,    // card titles
+  normal: 1.5,   // form inputs, short text
+  relaxed: 1.6,  // body text, descriptions
+};
+
+export const SPACING = {
+  "0.5": "0.125rem", // 2px
+  "1": "0.25rem",    // 4px
+  "1.5": "0.375rem", // 6px
+  "2": "0.5rem",     // 8px
+  "2.5": "0.625rem", // 10px
+  "3": "0.75rem",    // 12px
+  "4": "1rem",       // 16px
+  "5": "1.25rem",    // 20px
+  "6": "1.5rem",     // 24px
+  "8": "2rem",       // 32px
+  "10": "2.5rem",    // 40px
+};
+
+export const RADII = {
+  sm: "4px",      // badges, tags, small buttons
+  md: "6px",      // form inputs, filter buttons
+  lg: "8px",      // primary buttons, card sub-sections
+  xl: "10px",     // event cards
+  "2xl": "14px",  // modals, login card
+  pill: "9999px", // period filter pills
+};
+
+export const Z_INDEX = {
+  base: 0,
+  timeline: 2,
+  timelineActive: 4,
+  dropdown: 10,
+  overlay: 100,
+  modal: 1000,
+  lightbox: 9999,
+  toast: 10000,
+};
+
 const lightTheme = {
   pageBg: "#F7F7F5",
   pageText: "#1a1a1a",
@@ -21,10 +75,10 @@ const lightTheme = {
   cardShadow: "0 8px 24px rgba(0,0,0,0.08)",
 
   textPrimary: "#1a1a1a",
-  textSecondary: "#9CA3AF",
-  textTertiary: "#6B7280",
+  textSecondary: "#6B7280",
+  textTertiary: "#52525B",
   textDescription: "#374151",
-  textMuted: "#B0B0B0",
+  textMuted: "#767676",
   textDivider: "#D1D5DB",
 
   inputBg: "#fff",
@@ -52,6 +106,8 @@ const lightTheme = {
 
   modalOverlay: "rgba(0,0,0,0.4)",
   modalShadow: "0 24px 48px rgba(0,0,0,0.15)",
+
+  focusRing: "#2563EB",
 
   sourceTypeBg: {
     primary: "#D1FAE5",
@@ -105,6 +161,8 @@ const darkTheme = {
 
   modalOverlay: "rgba(0,0,0,0.6)",
   modalShadow: "0 24px 48px rgba(0,0,0,0.4)",
+
+  focusRing: "#60A5FA",
 
   sourceTypeBg: {
     primary: "#05966920",

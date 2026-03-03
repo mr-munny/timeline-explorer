@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useTheme, FONT_MONO } from "../contexts/ThemeContext";
+import { useTheme, FONT_MONO, FONT_SIZES } from "../contexts/ThemeContext";
 import { Icon } from "@iconify/react";
 import accountGroup from "@iconify-icons/mdi/account-group";
 import chevronDown from "@iconify-icons/mdi/chevron-down";
@@ -44,6 +44,7 @@ export default function StudentRoster({
       />
       <button
         onClick={() => setExpanded((v) => !v)}
+        aria-expanded={expanded}
         style={{
           width: "100%",
           display: "flex",
@@ -58,7 +59,7 @@ export default function StudentRoster({
       >
         <span
           style={{
-            fontSize: 10,
+            fontSize: FONT_SIZES.tiny,
             fontWeight: 700,
             textTransform: "uppercase",
             letterSpacing: "0.1em",
@@ -72,7 +73,7 @@ export default function StudentRoster({
           Student Roster
           <span
             style={{
-              fontSize: 9,
+              fontSize: FONT_SIZES.micro,
               fontWeight: 500,
               color: theme.textSecondary,
             }}
@@ -96,7 +97,7 @@ export default function StudentRoster({
           {students.length === 0 && (
             <div
               style={{
-                fontSize: 10,
+                fontSize: FONT_SIZES.tiny,
                 color: theme.textMuted,
                 fontStyle: "italic",
                 padding: "4px 6px",
@@ -114,7 +115,7 @@ export default function StudentRoster({
               <div key={sec.id} style={{ marginBottom: 8 }}>
                 <div
                   style={{
-                    fontSize: 9,
+                    fontSize: FONT_SIZES.micro,
                     fontWeight: 700,
                     color: theme.accentGold,
                     textTransform: "uppercase",
@@ -145,7 +146,7 @@ export default function StudentRoster({
             <div style={{ marginBottom: 8 }}>
               <div
                 style={{
-                  fontSize: 9,
+                  fontSize: FONT_SIZES.micro,
                   fontWeight: 700,
                   color: theme.errorRed,
                   textTransform: "uppercase",
@@ -194,7 +195,7 @@ function StudentRow({
         gap: 6,
         padding: "3px 6px",
         borderRadius: 4,
-        fontSize: 10,
+        fontSize: FONT_SIZES.tiny,
         fontFamily: FONT_MONO,
       }}
     >
@@ -212,7 +213,7 @@ function StudentRow({
       </div>
       <span
         style={{
-          fontSize: 8,
+          fontSize: FONT_SIZES.micro,
           color: student.assignedBy === "teacher" ? theme.teacherGreen : theme.textMuted,
           flexShrink: 0,
         }}
@@ -225,6 +226,7 @@ function StudentRow({
         <select
           autoFocus
           defaultValue=""
+          aria-label={`Reassign ${student.displayName || student.email} to section`}
           onChange={(e) => {
             if (e.target.value) {
               onReassign(student.uid, e.target.value);
@@ -233,7 +235,7 @@ function StudentRow({
           }}
           onBlur={() => setShowReassign(false)}
           style={{
-            fontSize: 9,
+            fontSize: FONT_SIZES.micro,
             fontFamily: FONT_MONO,
             padding: "2px 4px",
             borderRadius: 3,
@@ -257,6 +259,7 @@ function StudentRow({
       ) : (
         <button
           onClick={() => setShowReassign(true)}
+          aria-label={`Reassign ${student.displayName || student.email}`}
           title={`Reassign ${student.displayName || student.email}`}
           style={{
             background: "none",
@@ -264,7 +267,7 @@ function StudentRow({
             padding: "1px 4px",
             cursor: "pointer",
             color: theme.textMuted,
-            fontSize: 8,
+            fontSize: FONT_SIZES.micro,
             fontFamily: FONT_MONO,
             borderRadius: 3,
             transition: "all 0.15s",

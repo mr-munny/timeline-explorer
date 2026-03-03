@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useTheme } from "../contexts/ThemeContext";
+import { useTheme, FONT_SIZES } from "../contexts/ThemeContext";
 import { floorToDecade, ceilToDecade } from "../utils/dateUtils";
 
 export default function TimelineRangeEditor({ draftRange, onRangeChange, inputStyle }) {
@@ -17,7 +17,7 @@ export default function TimelineRangeEditor({ draftRange, onRangeChange, inputSt
   }
 
   const labelStyle = {
-    fontSize: 9,
+    fontSize: FONT_SIZES.micro,
     color: theme.textSecondary,
     textTransform: "uppercase",
     letterSpacing: "0.05em",
@@ -30,8 +30,9 @@ export default function TimelineRangeEditor({ draftRange, onRangeChange, inputSt
     <>
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
         <div style={{ flex: 1 }}>
-          <label style={labelStyle}>Start</label>
+          <label htmlFor="timeline-range-start" style={labelStyle}>Start</label>
           <input
+            id="timeline-range-start"
             type="number"
             value={startStr}
             step={10}
@@ -45,10 +46,11 @@ export default function TimelineRangeEditor({ draftRange, onRangeChange, inputSt
             style={{ ...inputStyle, width: "100%" }}
           />
         </div>
-        <span style={{ fontSize: 12, color: theme.textMuted, marginTop: 14 }}>&ndash;</span>
+        <span style={{ fontSize: FONT_SIZES.tiny, color: theme.textMuted, marginTop: 14 }}>&ndash;</span>
         <div style={{ flex: 1 }}>
-          <label style={labelStyle}>End</label>
+          <label htmlFor="timeline-range-end" style={labelStyle}>End</label>
           <input
+            id="timeline-range-end"
             type="number"
             value={endStr}
             step={10}
@@ -64,7 +66,7 @@ export default function TimelineRangeEditor({ draftRange, onRangeChange, inputSt
         </div>
       </div>
       <div style={{
-        fontSize: 9,
+        fontSize: FONT_SIZES.micro,
         color: theme.textMuted,
         marginTop: 6,
         textAlign: "center",

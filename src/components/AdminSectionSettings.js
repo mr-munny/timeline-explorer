@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { useTheme, FONT_MONO, FONT_SERIF } from "../contexts/ThemeContext";
+import { useTheme, FONT_MONO, FONT_SERIF, FONT_SIZES, SPACING, RADII } from "../contexts/ThemeContext";
 import { DEFAULT_FIELD_CONFIG } from "../data/constants";
 import { subscribeToPeriods, subscribeToCompellingQuestion, subscribeToTimelineRange, subscribeToFieldConfig, savePeriods, saveCompellingQuestion, saveTimelineRange, saveFieldConfig, seedDemoData, wipeSectionData } from "../services/database";
 import { Icon } from "@iconify/react";
@@ -165,29 +165,28 @@ export default function AdminSectionSettings({
 
   // Section header style
   const sectionHeaderStyle = {
-    fontSize: 10,
+    fontSize: FONT_SIZES.tiny,
     fontWeight: 700,
     color: theme.textMuted,
     textTransform: "uppercase",
     letterSpacing: "0.1em",
-    marginBottom: 10,
+    marginBottom: SPACING["2.5"],
     display: "flex",
     alignItems: "center",
-    gap: 6,
+    gap: SPACING["1.5"],
   };
 
-  const dividerStyle = { height: 1, background: theme.cardBorder, margin: "20px 0" };
+  const dividerStyle = { height: 1, background: theme.cardBorder, margin: `${SPACING[5]} 0` };
 
   const inputStyle = {
-    padding: "6px 8px",
+    padding: `${SPACING["1.5"]} ${SPACING[2]}`,
     border: `1.5px solid ${theme.inputBorder}`,
-    borderRadius: 6,
-    fontSize: 12,
+    borderRadius: RADII.md,
+    fontSize: FONT_SIZES.tiny,
     fontFamily: FONT_MONO,
     fontWeight: 700,
     background: theme.inputBg,
     color: theme.textPrimary,
-    outline: "none",
     boxSizing: "border-box",
     textAlign: "center",
   };
@@ -203,13 +202,14 @@ export default function AdminSectionSettings({
       flexDirection: "column",
     }}>
       {/* Scrollable content */}
-      <div style={{ flex: 1, padding: "24px 32px 100px", maxWidth: 640, width: "100%" }}>
+      <div style={{ flex: 1, padding: `${SPACING[6]} ${SPACING[8]} 100px`, maxWidth: 640, width: "100%" }}>
         {/* Section Name Header */}
-        <div style={{ marginBottom: 24 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 4 }}>
+        <div style={{ marginBottom: SPACING[6] }}>
+          <div style={{ display: "flex", alignItems: "center", gap: SPACING[3], marginBottom: SPACING[1] }}>
             {editingName ? (
               <input
                 autoFocus
+                aria-label="Section name"
                 value={draftSectionName}
                 onChange={(e) => setDraftSectionName(e.target.value)}
                 onKeyDown={(e) => {
@@ -218,21 +218,20 @@ export default function AdminSectionSettings({
                 }}
                 onBlur={handleRenameSubmit}
                 style={{
-                  fontSize: 22,
+                  fontSize: FONT_SIZES.xl,
                   fontWeight: 700,
                   fontFamily: FONT_SERIF,
                   border: `1.5px solid ${theme.inputBorder}`,
-                  borderRadius: 6,
+                  borderRadius: RADII.md,
                   background: theme.inputBg,
                   color: theme.textPrimary,
-                  padding: "4px 10px",
-                  outline: "none",
+                  padding: `${SPACING[1]} ${SPACING["2.5"]}`,
                 }}
               />
             ) : (
               <h2
                 style={{
-                  fontSize: 22,
+                  fontSize: FONT_SIZES.xl,
                   fontWeight: 700,
                   fontFamily: FONT_SERIF,
                   color: theme.textPrimary,
@@ -248,7 +247,7 @@ export default function AdminSectionSettings({
             <IconButton icon={pencilOutline} onClick={() => { setEditingName(true); setDraftSectionName(sectionName); }} title="Rename section" size={16} color={theme.textMuted} hoverColor={theme.textPrimary} />
             <IconButton icon={deleteOutline} onClick={handleDeleteSection} title="Delete section" size={16} color={theme.textMuted} hoverColor={theme.errorRed} style={{ marginLeft: "auto" }} />
           </div>
-          <div style={{ fontSize: 10, color: theme.textMuted, letterSpacing: "0.05em" }}>
+          <div style={{ fontSize: FONT_SIZES.tiny, color: theme.textMuted, letterSpacing: "0.05em" }}>
             ID: {sectionId}
           </div>
         </div>
@@ -314,14 +313,14 @@ export default function AdminSectionSettings({
           Demo Data
         </div>
         <div style={{
-          fontSize: 10,
+          fontSize: FONT_SIZES.tiny,
           color: theme.textSecondary,
-          marginBottom: 12,
+          marginBottom: SPACING[3],
           lineHeight: 1.5,
         }}>
           Seed this section with sample events, connections, and settings for demos and training. Wipe removes all events and connections from this section.
         </div>
-        <div style={{ display: "flex", gap: 8 }}>
+        <div style={{ display: "flex", gap: SPACING[2] }}>
           <button
             onClick={async () => {
               if (!window.confirm(
@@ -340,18 +339,18 @@ export default function AdminSectionSettings({
             }}
             disabled={seeding || wiping}
             style={{
-              padding: "8px 16px",
-              borderRadius: 6,
+              padding: `${SPACING[2]} ${SPACING[4]}`,
+              borderRadius: RADII.md,
               border: "none",
               background: seeding ? "#6366F180" : "#6366F1",
               color: "#fff",
-              fontSize: 10,
+              fontSize: FONT_SIZES.tiny,
               fontFamily: FONT_MONO,
               fontWeight: 700,
               cursor: seeding || wiping ? "not-allowed" : "pointer",
               display: "inline-flex",
               alignItems: "center",
-              gap: 6,
+              gap: SPACING["1.5"],
               textTransform: "uppercase",
               letterSpacing: "0.05em",
               transition: "all 0.15s",
@@ -380,18 +379,18 @@ export default function AdminSectionSettings({
             }}
             disabled={seeding || wiping}
             style={{
-              padding: "8px 16px",
-              borderRadius: 6,
+              padding: `${SPACING[2]} ${SPACING[4]}`,
+              borderRadius: RADII.md,
               border: `1px solid ${theme.errorRed}`,
               background: "transparent",
               color: theme.errorRed,
-              fontSize: 10,
+              fontSize: FONT_SIZES.tiny,
               fontFamily: FONT_MONO,
               fontWeight: 700,
               cursor: seeding || wiping ? "not-allowed" : "pointer",
               display: "inline-flex",
               alignItems: "center",
-              gap: 6,
+              gap: SPACING["1.5"],
               textTransform: "uppercase",
               letterSpacing: "0.05em",
               transition: "all 0.15s",
@@ -404,9 +403,9 @@ export default function AdminSectionSettings({
           </button>
         </div>
         {demoMessage && (
-          <div style={{
-            marginTop: 8,
-            fontSize: 10,
+          <div aria-live="polite" style={{
+            marginTop: SPACING[2],
+            fontSize: FONT_SIZES.tiny,
             fontFamily: FONT_MONO,
             color: demoMessage.includes("failed") ? theme.errorRed : theme.teacherGreen,
             fontWeight: 600,
@@ -422,10 +421,10 @@ export default function AdminSectionSettings({
         bottom: 0,
         background: theme.cardBg,
         borderTop: `1px solid ${theme.cardBorder}`,
-        padding: "12px 32px",
+        padding: `${SPACING[3]} ${SPACING[8]}`,
         display: "flex",
         alignItems: "center",
-        gap: 8,
+        gap: SPACING[2],
         maxWidth: 640,
         width: "100%",
         boxSizing: "border-box",
@@ -434,18 +433,18 @@ export default function AdminSectionSettings({
           onClick={handleSave}
           disabled={!isDirty || saving}
           style={{
-            padding: "8px 20px",
-            borderRadius: 6,
+            padding: `${SPACING[2]} ${SPACING[5]}`,
+            borderRadius: RADII.md,
             border: "none",
             background: isDirty ? theme.teacherGreen : theme.inputBorder,
             color: isDirty ? "#fff" : theme.textMuted,
-            fontSize: 11,
+            fontSize: FONT_SIZES.micro,
             fontFamily: FONT_MONO,
             fontWeight: 700,
             cursor: isDirty && !saving ? "pointer" : "not-allowed",
             display: "inline-flex",
             alignItems: "center",
-            gap: 6,
+            gap: SPACING["1.5"],
             textTransform: "uppercase",
             letterSpacing: "0.05em",
             transition: "all 0.15s",
@@ -466,13 +465,13 @@ export default function AdminSectionSettings({
           hoverBg={theme.subtleBg}
           style={{
             background: "transparent",
-            padding: "8px 16px",
-            borderRadius: 6,
+            padding: `${SPACING[2]} ${SPACING[4]}`,
+            borderRadius: RADII.md,
             border: `1px solid ${isDirty ? theme.inputBorder : "transparent"}`,
-            fontSize: 11,
+            fontSize: FONT_SIZES.micro,
             fontFamily: FONT_MONO,
             fontWeight: 600,
-            gap: 6,
+            gap: SPACING["1.5"],
             opacity: isDirty ? 1 : 0.4,
           }}
         >
@@ -488,13 +487,13 @@ export default function AdminSectionSettings({
           hoverBg={theme.subtleBg}
           style={{
             background: "transparent",
-            padding: "8px 16px",
-            borderRadius: 6,
+            padding: `${SPACING[2]} ${SPACING[4]}`,
+            borderRadius: RADII.md,
             border: `1px solid ${theme.inputBorder}`,
-            fontSize: 11,
+            fontSize: FONT_SIZES.micro,
             fontFamily: FONT_MONO,
             fontWeight: 600,
-            gap: 6,
+            gap: SPACING["1.5"],
           }}
         >
           Copy to...

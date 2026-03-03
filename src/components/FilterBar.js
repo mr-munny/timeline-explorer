@@ -90,7 +90,7 @@ export default function FilterBar({
           onClick={() => setSortOrder((s) => (s === "chrono" ? "reverse" : "chrono"))}
           aria-label={sortOrder === "chrono" ? "Sort: oldest first. Click for newest first" : "Sort: newest first. Click for oldest first"}
           style={{
-            padding: `${SPACING[2]} ${SPACING[3]},`,
+            padding: `${SPACING[2]} ${SPACING[3]}`,
             border: `1.5px solid ${theme.inputBorder}`,
             borderRadius: RADII.lg,
             fontSize: FONT_SIZES.sm,
@@ -98,6 +98,7 @@ export default function FilterBar({
             background: theme.inputBg,
             cursor: "pointer",
             color: theme.textTertiary,
+            fontWeight: 600,
             transition: "all 0.15s",
           }}
           onMouseEnter={(e) => { e.currentTarget.style.borderColor = theme.textTertiary; e.currentTarget.style.color = theme.textPrimary; }}

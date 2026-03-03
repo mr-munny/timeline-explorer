@@ -8,6 +8,7 @@ const MAX_ZOOM = 50;
 const ZOOM_STEP = 0.5;
 const ZOOM_WHEEL_FACTOR = 0.003;
 const CLUSTER_PX_THRESHOLD = 14;
+const ERA_LANE_HEIGHT = 34;
 
 /** Format a year label for the timeline axis.
  *  When hasBCE is true (range includes negative years), shows "500 BCE" / "1500 CE".
@@ -56,6 +57,8 @@ export default function VisualTimeline({
   const [openClusterId, setOpenClusterId] = useState(null);
   const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0 });
   const [isPanning, setIsPanning] = useState(false);
+  const [hoveredEra, setHoveredEra] = useState(null);
+  const [tooltipPos, setTooltipPos] = useState({ top: 0, left: 0 });
 
   // Refs
   const wrapperRef = useRef(null);
@@ -397,6 +400,34 @@ export default function VisualTimeline({
   // Whether the range includes BCE years (affects label formatting)
   const hasBCE = minYear < 0;
 
+  // Gantt-style lane assignment + z-index for era bands.
+  // Overlapping periods get separate lanes; most-recent period is on top.
+  const { periodZIndex, periodLane, eraLaneCount } = useMemo(() => {
+    const sorted = [...periods].sort((a, b) => a.era[0] - b.era[0]);
+    const zMap = {};
+    sorted.forEach((p, i) => { zMap[p.id] = i + 1; });
+
+    const lanes = [];
+    const laneMap = {};
+    sorted.forEach((p) => {
+      let assigned = 0;
+      for (let l = 0; l < lanes.length; l++) {
+        if (lanes[l].every(seg => p.era[0] >= seg[1] || p.era[1] <= seg[0])) {
+          assigned = l;
+          break;
+        }
+        assigned = l + 1;
+      }
+      if (!lanes[assigned]) lanes[assigned] = [];
+      lanes[assigned].push(p.era);
+      laneMap[p.id] = assigned;
+    });
+
+    return { periodZIndex: zMap, periodLane: laneMap, eraLaneCount: lanes.length };
+  }, [periods]);
+
+  const eraHeight = eraLaneCount * ERA_LANE_HEIGHT;
+
   const yearLabels = useMemo(() => {
     const labels = [];
     const start = Math.ceil(minYear / labelInterval) * labelInterval;
@@ -543,7 +574,7 @@ export default function VisualTimeline({
           <div
             style={{
               position: "relative",
-              height: 40,
+              height: eraHeight,
               borderRadius: 6,
               overflow: "hidden",
               background: theme.subtleBg,
@@ -563,21 +594,32 @@ export default function VisualTimeline({
                   aria-label={u.label}
                   onClick={() => onEraClick(u.id)}
                   onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onEraClick(u.id); } }}
-                  title={u.label}
+                  onMouseEnter={(e) => {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    const wrapperRect = wrapperRef.current.getBoundingClientRect();
+                    setTooltipPos({
+                      top: rect.top - wrapperRect.top - 4,
+                      left: Math.max(40, Math.min(rect.left + rect.width / 2 - wrapperRect.left, wrapperRect.width - 40)),
+                    });
+                    setHoveredEra(u);
+                  }}
+                  onMouseLeave={() => setHoveredEra(null)}
                   style={{
                     position: "absolute",
                     left: `${left}%`,
                     width: `${width}%`,
-                    top: 0,
-                    bottom: 0,
+                    top: periodLane[u.id] * ERA_LANE_HEIGHT,
+                    height: ERA_LANE_HEIGHT,
+                    zIndex: periodZIndex[u.id] || 0,
                     background: isActive ? u.accent + "25" : theme.subtleBg,
                     borderLeft: `2px solid ${isActive ? u.color : theme.inputBorder}`,
                     cursor: "pointer",
                     transition: "all 0.3s ease",
                     display: "flex",
                     alignItems: "center",
-                    justifyContent: "center",
                     overflow: "hidden",
+                    paddingLeft: SPACING[2],
+                    paddingRight: SPACING[1],
                   }}
                 >
                   <span
@@ -590,11 +632,13 @@ export default function VisualTimeline({
                       letterSpacing: "0.05em",
                       textTransform: "uppercase",
                       whiteSpace: "nowrap",
-                      opacity: width > 4 ? 1 : 0,
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      minWidth: 0,
                       transition: "opacity 0.3s",
                     }}
                   >
-                    {u.label.slice(0, 12)}
+                    {u.label}
                   </span>
                 </div>
               );
@@ -622,13 +666,65 @@ export default function VisualTimeline({
                       )`,
                       borderLeft: `1.5px dashed ${theme.textMuted}60`,
                       pointerEvents: "none",
-                      zIndex: 3,
+                      zIndex: periods.length + 1,
                       transition: "all 0.3s ease",
                     }}
                   />
                 );
               })()}
           </div>
+
+          {/* Era tooltip */}
+          {hoveredEra && (
+            <div
+              style={{
+                position: "absolute",
+                top: tooltipPos.top,
+                left: tooltipPos.left,
+                transform: "translate(-50%, -100%)",
+                zIndex: Z_INDEX.overlay,
+                background: theme.cardBg,
+                border: `1.5px solid ${hoveredEra.color}40`,
+                borderRadius: RADII.md,
+                boxShadow: `0 4px 12px rgba(0,0,0,0.15)`,
+                padding: `${SPACING[1]} ${SPACING["2.5"]}`,
+                pointerEvents: "none",
+                whiteSpace: "nowrap",
+                display: "flex",
+                alignItems: "center",
+                gap: SPACING["1.5"],
+              }}
+            >
+              <span
+                style={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: "50%",
+                  background: hoveredEra.color,
+                  flexShrink: 0,
+                }}
+              />
+              <span
+                style={{
+                  fontSize: FONT_SIZES.sm,
+                  fontWeight: 700,
+                  fontFamily: FONT_MONO,
+                  color: theme.textPrimary,
+                }}
+              >
+                {hoveredEra.label}
+              </span>
+              <span
+                style={{
+                  fontSize: FONT_SIZES.micro,
+                  fontFamily: FONT_MONO,
+                  color: theme.textMuted,
+                }}
+              >
+                {hoveredEra.era[0]}&ndash;{hoveredEra.era[1]}
+              </span>
+            </div>
+          )}
 
           {/* Connection arcs for the expanded event — arcs curve downward below the markers */}
           {connectionArcs.length > 0 && (
@@ -638,7 +734,7 @@ export default function VisualTimeline({
                 top: 0,
                 left: 0,
                 width: canvasWidth,
-                height: 42 + (durationLaneCount > 0 ? durationLaneCount * 12 + 4 : 0) + 28 + 40,
+                height: eraHeight + 2 + (durationLaneCount > 0 ? durationLaneCount * 12 + 4 : 0) + 28 + 40,
                 pointerEvents: "none",
                 zIndex: 4,
                 overflow: "visible",
@@ -658,7 +754,7 @@ export default function VisualTimeline({
                 </marker>
               </defs>
               {connectionArcs.map((arc) => {
-                const dotY = 42 + (durationLaneCount > 0 ? durationLaneCount * 12 + 4 : 0) + 7;
+                const dotY = eraHeight + 2 + (durationLaneCount > 0 ? durationLaneCount * 12 + 4 : 0) + 7;
                 const dist = Math.abs(arc.x2 - arc.x1);
                 const arcHeight = Math.min(36, Math.max(14, dist * 0.12));
                 const midX = (arc.x1 + arc.x2) / 2;

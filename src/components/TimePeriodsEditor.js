@@ -1,14 +1,15 @@
 import { useState, useRef } from "react";
 import { useTheme, FONT_MONO, FONT_SIZES } from "../contexts/ThemeContext";
-import { PERIOD_COLORS } from "../data/constants";
+import { getPaletteColors } from "../data/constants";
 import { Icon } from "@iconify/react";
 import pencilOutline from "@iconify-icons/mdi/pencil-outline";
 import closeCircleOutline from "@iconify-icons/mdi/close-circle-outline";
 import plusIcon from "@iconify-icons/mdi/plus";
 import IconButton from "./IconButton";
 
-export default function TimePeriodsEditor({ draftPeriods, draftTimelineRange, onPeriodsChange, inputStyle }) {
+export default function TimePeriodsEditor({ draftPeriods, draftTimelineRange, onPeriodsChange, inputStyle, paletteId }) {
   const { theme } = useTheme();
+  const activeColors = getPaletteColors(paletteId);
 
   const [editingPeriodId, setEditingPeriodId] = useState(null);
   const [draftEraStart, setDraftEraStart] = useState("");
@@ -199,7 +200,7 @@ export default function TimePeriodsEditor({ draftPeriods, draftTimelineRange, on
                     </div>
                   </div>
                   <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
-                    {PERIOD_COLORS.map((c, i) => (
+                    {activeColors.map((c, i) => (
                       <button
                         key={i}
                         onClick={() => {
@@ -232,8 +233,8 @@ export default function TimePeriodsEditor({ draftPeriods, draftTimelineRange, on
       <button
         onClick={() => {
           const newId = "period-" + Date.now();
-          const colorIdx = draftPeriods.length % PERIOD_COLORS.length;
-          const c = PERIOD_COLORS[colorIdx];
+          const colorIdx = draftPeriods.length % activeColors.length;
+          const c = activeColors[colorIdx];
           const newPeriod = {
             id: newId,
             label: "New Time Period",

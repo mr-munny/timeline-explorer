@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useTheme, FONT_MONO, FONT_SIZES, SPACING, RADII, Z_INDEX } from "../contexts/ThemeContext";
-import { savePeriods, saveCompellingQuestion, saveTimelineRange, saveFieldConfig } from "../services/database";
+import { savePeriods, saveCompellingQuestion, saveTimelineRange, saveFieldConfig, savePaletteId } from "../services/database";
 import { Icon } from "@iconify/react";
 import contentCopy from "@iconify-icons/mdi/content-copy";
 import closeIcon from "@iconify-icons/mdi/close";
@@ -8,6 +8,7 @@ import IconButton from "./IconButton";
 
 const SETTING_CATEGORIES = [
   { key: "timelineRange", label: "Timeline Range" },
+  { key: "paletteId", label: "Color Palette" },
   { key: "periods", label: "Time Periods" },
   { key: "compellingQuestion", label: "Compelling Question" },
   { key: "fieldConfig", label: "Entry Fields" },
@@ -66,6 +67,7 @@ export default function CopySettingsDialog({ sourceSection, sourceName, sections
         if (selectedSettings.has("compellingQuestion")) promises.push(saveCompellingQuestion(targetId, liveSettings.compellingQuestion));
         if (selectedSettings.has("timelineRange")) promises.push(saveTimelineRange(targetId, liveSettings.timelineRange));
         if (selectedSettings.has("fieldConfig")) promises.push(saveFieldConfig(targetId, liveSettings.fieldConfig));
+        if (selectedSettings.has("paletteId")) promises.push(savePaletteId(targetId, liveSettings.paletteId));
       }
       await Promise.all(promises);
       setDone(true);

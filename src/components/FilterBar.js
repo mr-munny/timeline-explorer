@@ -6,6 +6,7 @@ import sortAscending from "@iconify-icons/mdi/sort-ascending";
 import sortDescending from "@iconify-icons/mdi/sort-descending";
 import accountGroup from "@iconify-icons/mdi/account-group";
 import filterRemoveOutline from "@iconify-icons/mdi/filter-remove-outline";
+import earthIcon from "@iconify-icons/mdi/earth";
 
 export default function FilterBar({
   searchTerm,
@@ -25,6 +26,8 @@ export default function FilterBar({
   findPeriod,
   filteredCount,
   totalCount,
+  viewMode,
+  setViewMode,
 }) {
   const { theme, getThemedPeriodBg } = useTheme();
   const hasActiveFilters =
@@ -128,6 +131,29 @@ export default function FilterBar({
           <Icon icon={accountGroup} width={14} style={{ verticalAlign: "middle", marginRight: SPACING[1] }} aria-hidden="true" />
           Contributors
         </button>
+        {viewMode != null && (
+          <button
+            onClick={() => setViewMode(viewMode === "timeline" ? "worldview" : "timeline")}
+            aria-pressed={viewMode === "worldview"}
+            style={{
+              padding: `${SPACING[2]} ${SPACING[3]}`,
+              border: `1.5px solid ${viewMode === "worldview" ? theme.activeToggleBg : theme.inputBorder}`,
+              borderRadius: RADII.lg,
+              fontSize: FONT_SIZES.sm,
+              fontFamily: FONT_MONO,
+              background: viewMode === "worldview" ? theme.activeToggleBg : theme.inputBg,
+              color: viewMode === "worldview" ? theme.activeToggleText : theme.textTertiary,
+              cursor: "pointer",
+              fontWeight: 600,
+              transition: "all 0.15s",
+            }}
+            onMouseEnter={(e) => { if (viewMode !== "worldview") { e.currentTarget.style.borderColor = theme.textTertiary; e.currentTarget.style.color = theme.textPrimary; } }}
+            onMouseLeave={(e) => { if (viewMode !== "worldview") { e.currentTarget.style.borderColor = theme.inputBorder; e.currentTarget.style.color = theme.textTertiary; } }}
+          >
+            <Icon icon={earthIcon} width={14} style={{ verticalAlign: "middle", marginRight: SPACING[1] }} aria-hidden="true" />
+            {viewMode === "worldview" ? "Timeline" : "World View"}
+          </button>
+        )}
       </div>
 
       {/* Row 2: Period pills */}

@@ -1,4 +1,4 @@
-import { useState, useReducer, useMemo, useCallback, useEffect } from "react";
+import { useState, useReducer, useMemo, useCallback, useEffect, lazy, Suspense } from "react";
 import { useAuth } from "./contexts/AuthContext";
 import { useTheme, FONT_MONO, FONT_SERIF, FONT_SIZES, SPACING } from "./contexts/ThemeContext";
 import { getPeriod, DEFAULT_PERIODS, DEFAULT_FIELD_CONFIG } from "./data/constants";
@@ -21,6 +21,8 @@ import FilterBar from "./components/FilterBar";
 import CompellingQuestionHero from "./components/CompellingQuestionHero";
 import EventList from "./components/EventList";
 import RevisionPanel from "./components/RevisionPanel";
+
+const WorldMapView = lazy(() => import("./components/WorldMapView"));
 
 function modalReducer(state, action) {
   switch (action.type) {
@@ -52,6 +54,7 @@ export default function App() {
   const [modal, dispatchModal] = useReducer(modalReducer, { type: null, payload: null });
   const [showContributors, setShowContributors] = useState(false);
   const [showAdminView, setShowAdminView] = useState(false);
+  const [viewMode, setViewMode] = useState("timeline");
 
 
   // Derived modal state (backward-compatible with child components)
@@ -523,24 +526,26 @@ export default function App() {
         <main id="main-content">
       <CompellingQuestionHero compellingQuestion={compellingQuestion} />
 
-      {/* Visual Timeline */}
-      <div data-timeline-section style={{ background: theme.cardBg, borderBottom: `1px solid ${theme.cardBorder}` }}>
-        <div style={{ maxWidth: 960, margin: "0 auto" }}>
-          <VisualTimeline
-            filteredEvents={filteredEvents}
-            onEraClick={togglePeriod}
-            onEventSelect={handleScrollToEvent}
-            selectedPeriods={selectedPeriods}
-            selectedEraRange={selectedEraRange}
-            timelineStart={timelineStart}
-            timelineEnd={timelineEnd}
-            currentYear={new Date().getFullYear()}
-            periods={periods}
-            expandedEventId={expandedEvent}
-            connectionsByEvent={connectionsByEvent}
-          />
+      {/* Visual Timeline (hidden in world view) */}
+      {viewMode === "timeline" && (
+        <div data-timeline-section style={{ background: theme.cardBg, borderBottom: `1px solid ${theme.cardBorder}` }}>
+          <div style={{ maxWidth: 960, margin: "0 auto" }}>
+            <VisualTimeline
+              filteredEvents={filteredEvents}
+              onEraClick={togglePeriod}
+              onEventSelect={handleScrollToEvent}
+              selectedPeriods={selectedPeriods}
+              selectedEraRange={selectedEraRange}
+              timelineStart={timelineStart}
+              timelineEnd={timelineEnd}
+              currentYear={new Date().getFullYear()}
+              periods={periods}
+              expandedEventId={expandedEvent}
+              connectionsByEvent={connectionsByEvent}
+            />
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Main Content */}
       <div style={{ maxWidth: 960, margin: "0 auto", padding: `${SPACING[5]} ${SPACING[8]}` }}>
@@ -562,28 +567,62 @@ export default function App() {
           findPeriod={findPeriod}
           filteredCount={filteredEvents.length}
           totalCount={approvedEvents.length}
+          viewMode={viewMode}
+          setViewMode={setViewMode}
         />
 
-        <EventList
-          filteredEvents={filteredEvents}
-          expandedEvent={expandedEvent}
-          setExpandedEvent={setExpandedEvent}
-          readEvents={readEvents}
-          connectionsByEvent={connectionsByEvent}
-          approvedEvents={approvedEvents}
-          approvedConnections={approvedConnections}
-          filteredEventIds={filteredEventIds}
-          displayPeriods={periods}
-          isTeacher={isTeacher}
-          showContributors={showContributors}
-          handleEditEvent={handleEditEvent}
-          handleDeleteEvent={handleDeleteEvent}
-          handleScrollToEvent={handleScrollToEvent}
-          handleDeleteConnection={handleDeleteConnection}
-          handleEditConnection={handleEditConnection}
-          handleSuggestDeleteConnection={handleSuggestDeleteConnection}
-          teacherEmail={teacherEmail}
-        />
+        {/* World Map View */}
+        {viewMode === "worldview" && (
+          <Suspense fallback={
+            <div style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              height: 400,
+              fontFamily: FONT_MONO,
+              color: theme.textSecondary,
+              fontSize: FONT_SIZES.sm,
+            }}>
+              Loading map...
+            </div>
+          }>
+            <WorldMapView
+              filteredEvents={filteredEvents}
+              periods={periods}
+              onEventSelect={(eventId) => {
+                setViewMode("timeline");
+                handleScrollToEvent(eventId);
+              }}
+              timelineStart={timelineStart}
+              timelineEnd={timelineEnd}
+              selectedPeriods={selectedPeriods}
+            />
+          </Suspense>
+        )}
+
+        {/* Event List (hidden in world view) */}
+        {viewMode === "timeline" && (
+          <EventList
+            filteredEvents={filteredEvents}
+            expandedEvent={expandedEvent}
+            setExpandedEvent={setExpandedEvent}
+            readEvents={readEvents}
+            connectionsByEvent={connectionsByEvent}
+            approvedEvents={approvedEvents}
+            approvedConnections={approvedConnections}
+            filteredEventIds={filteredEventIds}
+            displayPeriods={periods}
+            isTeacher={isTeacher}
+            showContributors={showContributors}
+            handleEditEvent={handleEditEvent}
+            handleDeleteEvent={handleDeleteEvent}
+            handleScrollToEvent={handleScrollToEvent}
+            handleDeleteConnection={handleDeleteConnection}
+            handleEditConnection={handleEditConnection}
+            handleSuggestDeleteConnection={handleSuggestDeleteConnection}
+            teacherEmail={teacherEmail}
+          />
+        )}
 
         {/* Footer */}
         <footer

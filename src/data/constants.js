@@ -150,4 +150,5 @@ export const DEFAULT_FIELD_CONFIG = {
   sourceUrl: "optional",
   imageUrl: "optional",
   region: "optional",
+  location: "optional",
 };

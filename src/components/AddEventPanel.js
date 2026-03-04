@@ -5,14 +5,21 @@ import { Icon } from "@iconify/react";
 import closeIcon from "@iconify-icons/mdi/close";
 import sendIcon from "@iconify-icons/mdi/send";
 import lightbulbOutline from "@iconify-icons/mdi/lightbulb-outline";
+import mapMarkerIcon from "@iconify-icons/mdi/map-marker";
+import mapMarkerRemoveOutline from "@iconify-icons/mdi/map-marker-remove-outline";
 import { useTheme, FONT_MONO, FONT_SERIF, FONT_SIZES, SPACING, RADII } from "../contexts/ThemeContext";
 import FeedbackBanner from "./FeedbackBanner";
 import ModalShell from "./ModalShell";
 import IconButton from "./IconButton";
+import Map, { Marker, NavigationControl } from "react-map-gl/maplibre";
+import "maplibre-gl/dist/maplibre-gl.css";
+
+const LIGHT_STYLE = "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json";
+const DARK_STYLE = "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json";
 
 export default function AddEventPanel({ onAdd, onClose, userName, timelineStart = 1910, timelineEnd = 2000, periods = [], fieldConfig, editingEvent, isTeacher, revisionMode = false, feedback = null }) {
   const fc = { ...DEFAULT_FIELD_CONFIG, ...(fieldConfig || {}) };
-  const { theme, getThemedSourceTypeBg } = useTheme();
+  const { theme, mode, getThemedSourceTypeBg } = useTheme();
   const isEditing = !!editingEvent;
   const [form, setForm] = useState(isEditing ? {
     title: editingEvent.title || "",
@@ -30,6 +37,8 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
     sourceUrl: editingEvent.sourceUrl || "",
     imageUrl: editingEvent.imageUrl || "",
     region: editingEvent.region || "",
+    latitude: editingEvent.latitude ?? null,
+    longitude: editingEvent.longitude ?? null,
   } : {
     title: "",
     year: "",
@@ -46,6 +55,8 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
     sourceUrl: "",
     imageUrl: "",
     region: "",
+    latitude: null,
+    longitude: null,
   });
   const [errors, setErrors] = useState({});
   const [warnings, setWarnings] = useState({});
@@ -115,12 +126,13 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
     }
     if (fc.imageUrl === "mandatory" && !form.imageUrl.trim()) e.imageUrl = true;
     if (fc.region === "mandatory" && !form.region.trim()) e.region = true;
+    if (fc.location === "mandatory" && form.latitude == null) e.location = true;
     setErrors(e);
     setWarnings(w);
     return Object.keys(e).length === 0;
   };
 
-  const FIELD_NAMES = { title: "Title", year: "Year", month: "Month", day: "Day", endYear: "End Year", endMonth: "End Month", endDay: "End Day", period: "Time Period", tags: "Tags", description: "Description", sourceNote: "Source Citation", sourceUrl: "Source URL", imageUrl: "Image URL", region: "Region" };
+  const FIELD_NAMES = { title: "Title", year: "Year", month: "Month", day: "Day", endYear: "End Year", endMonth: "End Month", endDay: "End Day", period: "Time Period", tags: "Tags", description: "Description", sourceNote: "Source Citation", sourceUrl: "Source URL", imageUrl: "Image URL", region: "Region", location: "Location" };
 
   const handleSubmit = async () => {
     if (!validate()) {
@@ -614,6 +626,100 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
               style={fieldStyle("region")}
               aria-invalid={errors.region ? "true" : undefined}
             />
+          </div>
+          )}
+
+          {/* Location (map picker) */}
+          {fc.location !== "hidden" && (
+          <div>
+            <label style={labelStyle}>
+              <Icon icon={mapMarkerIcon} width={12} style={{ verticalAlign: "middle", marginRight: SPACING["0.5"] }} />
+              Map Location{fc.location === "optional" ? " (optional)" : fc.location === "mandatory" ? " *" : ""}
+            </label>
+            <div style={{
+              borderRadius: RADII.lg,
+              overflow: "hidden",
+              border: `1.5px solid ${errors.location ? theme.errorRed : theme.inputBorder}`,
+              height: 180,
+              position: "relative",
+            }}>
+              <Map
+                mapStyle={mode === "dark" ? DARK_STYLE : LIGHT_STYLE}
+                initialViewState={{
+                  longitude: form.longitude ?? -40,
+                  latitude: form.latitude ?? 30,
+                  zoom: form.latitude != null ? 4 : 1.5,
+                }}
+                style={{ width: "100%", height: "100%" }}
+                cursor="crosshair"
+                onClick={(e) => {
+                  setForm((f) => ({
+                    ...f,
+                    latitude: Math.round(e.lngLat.lat * 1000) / 1000,
+                    longitude: Math.round(e.lngLat.lng * 1000) / 1000,
+                  }));
+                  setErrors((prev) => ({ ...prev, location: undefined }));
+                }}
+                attributionControl={false}
+              >
+                <NavigationControl position="top-right" showCompass={false} />
+                {form.latitude != null && form.longitude != null && (
+                  <Marker
+                    longitude={form.longitude}
+                    latitude={form.latitude}
+                    anchor="bottom"
+                  >
+                    <Icon icon={mapMarkerIcon} width={28} style={{ color: theme.errorRed, filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.3))" }} />
+                  </Marker>
+                )}
+              </Map>
+            </div>
+            {form.latitude != null && form.longitude != null && (
+              <div style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginTop: SPACING[2],
+              }}>
+                <span style={{
+                  fontSize: FONT_SIZES.micro,
+                  fontFamily: FONT_MONO,
+                  color: theme.textSecondary,
+                }}>
+                  {form.latitude.toFixed(3)}, {form.longitude.toFixed(3)}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setForm((f) => ({ ...f, latitude: null, longitude: null }))}
+                  style={{
+                    fontSize: FONT_SIZES.micro,
+                    fontFamily: FONT_MONO,
+                    color: theme.errorRed,
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    fontWeight: 700,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: SPACING["0.5"],
+                  }}
+                >
+                  <Icon icon={mapMarkerRemoveOutline} width={12} />
+                  Clear pin
+                </button>
+              </div>
+            )}
+            {form.latitude == null && (
+              <p style={{
+                fontSize: FONT_SIZES.micro,
+                fontFamily: FONT_MONO,
+                color: theme.textMuted,
+                marginTop: SPACING[1],
+                marginBottom: 0,
+              }}>
+                Click the map to place a pin for this event's location
+              </p>
+            )}
           </div>
           )}
 

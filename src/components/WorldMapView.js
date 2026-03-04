@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
-import Map, { Source, Layer, Popup, NavigationControl } from "react-map-gl/maplibre";
+import Map, { Marker, Popup, NavigationControl } from "react-map-gl/maplibre";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { resolveEventCoordinates } from "../data/regionCentroids";
 import { getPeriod } from "../data/constants";
@@ -24,7 +24,6 @@ export default function WorldMapView({
   const mapRef = useRef(null);
   const [timeRange, setTimeRange] = useState([timelineStart, timelineEnd]);
   const [popupEvent, setPopupEvent] = useState(null);
-  const [cursor, setCursor] = useState("grab");
 
   // Reset time range when timeline bounds change
   useEffect(() => {
@@ -51,62 +50,6 @@ export default function WorldMapView({
     const [start, end] = timeRange;
     return mappableEvents.filter((e) => e.year >= start && e.year <= end);
   }, [mappableEvents, timeRange]);
-
-  // Build GeoJSON for the circle layer
-  const geojson = useMemo(() => ({
-    type: "FeatureCollection",
-    features: timeFilteredEvents.map((e) => {
-      const period = getPeriod(periods, e.period);
-      return {
-        type: "Feature",
-        geometry: {
-          type: "Point",
-          coordinates: [e._coords[1], e._coords[0]], // GeoJSON is [lng, lat]
-        },
-        properties: {
-          id: e.id,
-          title: e.title,
-          color: period?.accent || period?.color || "#6B7280",
-          borderColor: period?.color || "#374151",
-        },
-      };
-    }),
-  }), [timeFilteredEvents, periods]);
-
-  // Circle layer paint
-  const circleLayer = useMemo(() => ({
-    id: "event-circles",
-    type: "circle",
-    paint: {
-      "circle-radius": [
-        "interpolate", ["linear"], ["zoom"],
-        1, 5,
-        6, 8,
-        12, 12,
-      ],
-      "circle-color": ["get", "color"],
-      "circle-stroke-color": ["get", "borderColor"],
-      "circle-stroke-width": 2,
-      "circle-opacity": 0.85,
-    },
-  }), []);
-
-  const handleMapClick = useCallback((e) => {
-    const features = e.features;
-    if (features && features.length > 0) {
-      const feature = features[0];
-      const eventId = feature.properties.id;
-      const event = timeFilteredEvents.find((ev) => ev.id === eventId);
-      if (event) {
-        setPopupEvent(event);
-      }
-    } else {
-      setPopupEvent(null);
-    }
-  }, [timeFilteredEvents]);
-
-  const handleMouseEnter = useCallback(() => setCursor("pointer"), []);
-  const handleMouseLeave = useCallback(() => setCursor("grab"), []);
 
   const handleViewInTimeline = useCallback((eventId) => {
     setPopupEvent(null);
@@ -147,18 +90,41 @@ export default function WorldMapView({
             zoom: 1.5,
           }}
           style={{ width: "100%", height: "100%" }}
-          cursor={cursor}
-          interactiveLayerIds={["event-circles"]}
-          onClick={handleMapClick}
-          onMouseEnter={handleMouseEnter}
-          onMouseLeave={handleMouseLeave}
+          onClick={() => setPopupEvent(null)}
           attributionControl={true}
         >
           <NavigationControl position="top-right" />
 
-          <Source id="events" type="geojson" data={geojson}>
-            <Layer {...circleLayer} />
-          </Source>
+          {timeFilteredEvents.map((e) => {
+            const period = getPeriod(periods, e.period);
+            return (
+              <Marker
+                key={e.id}
+                longitude={e._coords[1]}
+                latitude={e._coords[0]}
+                anchor="center"
+                onClick={(evt) => {
+                  evt.originalEvent.stopPropagation();
+                  setPopupEvent(e);
+                }}
+              >
+                <div
+                  style={{
+                    width: 14,
+                    height: 14,
+                    borderRadius: "50%",
+                    background: period?.accent || period?.color || "#6B7280",
+                    border: `2px solid ${period?.color || "#374151"}`,
+                    cursor: "pointer",
+                    opacity: 0.85,
+                    transition: "transform 0.15s",
+                  }}
+                  onMouseEnter={(ev) => { ev.currentTarget.style.transform = "scale(1.4)"; }}
+                  onMouseLeave={(ev) => { ev.currentTarget.style.transform = "scale(1)"; }}
+                />
+              </Marker>
+            );
+          })}
 
           {popupEvent && (
             <Popup

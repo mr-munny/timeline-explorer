@@ -525,6 +525,7 @@ export default function App() {
           onImpersonate={setImpersonating}
           autoModeratorEnabled={autoModeratorEnabled}
           autoModeratorVisible={autoModeratorVisible}
+          effectiveTeacherUid={effectiveTeacherUid}
         />
       )}
 

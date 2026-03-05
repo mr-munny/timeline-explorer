@@ -153,15 +153,26 @@ export default function useFirebaseSubscriptions({
     return () => unsub();
   }, [user, section]);
 
-  // Subscribe to global auto-moderator setting
+  // Resolve the relevant teacher UID for auto-moderator:
+  // - Teachers: their own UID (or impersonated teacher's UID)
+  // - Students: the teacherUid from their assigned section
+  const autoModTeacherUid = useMemo(() => {
+    if (effectiveTeacherUid) return effectiveTeacherUid;
+    const sec = (sections || []).find((s) => s.id === section);
+    return sec?.teacherUid || null;
+  }, [effectiveTeacherUid, sections, section]);
+
+  // Subscribe to auto-moderator settings (global visibility + per-teacher enabled)
   useEffect(() => {
     if (!user) return;
     const unsub = subscribeToAutoModerator((data) => {
-      setAutoModeratorEnabled(data?.enabled || false);
       setAutoModeratorVisible(data?.visible || false);
+      setAutoModeratorEnabled(
+        autoModTeacherUid ? !!(data?.teachers?.[autoModTeacherUid]) : false
+      );
     });
     return () => unsub();
-  }, [user]);
+  }, [user, autoModTeacherUid]);
 
   return {
     allEvents,

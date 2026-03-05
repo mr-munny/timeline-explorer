@@ -30,6 +30,7 @@ export default function AdminView({
   teacherData,
   onImpersonate,
   autoModeratorEnabled,
+  autoModeratorVisible,
 }) {
   const { theme } = useTheme();
   const [selectedTab, setSelectedTab] = useState("moderation");
@@ -79,6 +80,8 @@ export default function AdminView({
             user={user}
             userName={userName}
             autoModeratorEnabled={autoModeratorEnabled}
+            autoModeratorVisible={autoModeratorVisible}
+            isSuperAdmin={isSuperAdmin}
           />
         ) : effectiveTab === "teachers" && isSuperAdmin ? (
           <TeacherManagement

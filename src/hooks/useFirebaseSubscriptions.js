@@ -31,6 +31,7 @@ export default function useFirebaseSubscriptions({
   const [fieldConfig, setFieldConfig] = useState(null);
   const [allStudentAssignments, setAllStudentAssignments] = useState([]);
   const [autoModeratorEnabled, setAutoModeratorEnabled] = useState(false);
+  const [autoModeratorVisible, setAutoModeratorVisible] = useState(false);
 
   // Filter sections by teacher ownership (client-side)
   const activeSections = useMemo(() => {
@@ -157,6 +158,7 @@ export default function useFirebaseSubscriptions({
     if (!user) return;
     const unsub = subscribeToAutoModerator((data) => {
       setAutoModeratorEnabled(data?.enabled || false);
+      setAutoModeratorVisible(data?.visible || false);
     });
     return () => unsub();
   }, [user]);
@@ -177,5 +179,6 @@ export default function useFirebaseSubscriptions({
     fieldConfig,
     allStudentAssignments,
     autoModeratorEnabled,
+    autoModeratorVisible,
   };
 }

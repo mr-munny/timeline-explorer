@@ -1,12 +1,12 @@
 import { useState } from "react";
-import { approveEvent, rejectEvent, updateEvent, approveEdit, approveConnection, rejectConnection, updateConnection, approveConnectionEdit, approveConnectionDeletion, requestRevision, saveAutoModerator } from "../services/database";
+import { approveEvent, rejectEvent, updateEvent, approveEdit, approveConnection, rejectConnection, updateConnection, approveConnectionEdit, approveConnectionDeletion, requestRevision, saveAutoModeratorVisible, saveAutoModeratorEnabled } from "../services/database";
 import { writeToSheet } from "../services/sheets";
 import { useTheme, FONT_MONO, FONT_SERIF, FONT_SIZES, SPACING, RADII } from "../contexts/ThemeContext";
 import PendingEventCard from "./PendingEventCard";
 import PendingConnectionCard from "./PendingConnectionCard";
 import AwaitingRevisionSection from "./AwaitingRevisionSection";
 
-export default function ModerationPanel({ pendingEvents, pendingConnections = [], needsRevisionEvents = [], needsRevisionConnections = [], allEvents = [], allConnections = [], periods = [], periodsBySection = {}, getSectionName = (id) => id, onEventApproved, readOnly = false, user, userName, onEditPendingEvent, onEditPendingConnection, onWithdraw, autoModeratorEnabled = false, autoModeratorVisible = false, isSuperAdmin = false }) {
+export default function ModerationPanel({ pendingEvents, pendingConnections = [], needsRevisionEvents = [], needsRevisionConnections = [], allEvents = [], allConnections = [], periods = [], periodsBySection = {}, getSectionName = (id) => id, onEventApproved, readOnly = false, user, userName, onEditPendingEvent, onEditPendingConnection, onWithdraw, autoModeratorEnabled = false, autoModeratorVisible = false, isSuperAdmin = false, teacherUid }) {
   const { theme } = useTheme();
   const [activeTab, setActiveTab] = useState("events");
   const [editingId, setEditingId] = useState(null);
@@ -253,7 +253,7 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
           {!readOnly && (isSuperAdmin || autoModeratorVisible) && (
             <div style={{ display: "flex", alignItems: "center", gap: SPACING[2] }}>
               <button
-                onClick={() => saveAutoModerator({ enabled: !autoModeratorEnabled, visible: autoModeratorVisible })}
+                onClick={() => teacherUid && saveAutoModeratorEnabled(teacherUid, !autoModeratorEnabled)}
                 style={{
                   display: "flex",
                   alignItems: "center",
@@ -300,7 +300,7 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
               </button>
               {isSuperAdmin && (
                 <button
-                  onClick={() => saveAutoModerator({ enabled: autoModeratorEnabled, visible: !autoModeratorVisible })}
+                  onClick={() => saveAutoModeratorVisible(!autoModeratorVisible)}
                   style={{
                     display: "flex",
                     alignItems: "center",

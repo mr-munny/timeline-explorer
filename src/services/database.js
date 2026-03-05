@@ -345,18 +345,24 @@ export async function resubmitConnection(connId, updates, currentFeedback, exist
 
 // ── Auto-Moderator Setting ──────────────────────────────────
 
-// Listen to global auto-moderator setting
+// Listen to auto-moderator settings (global visibility + per-teacher enabled)
 export function subscribeToAutoModerator(callback) {
   const autoModRef = ref(db, "settings/autoModerator");
   return onValue(autoModRef, (snapshot) => {
-    callback(snapshot.val() || { enabled: false });
+    callback(snapshot.val() || {});
   });
 }
 
-// Save global auto-moderator setting
-export async function saveAutoModerator(data) {
-  const autoModRef = ref(db, "settings/autoModerator");
-  await set(autoModRef, data);
+// Save global visibility toggle (super admin only)
+export async function saveAutoModeratorVisible(visible) {
+  const visibleRef = ref(db, "settings/autoModerator/visible");
+  await set(visibleRef, visible);
+}
+
+// Save per-teacher enabled toggle
+export async function saveAutoModeratorEnabled(teacherUid, enabled) {
+  const teacherRef = ref(db, `settings/autoModerator/teachers/${teacherUid}`);
+  await set(teacherRef, enabled);
 }
 
 // ── Color Palette ───────────────────────────────────────────

@@ -102,6 +102,7 @@ export default function App() {
     setTimelineEnd,
     fieldConfig,
     allStudentAssignments,
+    autoModeratorEnabled,
   } = useFirebaseSubscriptions({ user, isTeacher, section, showAdminView, effectiveTeacherUid });
   const defaultSection = section;
 
@@ -319,6 +320,8 @@ export default function App() {
     setEditingEvent,
     revisingEvent,
     setRevisingEvent,
+    autoModeratorEnabled,
+    periods,
   });
 
   const {
@@ -408,6 +411,7 @@ export default function App() {
         [data-theme="dark"] { --focus-ring: #60A5FA; }
         :focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
         :focus:not(:focus-visible) { outline: none; }
+        @keyframes spin { to { transform: rotate(360deg); } }
       `}</style>
 
       {/* Skip navigation link */}
@@ -518,6 +522,7 @@ export default function App() {
           isSuperAdmin={isSuperAdmin}
           teacherData={teacherData}
           onImpersonate={setImpersonating}
+          autoModeratorEnabled={autoModeratorEnabled}
         />
       )}
 

@@ -10,6 +10,7 @@ import {
   subscribeToCompellingQuestion,
   subscribeToTimelineRange,
   subscribeToFieldConfig,
+  subscribeToAutoModerator,
 } from "../services/database";
 
 export default function useFirebaseSubscriptions({
@@ -29,6 +30,7 @@ export default function useFirebaseSubscriptions({
   const [timelineEnd, setTimelineEnd] = useState(2000);
   const [fieldConfig, setFieldConfig] = useState(null);
   const [allStudentAssignments, setAllStudentAssignments] = useState([]);
+  const [autoModeratorEnabled, setAutoModeratorEnabled] = useState(false);
 
   // Filter sections by teacher ownership (client-side)
   const activeSections = useMemo(() => {
@@ -150,6 +152,15 @@ export default function useFirebaseSubscriptions({
     return () => unsub();
   }, [user, section]);
 
+  // Subscribe to global auto-moderator setting
+  useEffect(() => {
+    if (!user) return;
+    const unsub = subscribeToAutoModerator((data) => {
+      setAutoModeratorEnabled(data?.enabled || false);
+    });
+    return () => unsub();
+  }, [user]);
+
   return {
     allEvents,
     allConnections,
@@ -165,5 +176,6 @@ export default function useFirebaseSubscriptions({
     setTimelineEnd,
     fieldConfig,
     allStudentAssignments,
+    autoModeratorEnabled,
   };
 }

@@ -36,6 +36,7 @@ export default function PendingEventCard({
   onEditPendingEvent, onWithdraw,
   feedbackId, feedbackText, feedbackType,
   onFeedbackOpen, onFeedbackChange, onFeedbackSubmit, onFeedbackCancel,
+  autoModeratorEnabled,
 }) {
   const { theme } = useTheme();
   const unit = getPeriod(periods, event.period);
@@ -514,6 +515,110 @@ export default function PendingEventCard({
             )}
           </div>
           </>
+          )}
+
+          {/* AI Auto-Moderator Review */}
+          {!readOnly && event.aiReview && (() => {
+            const review = event.aiReview;
+            const rec = review.recommendation;
+            const colorMap = {
+              approve: { border: theme.successGreen || "#16A34A", bg: (theme.successGreen || "#16A34A") + "12", text: theme.successGreen || "#16A34A", label: "AI: Approve" },
+              flag: { border: theme.feedbackAmber, bg: theme.feedbackAmberBg, text: theme.feedbackAmber, label: "AI: Flag for Review" },
+              reject: { border: theme.errorRed, bg: (theme.errorRed || "#DC2626") + "12", text: theme.errorRed, label: "AI: Reject" },
+            };
+            const style = colorMap[rec] || colorMap.flag;
+            return (
+              <div style={{
+                padding: `${SPACING[2.5]} ${SPACING[3]}`,
+                background: style.bg,
+                border: `1.5px solid ${style.border}`,
+                borderRadius: RADII.lg,
+                marginBottom: SPACING[2.5],
+              }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: SPACING[1] }}>
+                  <span style={{
+                    fontSize: FONT_SIZES.tiny,
+                    fontWeight: 700,
+                    fontFamily: FONT_MONO,
+                    color: style.text,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.05em",
+                  }}>
+                    {style.label}
+                  </span>
+                  <span style={{
+                    fontSize: FONT_SIZES.micro,
+                    fontFamily: FONT_MONO,
+                    color: theme.textSecondary,
+                  }}>
+                    Confidence: {review.confidence}/10
+                  </span>
+                </div>
+                <p style={{
+                  fontSize: FONT_SIZES.tiny,
+                  fontFamily: FONT_SERIF,
+                  color: theme.textDescription,
+                  margin: 0,
+                  lineHeight: 1.5,
+                }}>
+                  {review.reasoning}
+                </p>
+                {(rec === "approve" || rec === "reject") && (
+                  <button
+                    onClick={() => rec === "approve" ? onApprove(event) : onReject(event.id)}
+                    disabled={isProcessing}
+                    style={{
+                      marginTop: SPACING[2],
+                      padding: `${SPACING[1.5]} ${SPACING[3]}`,
+                      background: style.text,
+                      color: "#fff",
+                      border: "none",
+                      borderRadius: RADII.md,
+                      fontSize: FONT_SIZES.micro,
+                      fontFamily: FONT_MONO,
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      transition: "filter 0.15s",
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.filter = "brightness(1.15)"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.filter = "none"; }}
+                  >
+                    {isProcessing ? "..." : `Accept: ${rec === "approve" ? "Approve" : "Reject"}`}
+                  </button>
+                )}
+              </div>
+            );
+          })()}
+
+          {/* Pending AI review indicator */}
+          {!readOnly && !event.aiReview && autoModeratorEnabled && !event.editOf && (
+            <div style={{
+              padding: `${SPACING[2]} ${SPACING[3]}`,
+              background: theme.subtleBg,
+              border: `1.5px dashed ${theme.inputBorder}`,
+              borderRadius: RADII.lg,
+              marginBottom: SPACING[2.5],
+              display: "flex",
+              alignItems: "center",
+              gap: SPACING[2],
+            }}>
+              <span style={{
+                width: 10,
+                height: 10,
+                borderRadius: "50%",
+                border: `2px solid ${theme.textMuted}`,
+                borderTopColor: "transparent",
+                display: "inline-block",
+                animation: "spin 1s linear infinite",
+              }} />
+              <span style={{
+                fontSize: FONT_SIZES.micro,
+                fontFamily: FONT_MONO,
+                color: theme.textMuted,
+              }}>
+                Awaiting AI review...
+              </span>
+            </div>
           )}
 
           {/* Student self-service buttons (readOnly mode, own submissions only) */}

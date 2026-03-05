@@ -6,7 +6,7 @@ import PendingEventCard from "./PendingEventCard";
 import PendingConnectionCard from "./PendingConnectionCard";
 import AwaitingRevisionSection from "./AwaitingRevisionSection";
 
-export default function ModerationPanel({ pendingEvents, pendingConnections = [], needsRevisionEvents = [], needsRevisionConnections = [], allEvents = [], allConnections = [], periods = [], periodsBySection = {}, getSectionName = (id) => id, onEventApproved, readOnly = false, user, userName, onEditPendingEvent, onEditPendingConnection, onWithdraw, autoModeratorEnabled = false }) {
+export default function ModerationPanel({ pendingEvents, pendingConnections = [], needsRevisionEvents = [], needsRevisionConnections = [], allEvents = [], allConnections = [], periods = [], periodsBySection = {}, getSectionName = (id) => id, onEventApproved, readOnly = false, user, userName, onEditPendingEvent, onEditPendingConnection, onWithdraw, autoModeratorEnabled = false, autoModeratorVisible = false, isSuperAdmin = false }) {
   const { theme } = useTheme();
   const [activeTab, setActiveTab] = useState("events");
   const [editingId, setEditingId] = useState(null);
@@ -250,53 +250,78 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                 : ""}
             </p>
           </div>
-          {!readOnly && (
-            <button
-              onClick={() => saveAutoModerator({ enabled: !autoModeratorEnabled })}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: SPACING[2],
-                padding: `${SPACING[2]} ${SPACING[3]}`,
-                borderRadius: RADII.lg,
-                border: `1.5px solid ${autoModeratorEnabled ? theme.accentGold : theme.inputBorder}`,
-                background: autoModeratorEnabled ? theme.accentGold + "15" : "transparent",
-                cursor: "pointer",
-                transition: "all 0.15s",
-              }}
-              title={autoModeratorEnabled ? "AI auto-moderator is on — click to disable" : "Enable AI auto-moderator for new submissions"}
-            >
-              <span style={{
-                fontSize: FONT_SIZES.micro,
-                fontFamily: FONT_MONO,
-                fontWeight: 700,
-                color: autoModeratorEnabled ? theme.accentGold : theme.textSecondary,
-                whiteSpace: "nowrap",
-              }}>
-                AI Moderator
-              </span>
-              <span style={{
-                width: 32,
-                height: 18,
-                borderRadius: 9,
-                background: autoModeratorEnabled ? theme.accentGold : theme.inputBorder,
-                position: "relative",
-                display: "inline-block",
-                transition: "background 0.15s",
-                flexShrink: 0,
-              }}>
+          {!readOnly && (isSuperAdmin || autoModeratorVisible) && (
+            <div style={{ display: "flex", alignItems: "center", gap: SPACING[2] }}>
+              <button
+                onClick={() => saveAutoModerator({ enabled: !autoModeratorEnabled, visible: autoModeratorVisible })}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: SPACING[2],
+                  padding: `${SPACING[2]} ${SPACING[3]}`,
+                  borderRadius: RADII.lg,
+                  border: `1.5px solid ${autoModeratorEnabled ? theme.accentGold : theme.inputBorder}`,
+                  background: autoModeratorEnabled ? theme.accentGold + "15" : "transparent",
+                  cursor: "pointer",
+                  transition: "all 0.15s",
+                }}
+                title={autoModeratorEnabled ? "AI auto-moderator is on — click to disable" : "Enable AI auto-moderator for new submissions"}
+              >
                 <span style={{
-                  position: "absolute",
-                  top: 2,
-                  left: autoModeratorEnabled ? 16 : 2,
-                  width: 14,
-                  height: 14,
-                  borderRadius: "50%",
-                  background: "#fff",
-                  transition: "left 0.15s",
-                }} />
-              </span>
-            </button>
+                  fontSize: FONT_SIZES.micro,
+                  fontFamily: FONT_MONO,
+                  fontWeight: 700,
+                  color: autoModeratorEnabled ? theme.accentGold : theme.textSecondary,
+                  whiteSpace: "nowrap",
+                }}>
+                  AI Moderator
+                </span>
+                <span style={{
+                  width: 32,
+                  height: 18,
+                  borderRadius: 9,
+                  background: autoModeratorEnabled ? theme.accentGold : theme.inputBorder,
+                  position: "relative",
+                  display: "inline-block",
+                  transition: "background 0.15s",
+                  flexShrink: 0,
+                }}>
+                  <span style={{
+                    position: "absolute",
+                    top: 2,
+                    left: autoModeratorEnabled ? 16 : 2,
+                    width: 14,
+                    height: 14,
+                    borderRadius: "50%",
+                    background: "#fff",
+                    transition: "left 0.15s",
+                  }} />
+                </span>
+              </button>
+              {isSuperAdmin && (
+                <button
+                  onClick={() => saveAutoModerator({ enabled: autoModeratorEnabled, visible: !autoModeratorVisible })}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: SPACING[1],
+                    padding: `${SPACING[1]} ${SPACING[2]}`,
+                    borderRadius: RADII.md,
+                    border: `1.5px solid ${autoModeratorVisible ? theme.accentGold : theme.inputBorder}`,
+                    background: autoModeratorVisible ? theme.accentGold + "15" : "transparent",
+                    cursor: "pointer",
+                    transition: "all 0.15s",
+                    fontSize: FONT_SIZES.micro,
+                    fontFamily: FONT_MONO,
+                    fontWeight: 600,
+                    color: autoModeratorVisible ? theme.accentGold : theme.textSecondary,
+                  }}
+                  title={autoModeratorVisible ? "Hide AI Moderator toggle from other teachers" : "Show AI Moderator toggle to other teachers"}
+                >
+                  {autoModeratorVisible ? "Visible" : "Hidden"}
+                </button>
+              )}
+            </div>
           )}
         </div>
 

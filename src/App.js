@@ -103,6 +103,7 @@ export default function App() {
     fieldConfig,
     allStudentAssignments,
     autoModeratorEnabled,
+    autoModeratorVisible,
   } = useFirebaseSubscriptions({ user, isTeacher, section, showAdminView, effectiveTeacherUid });
   const defaultSection = section;
 
@@ -523,6 +524,7 @@ export default function App() {
           teacherData={teacherData}
           onImpersonate={setImpersonating}
           autoModeratorEnabled={autoModeratorEnabled}
+          autoModeratorVisible={autoModeratorVisible}
         />
       )}
 

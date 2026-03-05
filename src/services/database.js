@@ -343,6 +343,22 @@ export async function resubmitConnection(connId, updates, currentFeedback, exist
   });
 }
 
+// ── Auto-Moderator Setting ──────────────────────────────────
+
+// Listen to global auto-moderator setting
+export function subscribeToAutoModerator(callback) {
+  const autoModRef = ref(db, "settings/autoModerator");
+  return onValue(autoModRef, (snapshot) => {
+    callback(snapshot.val() || { enabled: false });
+  });
+}
+
+// Save global auto-moderator setting
+export async function saveAutoModerator(data) {
+  const autoModRef = ref(db, "settings/autoModerator");
+  await set(autoModRef, data);
+}
+
 // ── Color Palette ───────────────────────────────────────────
 
 // Listen to a section's selected color palette ID

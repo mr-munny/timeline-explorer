@@ -21,6 +21,7 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
   const fc = { ...DEFAULT_FIELD_CONFIG, ...(fieldConfig || {}) };
   const { theme, mode, getThemedSourceTypeBg } = useTheme();
   const isEditing = !!editingEvent;
+  const [submitAsPending, setSubmitAsPending] = useState(false);
   const [form, setForm] = useState(isEditing ? {
     title: editingEvent.title || "",
     year: String(editingEvent.year || ""),
@@ -161,7 +162,7 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
       Object.keys(data).forEach((k) => {
         if (fc[k] === "hidden" || data[k] === null || data[k] === undefined || data[k] === "") delete data[k];
       });
-      await onAdd(data);
+      await onAdd(data, { submitAsPending });
       onClose();
     } catch (err) {
       console.error("Save failed:", err);
@@ -767,6 +768,54 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
                 : <>Please fix the following fields: {Object.keys(errors).map((k) => FIELD_NAMES[k] || k).join(", ")}</>
               }
             </div>
+          )}
+
+          {/* Submit as pending toggle (teacher only, new events only) */}
+          {isTeacher && !isEditing && !revisionMode && (
+            <button
+              type="button"
+              onClick={() => setSubmitAsPending((v) => !v)}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: SPACING[2],
+                padding: `${SPACING[2]} 0`,
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                alignSelf: "flex-start",
+              }}
+            >
+              <span style={{
+                width: 32,
+                height: 18,
+                borderRadius: 9,
+                background: submitAsPending ? theme.accentGold || theme.feedbackAmber : theme.inputBorder,
+                position: "relative",
+                display: "inline-block",
+                transition: "background 0.15s",
+                flexShrink: 0,
+              }}>
+                <span style={{
+                  position: "absolute",
+                  top: 2,
+                  left: submitAsPending ? 16 : 2,
+                  width: 14,
+                  height: 14,
+                  borderRadius: "50%",
+                  background: "#fff",
+                  transition: "left 0.15s",
+                }} />
+              </span>
+              <span style={{
+                fontSize: FONT_SIZES.micro,
+                fontFamily: FONT_MONO,
+                fontWeight: 600,
+                color: submitAsPending ? (theme.accentGold || theme.feedbackAmber) : theme.textSecondary,
+              }}>
+                Submit as student (goes to moderation)
+              </span>
+            </button>
           )}
 
           {/* Submit */}

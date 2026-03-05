@@ -1,12 +1,12 @@
 import { useState } from "react";
-import { approveEvent, rejectEvent, updateEvent, approveEdit, approveConnection, rejectConnection, updateConnection, approveConnectionEdit, approveConnectionDeletion, requestRevision } from "../services/database";
+import { approveEvent, rejectEvent, updateEvent, approveEdit, approveConnection, rejectConnection, updateConnection, approveConnectionEdit, approveConnectionDeletion, requestRevision, saveAutoModerator } from "../services/database";
 import { writeToSheet } from "../services/sheets";
-import { useTheme, FONT_MONO, FONT_SERIF, FONT_SIZES, SPACING } from "../contexts/ThemeContext";
+import { useTheme, FONT_MONO, FONT_SERIF, FONT_SIZES, SPACING, RADII } from "../contexts/ThemeContext";
 import PendingEventCard from "./PendingEventCard";
 import PendingConnectionCard from "./PendingConnectionCard";
 import AwaitingRevisionSection from "./AwaitingRevisionSection";
 
-export default function ModerationPanel({ pendingEvents, pendingConnections = [], needsRevisionEvents = [], needsRevisionConnections = [], allEvents = [], allConnections = [], periods = [], periodsBySection = {}, getSectionName = (id) => id, onEventApproved, readOnly = false, user, userName, onEditPendingEvent, onEditPendingConnection, onWithdraw }) {
+export default function ModerationPanel({ pendingEvents, pendingConnections = [], needsRevisionEvents = [], needsRevisionConnections = [], allEvents = [], allConnections = [], periods = [], periodsBySection = {}, getSectionName = (id) => id, onEventApproved, readOnly = false, user, userName, onEditPendingEvent, onEditPendingConnection, onWithdraw, autoModeratorEnabled = false }) {
   const { theme } = useTheme();
   const [activeTab, setActiveTab] = useState("events");
   const [editingId, setEditingId] = useState(null);
@@ -250,6 +250,54 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                 : ""}
             </p>
           </div>
+          {!readOnly && (
+            <button
+              onClick={() => saveAutoModerator({ enabled: !autoModeratorEnabled })}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: SPACING[2],
+                padding: `${SPACING[2]} ${SPACING[3]}`,
+                borderRadius: RADII.lg,
+                border: `1.5px solid ${autoModeratorEnabled ? theme.accentGold : theme.inputBorder}`,
+                background: autoModeratorEnabled ? theme.accentGold + "15" : "transparent",
+                cursor: "pointer",
+                transition: "all 0.15s",
+              }}
+              title={autoModeratorEnabled ? "AI auto-moderator is on — click to disable" : "Enable AI auto-moderator for new submissions"}
+            >
+              <span style={{
+                fontSize: FONT_SIZES.micro,
+                fontFamily: FONT_MONO,
+                fontWeight: 700,
+                color: autoModeratorEnabled ? theme.accentGold : theme.textSecondary,
+                whiteSpace: "nowrap",
+              }}>
+                AI Moderator
+              </span>
+              <span style={{
+                width: 32,
+                height: 18,
+                borderRadius: 9,
+                background: autoModeratorEnabled ? theme.accentGold : theme.inputBorder,
+                position: "relative",
+                display: "inline-block",
+                transition: "background 0.15s",
+                flexShrink: 0,
+              }}>
+                <span style={{
+                  position: "absolute",
+                  top: 2,
+                  left: autoModeratorEnabled ? 16 : 2,
+                  width: 14,
+                  height: 14,
+                  borderRadius: "50%",
+                  background: "#fff",
+                  transition: "left 0.15s",
+                }} />
+              </span>
+            </button>
+          )}
         </div>
 
         {/* Tabs */}
@@ -326,6 +374,7 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                 onFeedbackChange={setFeedbackText}
                 onFeedbackSubmit={handleRequestRevision}
                 onFeedbackCancel={handleFeedbackCancel}
+                autoModeratorEnabled={autoModeratorEnabled}
               />
             ))}
           </div>

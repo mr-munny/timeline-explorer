@@ -2,6 +2,7 @@ import { useCallback } from "react";
 import { submitEvent, deleteEvent, updateEvent, resubmitEvent } from "../services/database";
 import { saveTimelineRange } from "../services/database";
 import { writeToSheet } from "../services/sheets";
+import { sendToAutoModerator } from "../services/autoModerator";
 import { floorToDecade, ceilToDecade } from "../utils/dateUtils";
 
 export default function useEventHandlers({
@@ -18,6 +19,8 @@ export default function useEventHandlers({
   setEditingEvent,
   revisingEvent,
   setRevisingEvent,
+  autoModeratorEnabled,
+  periods,
 }) {
   // Auto-expand timeline range when event outside range is approved
   const handleEventApproved = useCallback((event) => {
@@ -49,22 +52,25 @@ export default function useEventHandlers({
   }, [timelineStart, timelineEnd, section]);
 
   const handleAddEvent = useCallback(
-    async (formData) => {
+    async (formData, options = {}) => {
+      const treatAsStudent = isTeacher && options.submitAsPending;
       const eventData = {
         ...formData,
         addedBy: userName,
         addedByEmail: user.email,
         addedByUid: user.uid,
         section: defaultSection,
-        ...(isTeacher ? { status: "approved" } : {}),
+        ...(isTeacher && !treatAsStudent ? { status: "approved" } : {}),
       };
-      await submitEvent(eventData);
-      if (isTeacher) {
+      const newEventId = await submitEvent(eventData);
+      if (isTeacher && !treatAsStudent) {
         writeToSheet(eventData);
         handleEventApproved(eventData);
+      } else if (autoModeratorEnabled) {
+        sendToAutoModerator(newEventId, eventData, periods);
       }
     },
-    [user, isTeacher, userName, defaultSection, handleEventApproved]
+    [user, isTeacher, userName, defaultSection, handleEventApproved, autoModeratorEnabled, periods]
   );
 
   const handleDeleteEvent = useCallback(async (eventId) => {
@@ -116,17 +122,21 @@ export default function useEventHandlers({
         await updateEvent(editingEvent.id, updates);
       } else {
         // Student editing approved event: submit as pending edit proposal
-        await submitEvent({
+        const editData = {
           ...updates,
           editOf: editingEvent.id,
           addedBy: userName,
           addedByEmail: user.email,
           addedByUid: user.uid,
           section: editingEvent.section || (defaultSection),
-        });
+        };
+        const newEventId = await submitEvent(editData);
+        if (autoModeratorEnabled) {
+          sendToAutoModerator(newEventId, editData, periods);
+        }
       }
     },
-    [editingEvent, isTeacher, user, userName, defaultSection]
+    [editingEvent, isTeacher, user, userName, defaultSection, autoModeratorEnabled, periods]
   );
 
   const handleRevisionResubmit = useCallback(
@@ -147,9 +157,12 @@ export default function useEventHandlers({
         revisingEvent.feedback,
         revisingEvent.feedbackHistory || []
       );
+      if (autoModeratorEnabled) {
+        sendToAutoModerator(revisingEvent.id, { ...revisingEvent, ...updates }, periods);
+      }
       setRevisingEvent(null);
     },
-    [revisingEvent, setRevisingEvent]
+    [revisingEvent, setRevisingEvent, autoModeratorEnabled, periods]
   );
 
   return {

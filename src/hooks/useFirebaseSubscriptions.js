@@ -10,7 +10,8 @@ import {
   subscribeToCompellingQuestion,
   subscribeToTimelineRange,
   subscribeToFieldConfig,
-  subscribeToAutoModerator,
+  subscribeToAutoModeratorVisible,
+  subscribeToAutoModeratorEnabled,
 } from "../services/database";
 
 export default function useFirebaseSubscriptions({
@@ -162,14 +163,23 @@ export default function useFirebaseSubscriptions({
     return sec?.teacherUid || null;
   }, [effectiveTeacherUid, sections, section]);
 
-  // Subscribe to auto-moderator settings (global visibility + per-teacher enabled)
+  // Subscribe to global auto-moderator visibility
   useEffect(() => {
     if (!user) return;
-    const unsub = subscribeToAutoModerator((data) => {
-      setAutoModeratorVisible(data?.visible || false);
-      setAutoModeratorEnabled(
-        autoModTeacherUid ? !!(data?.teachers?.[autoModTeacherUid]) : false
-      );
+    const unsub = subscribeToAutoModeratorVisible((visible) => {
+      setAutoModeratorVisible(visible);
+    });
+    return () => unsub();
+  }, [user]);
+
+  // Subscribe to per-teacher auto-moderator enabled flag
+  useEffect(() => {
+    if (!user || !autoModTeacherUid) {
+      setAutoModeratorEnabled(false);
+      return;
+    }
+    const unsub = subscribeToAutoModeratorEnabled(autoModTeacherUid, (enabled) => {
+      setAutoModeratorEnabled(enabled);
     });
     return () => unsub();
   }, [user, autoModTeacherUid]);

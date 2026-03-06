@@ -344,25 +344,36 @@ export async function resubmitConnection(connId, updates, currentFeedback, exist
 }
 
 // ── Auto-Moderator Setting ──────────────────────────────────
+// Stored under teachers/ path which has established Firebase security rules.
+// Visibility (global flag): teachers/_config/autoModeratorVisible
+// Enabled (per-teacher):    teachers/{uid}/autoModeratorEnabled
 
-// Listen to auto-moderator settings (global visibility + per-teacher enabled)
-export function subscribeToAutoModerator(callback) {
-  const autoModRef = ref(db, "settings/autoModerator");
-  return onValue(autoModRef, (snapshot) => {
-    callback(snapshot.val() || {});
+// Listen to global auto-moderator visibility
+export function subscribeToAutoModeratorVisible(callback) {
+  const visibleRef = ref(db, "teachers/_config/autoModeratorVisible");
+  return onValue(visibleRef, (snapshot) => {
+    callback(!!snapshot.val());
+  });
+}
+
+// Listen to per-teacher auto-moderator enabled flag
+export function subscribeToAutoModeratorEnabled(teacherUid, callback) {
+  const enabledRef = ref(db, `teachers/${teacherUid}/autoModeratorEnabled`);
+  return onValue(enabledRef, (snapshot) => {
+    callback(!!snapshot.val());
   });
 }
 
 // Save global visibility toggle (super admin only)
 export async function saveAutoModeratorVisible(visible) {
-  const visibleRef = ref(db, "settings/autoModerator/visible");
+  const visibleRef = ref(db, "teachers/_config/autoModeratorVisible");
   await set(visibleRef, visible);
 }
 
 // Save per-teacher enabled toggle
 export async function saveAutoModeratorEnabled(teacherUid, enabled) {
-  const teacherRef = ref(db, `settings/autoModerator/teachers/${teacherUid}`);
-  await set(teacherRef, enabled);
+  const enabledRef = ref(db, `teachers/${teacherUid}/autoModeratorEnabled`);
+  await set(enabledRef, enabled);
 }
 
 // ── Color Palette ───────────────────────────────────────────

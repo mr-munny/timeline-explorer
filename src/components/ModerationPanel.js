@@ -73,18 +73,18 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
   const startEdit = (event) => {
     setEditingId(event.id);
     setEditForm({
-      title: event.title,
+      title: event.title || "",
       year: event.year,
       month: event.month || "",
       day: event.day || "",
       endYear: event.endYear || "",
       endMonth: event.endMonth || "",
       endDay: event.endDay || "",
-      period: event.period,
+      period: event.period || "",
       tags: [...(event.tags || [])],
       sourceType: event.sourceType || "Primary",
-      description: event.description,
-      sourceNote: event.sourceNote,
+      description: event.description || "",
+      sourceNote: event.sourceNote || "",
       sourceUrl: event.sourceUrl || "",
       imageUrl: event.imageUrl || "",
       region: event.region || "",

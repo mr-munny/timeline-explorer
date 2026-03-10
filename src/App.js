@@ -3,7 +3,7 @@ import { useAuth } from "./contexts/AuthContext";
 import { useTheme, FONT_MONO, FONT_SERIF, FONT_SIZES, SPACING } from "./contexts/ThemeContext";
 import { getPeriod, DEFAULT_PERIODS, DEFAULT_FIELD_CONFIG } from "./data/constants";
 import { compareEventDates } from "./utils/dateUtils";
-import { savePeriods, saveSections, saveCompellingQuestion, saveTimelineRange, saveFieldConfig, assignStudentSection, reassignStudentSection, removeStudentSection } from "./services/database";
+import { savePeriods, saveSections, saveCompellingQuestion, saveTimelineRange, saveFieldConfig, assignStudentSection, reassignStudentSection, removeStudentSection, unlinkEasterEgg } from "./services/database";
 import useFirebaseSubscriptions from "./hooks/useFirebaseSubscriptions";
 import useEventHandlers from "./hooks/useEventHandlers";
 import useConnectionHandlers from "./hooks/useConnectionHandlers";
@@ -21,6 +21,8 @@ import FilterBar from "./components/FilterBar";
 import CompellingQuestionHero from "./components/CompellingQuestionHero";
 import EventList from "./components/EventList";
 import RevisionPanel from "./components/RevisionPanel";
+import EasterEggShell from "./easterEggs/EasterEggShell";
+import EasterEggLinkDialog from "./components/EasterEggLinkDialog";
 
 const WorldMapView = lazy(() => import("./components/WorldMapView"));
 
@@ -55,6 +57,7 @@ export default function App() {
   const [showContributors, setShowContributors] = useState(false);
   const [showAdminView, setShowAdminView] = useState(false);
   const [viewMode, setViewMode] = useState("timeline");
+  const [activeEasterEgg, setActiveEasterEgg] = useState(null);
 
 
   // Derived modal state (backward-compatible with child components)
@@ -66,6 +69,7 @@ export default function App() {
   const showRevisionPanel = modal.type === 'revisionPanel';
   const revisingEvent = modal.type === 'reviseEvent' ? modal.payload : null;
   const revisingConnection = modal.type === 'reviseConnection' ? modal.payload : null;
+  const linkEasterEggEvent = modal.type === 'linkEasterEgg' ? modal.payload : null;
 
   // Stable modal dispatch helpers (passed to hooks and child components)
   const closeModal = useCallback(() => dispatchModal({ type: 'CLOSE' }), []);
@@ -104,6 +108,7 @@ export default function App() {
     allStudentAssignments,
     autoModeratorEnabled,
     autoModeratorVisible,
+    easterEggDiscoveries,
   } = useFirebaseSubscriptions({ user, isTeacher, section, showAdminView, effectiveTeacherUid });
   const defaultSection = section;
 
@@ -247,6 +252,25 @@ export default function App() {
     setSelectedTags([]);
     setTagMatchMode("or");
     setSearchTerm("");
+  }, []);
+
+  // Easter egg handlers
+  const launchEasterEgg = useCallback((eventId, eggId) => {
+    setActiveEasterEgg({ eventId, eggId });
+    setViewMode("easterEgg");
+  }, []);
+
+  const closeEasterEgg = useCallback(() => {
+    setActiveEasterEgg(null);
+    setViewMode("timeline");
+  }, []);
+
+  const handleUnlinkEasterEgg = useCallback(async (eventId) => {
+    try {
+      await unlinkEasterEgg(eventId);
+    } catch (err) {
+      console.error("Failed to unlink Easter egg:", err);
+    }
   }, []);
 
   // Filtered + sorted events for display
@@ -557,7 +581,7 @@ export default function App() {
 
       {/* Main Content */}
       <div style={{ maxWidth: 960, margin: "0 auto", padding: `${SPACING[5]} ${SPACING[8]}` }}>
-        <FilterBar
+        {viewMode !== "easterEgg" && <FilterBar
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}
           selectedPeriods={selectedPeriods}
@@ -577,7 +601,7 @@ export default function App() {
           totalCount={approvedEvents.length}
           viewMode={viewMode}
           setViewMode={setViewMode}
-        />
+        />}
 
         {/* World Map View */}
         {viewMode === "worldview" && (
@@ -608,7 +632,19 @@ export default function App() {
           </Suspense>
         )}
 
-        {/* Event List (hidden in world view) */}
+        {/* Easter Egg View */}
+        {viewMode === "easterEgg" && activeEasterEgg && (
+          <EasterEggShell
+            eventId={activeEasterEgg.eventId}
+            eggId={activeEasterEgg.eggId}
+            event={approvedEvents.find(e => e.id === activeEasterEgg.eventId)}
+            onClose={closeEasterEgg}
+            user={user}
+            section={section}
+          />
+        )}
+
+        {/* Event List (hidden in world/easter-egg view) */}
         {viewMode === "timeline" && (
           <EventList
             filteredEvents={filteredEvents}
@@ -629,6 +665,11 @@ export default function App() {
             handleEditConnection={handleEditConnection}
             handleSuggestDeleteConnection={handleSuggestDeleteConnection}
             teacherEmail={teacherEmail}
+            onLaunchEasterEgg={launchEasterEgg}
+            onLinkEasterEgg={(event) => dispatchModal({ type: 'OPEN', modalType: 'linkEasterEgg', payload: event })}
+            onUnlinkEasterEgg={handleUnlinkEasterEgg}
+            easterEggDiscoveries={easterEggDiscoveries}
+            user={user}
           />
         )}
 
@@ -778,6 +819,15 @@ export default function App() {
           isTeacher={isTeacher}
           revisionMode
           feedback={revisingConnection.feedback}
+        />
+      )}
+
+      {/* Easter Egg Link Dialog */}
+      {linkEasterEggEvent && (
+        <EasterEggLinkDialog
+          event={linkEasterEggEvent}
+          userName={userName}
+          onClose={closeModal}
         />
       )}
 

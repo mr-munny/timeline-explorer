@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useMemo } from "react";
 import { useTheme, FONT_MONO, FONT_SIZES, SPACING } from "../contexts/ThemeContext";
 import EventCard from "./EventCard";
 import ConnectionLines from "./ConnectionLines";
@@ -23,10 +23,24 @@ export default function EventList({
   handleEditConnection,
   handleSuggestDeleteConnection,
   teacherEmail,
+  onLaunchEasterEgg,
+  onLinkEasterEgg,
+  onUnlinkEasterEgg,
+  easterEggDiscoveries,
+  user,
 }) {
   const { theme } = useTheme();
   const eventListRef = useRef(null);
   const [hoveredEvent, setHoveredEvent] = useState(null);
+
+  const discoveredEventIds = useMemo(() => {
+    if (!easterEggDiscoveries || !user) return new Set();
+    return new Set(
+      easterEggDiscoveries
+        .filter(d => d.uid === user.uid)
+        .map(d => d.eventId)
+    );
+  }, [easterEggDiscoveries, user]);
 
   return (
     <div style={{ display: "flex", gap: SPACING[5], alignItems: "flex-start" }}>
@@ -88,6 +102,10 @@ export default function EventList({
                 onDeleteConnection={handleDeleteConnection}
                 onEditConnection={handleEditConnection}
                 onSuggestDeleteConnection={!isTeacher ? handleSuggestDeleteConnection : undefined}
+                onLaunchEasterEgg={onLaunchEasterEgg}
+                onLinkEasterEgg={onLinkEasterEgg}
+                onUnlinkEasterEgg={onUnlinkEasterEgg}
+                hasDiscovered={discoveredEventIds.has(event.id)}
               />
             </div>
           ))
@@ -104,7 +122,7 @@ export default function EventList({
       {/* Contributors sidebar */}
       {showContributors && (
         <aside style={{ width: 220, flexShrink: 0 }} aria-label="Contributors">
-          <ContributorSidebar events={approvedEvents} teacherEmail={teacherEmail} />
+          <ContributorSidebar events={approvedEvents} teacherEmail={teacherEmail} easterEggDiscoveries={easterEggDiscoveries} />
         </aside>
       )}
     </div>

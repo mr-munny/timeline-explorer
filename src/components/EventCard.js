@@ -13,11 +13,13 @@ import imageOutline from "@iconify-icons/mdi/image-outline";
 import accountOutline from "@iconify-icons/mdi/account-outline";
 import mapMarkerOutline from "@iconify-icons/mdi/map-marker-outline";
 import schoolOutline from "@iconify-icons/mdi/school-outline";
+import puzzleOutline from "@iconify-icons/mdi/puzzle-outline";
+import starFourPointsSmall from "@iconify-icons/mdi/star-four-points-small";
 import { useTheme, FONT_MONO, FONT_SERIF, FONT_SIZES, SPACING, RADII, Z_INDEX } from "../contexts/ThemeContext";
 import IconButton from "./IconButton";
 import EventConnections from "./EventConnections";
 
-export default function EventCard({ event, isExpanded, isRead, onToggle, isTeacher, onEdit, onDelete, periods = [], onReturnToTimeline, connections, allEvents = [], onScrollToEvent, onDeleteConnection, onEditConnection, onSuggestDeleteConnection }) {
+export default function EventCard({ event, isExpanded, isRead, onToggle, isTeacher, onEdit, onDelete, periods = [], onReturnToTimeline, connections, allEvents = [], onScrollToEvent, onDeleteConnection, onEditConnection, onSuggestDeleteConnection, onLaunchEasterEgg, onLinkEasterEgg, onUnlinkEasterEgg, hasDiscovered }) {
   const { theme } = useTheme();
   const [showEditHistory, setShowEditHistory] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -147,6 +149,25 @@ export default function EventCard({ event, isExpanded, isRead, onToggle, isTeach
                     }}
                   >
                     edited
+                  </span>
+                </>
+              )}
+              {event.easterEgg && event.easterEgg.visibility === "visible" && (
+                <>
+                  <span style={{ fontSize: FONT_SIZES.tiny, color: theme.textDivider }}>&middot;</span>
+                  <span
+                    style={{
+                      fontSize: FONT_SIZES.tiny,
+                      color: hasDiscovered ? theme.successGreen : theme.accentGold,
+                      fontFamily: FONT_MONO,
+                      fontWeight: 600,
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: SPACING["0.5"],
+                    }}
+                  >
+                    <Icon icon={starFourPointsSmall} width={10} style={{ verticalAlign: "middle" }} aria-hidden="true" />
+                    {hasDiscovered ? "discovered" : "explore"}
                   </span>
                 </>
               )}
@@ -523,7 +544,61 @@ export default function EventCard({ event, isExpanded, isRead, onToggle, isTeach
           )}
 
           {/* Action buttons */}
-          <div style={{ marginTop: SPACING["2.5"], display: "flex", justifyContent: "flex-end", gap: SPACING["1.5"] }}>
+          <div style={{ marginTop: SPACING["2.5"], display: "flex", justifyContent: "flex-end", gap: SPACING["1.5"], flexWrap: "wrap" }}>
+            {/* Easter egg launch button (students and teachers) */}
+            {event.easterEgg && onLaunchEasterEgg && (
+              <IconButton
+                icon={puzzleOutline}
+                onClick={(e) => { e.stopPropagation(); onLaunchEasterEgg(event.id, event.easterEgg.eggId); }}
+                title={hasDiscovered ? "Play again" : "Discover"}
+                size={13}
+                color={
+                  event.easterEgg.visibility === "hidden" && !hasDiscovered
+                    ? theme.textMuted
+                    : hasDiscovered ? theme.successGreen : theme.accentGold
+                }
+                hoverBg={theme.subtleBg}
+                style={{
+                  padding: `${SPACING["1.5"]} ${SPACING[3]}`,
+                  border: `1.5px solid ${
+                    event.easterEgg.visibility === "hidden" && !hasDiscovered
+                      ? theme.inputBorder
+                      : hasDiscovered ? theme.successGreen + "40" : theme.accentGold + "40"
+                  }`,
+                  borderRadius: RADII.md, fontSize: FONT_SIZES.sm, fontFamily: FONT_MONO, fontWeight: 600,
+                }}
+              >
+                {hasDiscovered ? "Play Again" : "Discover"}
+              </IconButton>
+            )}
+            {/* Teacher: link Easter egg */}
+            {isTeacher && !event.easterEgg && onLinkEasterEgg && (
+              <IconButton
+                icon={puzzleOutline}
+                onClick={(e) => { e.stopPropagation(); onLinkEasterEgg(event); }}
+                title="Link Easter Egg"
+                size={13}
+                color={theme.textDescription}
+                hoverBg={theme.subtleBg}
+                style={{ padding: `${SPACING["1.5"]} ${SPACING[3]}`, border: `1.5px solid ${theme.inputBorder}`, borderRadius: RADII.md, fontSize: FONT_SIZES.sm, fontFamily: FONT_MONO, fontWeight: 600 }}
+              >
+                Link Egg
+              </IconButton>
+            )}
+            {/* Teacher: unlink Easter egg */}
+            {isTeacher && event.easterEgg && onUnlinkEasterEgg && (
+              <IconButton
+                icon={puzzleOutline}
+                onClick={(e) => { e.stopPropagation(); if (window.confirm("Unlink this Easter egg?")) onUnlinkEasterEgg(event.id); }}
+                title="Unlink Easter Egg"
+                size={13}
+                color={theme.errorRed}
+                hoverBg={(theme.errorRed || "#DC2626") + "10"}
+                style={{ padding: `${SPACING["1.5"]} ${SPACING[3]}`, border: `1.5px solid ${theme.errorRed}`, borderRadius: RADII.md, fontSize: FONT_SIZES.sm, fontFamily: FONT_MONO, fontWeight: 600 }}
+              >
+                Unlink Egg
+              </IconButton>
+            )}
             {onEdit && (
               <IconButton
                 icon={pencilOutline}

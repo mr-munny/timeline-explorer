@@ -2,27 +2,37 @@ import { useMemo } from "react";
 import { Icon } from "@iconify/react";
 import accountGroup from "@iconify-icons/mdi/account-group";
 import trophyOutline from "@iconify-icons/mdi/trophy-outline";
+import puzzleOutline from "@iconify-icons/mdi/puzzle-outline";
 import { useTheme, FONT_MONO, FONT_SIZES, SPACING, RADII } from "../contexts/ThemeContext";
 
-export default function ContributorSidebar({ events, teacherEmail }) {
+export default function ContributorSidebar({ events, teacherEmail, easterEggDiscoveries }) {
   const { theme } = useTheme();
 
   const contributors = useMemo(() => {
     const byName = {};
     events.forEach((e) => {
       if (!byName[e.addedBy]) {
-        byName[e.addedBy] = { count: 0, email: e.addedByEmail };
+        byName[e.addedBy] = { count: 0, discoveryCount: 0, email: e.addedByEmail };
       }
       byName[e.addedBy].count += 1;
     });
+    if (easterEggDiscoveries) {
+      easterEggDiscoveries.forEach((d) => {
+        if (!byName[d.discoveredBy]) {
+          byName[d.discoveredBy] = { count: 0, discoveryCount: 0, email: d.discoveredByEmail };
+        }
+        byName[d.discoveredBy].discoveryCount += 1;
+      });
+    }
     return Object.entries(byName)
       .sort((a, b) => b[1].count - a[1].count)
-      .map(([name, { count, email }]) => ({
+      .map(([name, { count, discoveryCount, email }]) => ({
         name,
         count,
+        discoveryCount,
         isTeacher: email === teacherEmail,
       }));
-  }, [events, teacherEmail]);
+  }, [events, easterEggDiscoveries, teacherEmail]);
 
   const topContributor = contributors.find((x) => !x.isTeacher);
 
@@ -99,6 +109,22 @@ export default function ContributorSidebar({ events, teacherEmail }) {
               >
                 {c.count}
               </span>
+              {c.discoveryCount > 0 && (
+                <span
+                  style={{
+                    fontSize: FONT_SIZES.tiny,
+                    fontFamily: FONT_MONO,
+                    color: theme.accentGold,
+                    fontWeight: 600,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: SPACING["0.5"],
+                  }}
+                >
+                  <Icon icon={puzzleOutline} width={10} aria-hidden="true" />
+                  {c.discoveryCount}
+                </span>
+              )}
             </div>
           </div>
         ))}

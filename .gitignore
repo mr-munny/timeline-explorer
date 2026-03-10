@@ -22,7 +22,6 @@
 # Local dev reference (contains PII)
 HANDOFF.md
 DEMO-SCRIPT.md
-firebase-rules.json
 
 # Firebase CLI config
 .firebaserc

@@ -1,0 +1,91 @@
+{
+  "rules": {
+    "teachers": {
+      ".read": "auth != null",
+      "$uid": {
+        ".write": "auth != null && ($uid === auth.uid || root.child('teachers').child(auth.uid).child('isSuperAdmin').val() === true)"
+      }
+    },
+    "teacherInvites": {
+      ".read": "auth != null",
+      ".write": "auth != null && root.child('teachers').child(auth.uid).child('isSuperAdmin').val() === true",
+      "$emailKey": {
+        ".write": "auth != null && (root.child('teachers').child(auth.uid).child('isSuperAdmin').val() === true || (!newData.exists() && root.child('teachers').child(auth.uid).exists()))"
+      }
+    },
+    "events": {
+      ".read": "auth != null && (auth.token.email.matches(/.*@universityprep\\.org$/) || auth.token.email === 'roiboi1234@gmail.com')",
+      ".indexOn": ["section", "status"],
+      "$eventId": {
+        "aiReview": {
+          ".write": true,
+          ".validate": "newData.hasChildren(['recommendation', 'confidence', 'reasoning']) && newData.child('recommendation').isString() && newData.child('confidence').isNumber() && newData.child('reasoning').isString()"
+        },
+        ".write": "auth != null && (auth.token.email.matches(/.*@universityprep\\.org$/) || auth.token.email === 'roiboi1234@gmail.com') && ((!data.exists() && newData.child('status').val() === 'pending') || root.child('teachers').child(auth.uid).exists() || (data.child('status').val() === 'needs_revision' && data.child('addedByUid').val() === auth.uid && newData.child('status').val() === 'pending') || (data.child('status').val() === 'pending' && data.child('addedByUid').val() === auth.uid && newData.child('status').val() === 'pending') || ((data.child('status').val() === 'pending' || data.child('status').val() === 'needs_revision') && data.child('addedByUid').val() === auth.uid && !newData.exists()))"
+      }
+    },
+    "sections": {
+      ".read": "auth != null && (auth.token.email.matches(/.*@universityprep\\.org$/) || auth.token.email === 'roiboi1234@gmail.com')",
+      ".write": "auth != null && root.child('teachers').child(auth.uid).exists()"
+    },
+    "sectionSettings": {
+      ".read": "auth != null && (auth.token.email.matches(/.*@universityprep\\.org$/) || auth.token.email === 'roiboi1234@gmail.com')",
+      "$section": {
+        ".write": "auth != null && root.child('teachers').child(auth.uid).exists()"
+      }
+    },
+    "defaultPeriods": {
+      ".read": "auth != null && (auth.token.email.matches(/.*@universityprep\\.org$/) || auth.token.email === 'roiboi1234@gmail.com')",
+      ".write": "auth != null && root.child('teachers').child(auth.uid).exists()"
+    },
+    "defaultCompellingQuestion": {
+      ".read": "auth != null && (auth.token.email.matches(/.*@universityprep\\.org$/) || auth.token.email === 'roiboi1234@gmail.com')",
+      ".write": "auth != null && root.child('teachers').child(auth.uid).exists()"
+    },
+    "defaultTimelineRange": {
+      ".read": "auth != null && (auth.token.email.matches(/.*@universityprep\\.org$/) || auth.token.email === 'roiboi1234@gmail.com')",
+      ".write": "auth != null && root.child('teachers').child(auth.uid).exists()"
+    },
+    "defaultFieldConfig": {
+      ".read": "auth != null && (auth.token.email.matches(/.*@universityprep\\.org$/) || auth.token.email === 'roiboi1234@gmail.com')",
+      ".write": "auth != null && root.child('teachers').child(auth.uid).exists()"
+    },
+    "studentSections": {
+      ".read": "auth != null && (auth.token.email.matches(/.*@universityprep\\.org$/) || auth.token.email === 'roiboi1234@gmail.com')",
+      "$uid": {
+        ".write": "auth != null && (auth.token.email.matches(/.*@universityprep\\.org$/) || auth.token.email === 'roiboi1234@gmail.com') && ($uid === auth.uid || root.child('teachers').child(auth.uid).exists())"
+      }
+    },
+    "settings": {
+      ".read": "auth != null && (auth.token.email.matches(/.*@universityprep\\.org$/) || auth.token.email === 'roiboi1234@gmail.com')",
+      "autoModerator": {
+        "visible": {
+          ".write": "auth != null && root.child('teachers').child(auth.uid).child('isSuperAdmin').val() === true"
+        },
+        "teachers": {
+          "$uid": {
+            ".write": "auth != null && $uid === auth.uid && root.child('teachers').child(auth.uid).exists()"
+          }
+        }
+      },
+      "$other": {
+        ".write": "auth != null && root.child('teachers').child(auth.uid).exists()"
+      }
+    },
+    "easterEggDiscoveries": {
+      ".read": "auth != null && (auth.token.email.matches(/.*@universityprep\\.org$/) || auth.token.email === 'roiboi1234@gmail.com')",
+      "$eventId": {
+        "$uid": {
+          ".write": "auth != null && (auth.uid === $uid || root.child('teachers').child(auth.uid).exists())"
+        }
+      }
+    },
+    "connections": {
+      ".read": "auth != null && (auth.token.email.matches(/.*@universityprep\\.org$/) || auth.token.email === 'roiboi1234@gmail.com')",
+      ".indexOn": ["section", "status"],
+      "$connectionId": {
+        ".write": "auth != null && (auth.token.email.matches(/.*@universityprep\\.org$/) || auth.token.email === 'roiboi1234@gmail.com') && ((!data.exists() && newData.child('status').val() === 'pending') || root.child('teachers').child(auth.uid).exists() || (data.child('status').val() === 'needs_revision' && data.child('addedByUid').val() === auth.uid && newData.child('status').val() === 'pending') || (data.child('status').val() === 'pending' && data.child('addedByUid').val() === auth.uid && newData.child('status').val() === 'pending') || ((data.child('status').val() === 'pending' || data.child('status').val() === 'needs_revision') && data.child('addedByUid').val() === auth.uid && !newData.exists()))"
+      }
+    }
+  }
+}

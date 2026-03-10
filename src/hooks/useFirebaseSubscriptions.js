@@ -11,6 +11,7 @@ import {
   subscribeToTimelineRange,
   subscribeToFieldConfig,
   subscribeToAutoModerator,
+  subscribeToEasterEggDiscoveries,
 } from "../services/database";
 
 export default function useFirebaseSubscriptions({
@@ -32,6 +33,7 @@ export default function useFirebaseSubscriptions({
   const [allStudentAssignments, setAllStudentAssignments] = useState([]);
   const [autoModeratorEnabled, setAutoModeratorEnabled] = useState(false);
   const [autoModeratorVisible, setAutoModeratorVisible] = useState(false);
+  const [easterEggDiscoveries, setEasterEggDiscoveries] = useState([]);
 
   // Filter sections by teacher ownership (client-side)
   const activeSections = useMemo(() => {
@@ -174,6 +176,13 @@ export default function useFirebaseSubscriptions({
     return () => unsub();
   }, [user, autoModTeacherUid]);
 
+  // Subscribe to Easter egg discoveries for current section
+  useEffect(() => {
+    if (!user) return;
+    const unsub = subscribeToEasterEggDiscoveries(section, setEasterEggDiscoveries);
+    return () => unsub();
+  }, [user, section]);
+
   return {
     allEvents,
     allConnections,
@@ -191,5 +200,6 @@ export default function useFirebaseSubscriptions({
     allStudentAssignments,
     autoModeratorEnabled,
     autoModeratorVisible,
+    easterEggDiscoveries,
   };
 }

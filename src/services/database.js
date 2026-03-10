@@ -699,3 +699,59 @@ export function subscribeToAllStudentSections(callback) {
     callback([]);
   });
 }
+
+// ── Easter Egg Discoveries ──────────────────────────────────
+
+export async function linkEasterEgg(eventId, eggId, visibility, teacherName) {
+  const eventRef = ref(db, `events/${eventId}`);
+  await update(eventRef, {
+    easterEgg: {
+      eggId,
+      visibility,
+      linkedBy: teacherName,
+      linkedAt: new Date().toISOString(),
+    },
+  });
+}
+
+export async function unlinkEasterEgg(eventId) {
+  const eventRef = ref(db, `events/${eventId}`);
+  await update(eventRef, { easterEgg: null });
+}
+
+export async function recordEasterEggDiscovery(eventId, eggId, uid, displayName, email, section) {
+  const discoveryRef = ref(db, `easterEggDiscoveries/${eventId}/${uid}`);
+  await set(discoveryRef, {
+    eggId,
+    discoveredBy: displayName,
+    discoveredByEmail: email,
+    discoveredAt: new Date().toISOString(),
+    section,
+  });
+}
+
+export function subscribeToEasterEggDiscoveries(section, callback) {
+  const discoveriesRef = ref(db, "easterEggDiscoveries");
+  return onValue(discoveriesRef, (snapshot) => {
+    const discoveries = [];
+    snapshot.forEach((eventChild) => {
+      eventChild.forEach((userChild) => {
+        const data = userChild.val();
+        if (data.section === section) {
+          discoveries.push({
+            eventId: eventChild.key,
+            uid: userChild.key,
+            ...data,
+          });
+        }
+      });
+    });
+    callback(discoveries);
+  });
+}
+
+export async function hasDiscoveredEasterEgg(eventId, uid) {
+  const discoveryRef = ref(db, `easterEggDiscoveries/${eventId}/${uid}`);
+  const snapshot = await get(discoveryRef);
+  return snapshot.exists();
+}

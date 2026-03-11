@@ -19,9 +19,10 @@
 .env.test.local
 .env.production.local
 
-# Local dev reference (contains PII)
+# Local dev reference (contains PII / sensitive info)
 HANDOFF.md
 DEMO-SCRIPT.md
+INFRASTRUCTURE.md
 
 # Firebase CLI config
 .firebaserc

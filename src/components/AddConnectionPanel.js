@@ -233,6 +233,8 @@ export default function AddConnectionPanel({ onAdd, onClose, userName, approvedE
   const [causeEventId, setCauseEventId] = useState(isEditing ? editingConnection.causeEventId : (prefilledCause || null));
   const [effectEventId, setEffectEventId] = useState(isEditing ? editingConnection.effectEventId : (prefilledEffect || null));
   const [description, setDescription] = useState(isEditing ? editingConnection.description : "");
+  const isStudentEditProposal = isEditing && !isTeacher && !revisionMode && editingConnection?.status === "approved";
+  const [editRationale, setEditRationale] = useState("");
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
@@ -243,6 +245,7 @@ export default function AddConnectionPanel({ onAdd, onClose, userName, approvedE
     if (!effectEventId) e.effect = true;
     if (!description.trim()) e.description = true;
     if (causeEventId && effectEventId && causeEventId === effectEventId) e.effect = true;
+    if (isStudentEditProposal && !editRationale.trim()) e.editRationale = true;
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -252,7 +255,11 @@ export default function AddConnectionPanel({ onAdd, onClose, userName, approvedE
     setSubmitting(true);
     setSubmitError(null);
     try {
-      await onAdd({ causeEventId, effectEventId, description: description.trim() });
+      const data = { causeEventId, effectEventId, description: description.trim() };
+      if (isStudentEditProposal) {
+        data.editRationale = editRationale.trim();
+      }
+      await onAdd(data);
       onClose();
     } catch (err) {
       console.error("Connection submit failed:", err);
@@ -392,6 +399,37 @@ export default function AddConnectionPanel({ onAdd, onClose, userName, approvedE
             Explain the cause-and-effect relationship clearly. What about the cause event
             led to the effect? Use evidence and reasoning, not just "they happened around the same time."
           </div>
+
+          {isStudentEditProposal && (
+          <div>
+            <label htmlFor="acp-edit-rationale" style={{
+              ...labelStyle,
+              color: errors.editRationale ? theme.errorRed : theme.textTertiary,
+            }}>Reason for Edit *</label>
+            <textarea
+              id="acp-edit-rationale"
+              value={editRationale}
+              onChange={(e) => { setEditRationale(e.target.value); setErrors((err) => ({ ...err, editRationale: undefined })); }}
+              placeholder="Why should this change be made? What evidence supports your suggested revision?"
+              rows={3}
+              style={{
+                width: "100%",
+                padding: `9px ${SPACING["3"]}`,
+                border: `1.5px solid ${errors.editRationale ? theme.errorRed : theme.inputBorder}`,
+                borderRadius: RADII.md,
+                fontSize: FONT_SIZES.sm,
+                fontFamily: FONT_MONO,
+                background: theme.inputBg,
+                color: theme.textPrimary,
+                boxSizing: "border-box",
+                transition: "border-color 0.2s",
+                resize: "vertical",
+                lineHeight: 1.5,
+              }}
+              aria-invalid={errors.editRationale ? "true" : undefined}
+            />
+          </div>
+          )}
 
           {submitError && (
             <div

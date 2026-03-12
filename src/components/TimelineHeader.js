@@ -32,9 +32,11 @@ export default function TimelineHeader({
   setShowPendingQueue,
   myRevisionEvents = [],
   myRevisionConnections = [],
+  myRejectedEvents = [],
+  myRejectedConnections = [],
   setShowRevisionPanel,
 }) {
-  const revisionCount = myRevisionEvents.length + myRevisionConnections.length;
+  const revisionCount = myRevisionEvents.length + myRevisionConnections.length + myRejectedEvents.length + myRejectedConnections.length;
   const pendingCount = pendingEvents.length + pendingConnections.length;
 
   const badgeStyle = {

@@ -3,7 +3,7 @@ import { useAuth } from "./contexts/AuthContext";
 import { useTheme, FONT_MONO, FONT_SERIF, FONT_SIZES, SPACING } from "./contexts/ThemeContext";
 import { getPeriod, DEFAULT_PERIODS, DEFAULT_FIELD_CONFIG } from "./data/constants";
 import { compareEventDates } from "./utils/dateUtils";
-import { savePeriods, saveSections, saveCompellingQuestion, saveTimelineRange, saveFieldConfig, assignStudentSection, reassignStudentSection, removeStudentSection, unlinkEasterEgg } from "./services/database";
+import { savePeriods, saveSections, saveCompellingQuestion, saveTimelineRange, saveFieldConfig, assignStudentSection, reassignStudentSection, removeStudentSection, unlinkEasterEgg, dismissRejectedEvent, dismissRejectedConnection } from "./services/database";
 import useFirebaseSubscriptions from "./hooks/useFirebaseSubscriptions";
 import useEventHandlers from "./hooks/useEventHandlers";
 import useConnectionHandlers from "./hooks/useConnectionHandlers";
@@ -212,6 +212,17 @@ export default function App() {
     [allConnections]
   );
 
+  // Rejected items
+  const rejectedEvents = useMemo(
+    () => allEvents.filter((e) => e.status === "rejected"),
+    [allEvents]
+  );
+
+  const rejectedConnections = useMemo(
+    () => allConnections.filter((c) => c.status === "rejected"),
+    [allConnections]
+  );
+
   // Current student's items needing revision (for notification bell)
   const myRevisionEvents = useMemo(
     () => needsRevisionEvents.filter((e) => e.addedByUid === user?.uid),
@@ -221,6 +232,17 @@ export default function App() {
   const myRevisionConnections = useMemo(
     () => needsRevisionConnections.filter((c) => c.addedByUid === user?.uid),
     [needsRevisionConnections, user]
+  );
+
+  // Current student's rejected items (for notification bell)
+  const myRejectedEvents = useMemo(
+    () => rejectedEvents.filter((e) => e.addedByUid === user?.uid),
+    [rejectedEvents, user]
+  );
+
+  const myRejectedConnections = useMemo(
+    () => rejectedConnections.filter((c) => c.addedByUid === user?.uid),
+    [rejectedConnections, user]
   );
 
   // Lookup: eventId -> { causes: [connections where event is cause], effects: [connections where event is effect] }
@@ -518,6 +540,8 @@ export default function App() {
         setShowPendingQueue={() => dispatchModal({ type: 'OPEN', modalType: 'pendingQueue' })}
         myRevisionEvents={myRevisionEvents}
         myRevisionConnections={myRevisionConnections}
+        myRejectedEvents={myRejectedEvents}
+        myRejectedConnections={myRejectedConnections}
         setShowRevisionPanel={() => dispatchModal({ type: 'OPEN', modalType: 'revisionPanel' })}
       />
 
@@ -782,10 +806,14 @@ export default function App() {
         <RevisionPanel
           revisionEvents={myRevisionEvents}
           revisionConnections={myRevisionConnections}
+          rejectedEvents={myRejectedEvents}
+          rejectedConnections={myRejectedConnections}
           allEvents={allEvents}
           periods={periods}
           onReviseEvent={setRevisingEvent}
           onReviseConnection={setRevisingConnection}
+          onDismissEvent={dismissRejectedEvent}
+          onDismissConnection={dismissRejectedConnection}
           onClose={closeModal}
         />
       )}

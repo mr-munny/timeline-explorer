@@ -9,8 +9,23 @@ import IconButton from "./IconButton";
 
 export default function AwaitingRevisionSection({
   items, type, periods, periodsBySection = {}, getSectionName, findEvent, processing, onReject, hasPendingItems,
+  feedbackId, feedbackText, feedbackMode, onFeedbackChange, onFeedbackSubmit, onFeedbackCancel,
 }) {
   const { theme } = useTheme();
+
+  const inputStyle = {
+    width: "100%",
+    padding: `9px ${SPACING["3"]}`,
+    border: `1.5px solid ${theme.inputBorder}`,
+    borderRadius: RADII.md,
+    fontSize: FONT_SIZES.sm,
+    fontFamily: FONT_MONO,
+    background: theme.inputBg,
+    color: theme.textPrimary,
+    boxSizing: "border-box",
+    resize: "vertical",
+    lineHeight: 1.5,
+  };
 
   if (items.length === 0) return null;
 
@@ -95,6 +110,60 @@ export default function AwaitingRevisionSection({
                     Reject
                   </IconButton>
                 </div>
+                {feedbackId === item.id && feedbackMode === "rejection" && (
+                  <div style={{
+                    marginTop: SPACING[2.5], padding: `${SPACING[3]} ${SPACING[3]}`,
+                    background: (theme.errorRed || "#DC2626") + "08",
+                    borderRadius: RADII.lg, border: `1.5px solid ${theme.errorRed}`,
+                  }}>
+                    <label style={{
+                      fontSize: FONT_SIZES.tiny, fontWeight: 700, fontFamily: FONT_MONO,
+                      color: theme.errorRed, textTransform: "uppercase", letterSpacing: "0.05em",
+                      marginBottom: SPACING[1.5], display: "block",
+                    }}>
+                      Reason for Rejection
+                    </label>
+                    <textarea
+                      autoFocus
+                      value={feedbackText}
+                      onChange={(e) => onFeedbackChange(e.target.value)}
+                      placeholder="Why is this submission being rejected?"
+                      rows={3}
+                      style={{ ...inputStyle, borderColor: theme.errorRed }}
+                    />
+                    <div style={{ display: "flex", gap: SPACING[1.5], justifyContent: "flex-end", marginTop: SPACING[2] }}>
+                      <button
+                        onClick={onFeedbackCancel}
+                        style={{
+                          padding: `${SPACING[1.5]} ${SPACING[3]}`, background: "none",
+                          border: `1.5px solid ${theme.inputBorder}`, borderRadius: RADII.md,
+                          fontSize: FONT_SIZES.micro, fontFamily: FONT_MONO,
+                          cursor: "pointer", color: theme.textTertiary, transition: "all 0.15s",
+                        }}
+                        onMouseEnter={(e) => { e.currentTarget.style.background = theme.subtleBg; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.background = "none"; }}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={() => onFeedbackSubmit("event", item.id)}
+                        disabled={!feedbackText.trim() || isProcessing}
+                        style={{
+                          padding: `${SPACING[1.5]} ${SPACING[3]}`,
+                          background: feedbackText.trim() ? theme.errorRed : theme.inputBorder,
+                          color: "#fff", border: "none", borderRadius: RADII.md,
+                          fontSize: FONT_SIZES.micro, fontFamily: FONT_MONO,
+                          fontWeight: 700, cursor: feedbackText.trim() ? "pointer" : "default",
+                          transition: "filter 0.15s",
+                        }}
+                        onMouseEnter={(e) => { if (feedbackText.trim()) e.currentTarget.style.filter = "brightness(1.15)"; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.filter = "none"; }}
+                      >
+                        Reject Submission
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             );
           }
@@ -170,6 +239,60 @@ export default function AwaitingRevisionSection({
                   Reject
                 </IconButton>
               </div>
+              {feedbackId === item.id && feedbackMode === "rejection" && (
+                <div style={{
+                  marginTop: SPACING[2.5], padding: `${SPACING[3]} ${SPACING[3]}`,
+                  background: (theme.errorRed || "#DC2626") + "08",
+                  borderRadius: RADII.lg, border: `1.5px solid ${theme.errorRed}`,
+                }}>
+                  <label style={{
+                    fontSize: FONT_SIZES.tiny, fontWeight: 700, fontFamily: FONT_MONO,
+                    color: theme.errorRed, textTransform: "uppercase", letterSpacing: "0.05em",
+                    marginBottom: SPACING[1.5], display: "block",
+                  }}>
+                    Reason for Rejection
+                  </label>
+                  <textarea
+                    autoFocus
+                    value={feedbackText}
+                    onChange={(e) => onFeedbackChange(e.target.value)}
+                    placeholder="Why is this submission being rejected?"
+                    rows={3}
+                    style={{ ...inputStyle, borderColor: theme.errorRed }}
+                  />
+                  <div style={{ display: "flex", gap: SPACING[1.5], justifyContent: "flex-end", marginTop: SPACING[2] }}>
+                    <button
+                      onClick={onFeedbackCancel}
+                      style={{
+                        padding: `${SPACING[1.5]} ${SPACING[3]}`, background: "none",
+                        border: `1.5px solid ${theme.inputBorder}`, borderRadius: RADII.md,
+                        fontSize: FONT_SIZES.micro, fontFamily: FONT_MONO,
+                        cursor: "pointer", color: theme.textTertiary, transition: "all 0.15s",
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = theme.subtleBg; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = "none"; }}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={() => onFeedbackSubmit("connection", item.id)}
+                      disabled={!feedbackText.trim() || isProcessing}
+                      style={{
+                        padding: `${SPACING[1.5]} ${SPACING[3]}`,
+                        background: feedbackText.trim() ? theme.errorRed : theme.inputBorder,
+                        color: "#fff", border: "none", borderRadius: RADII.md,
+                        fontSize: FONT_SIZES.micro, fontFamily: FONT_MONO,
+                        fontWeight: 700, cursor: feedbackText.trim() ? "pointer" : "default",
+                        transition: "filter 0.15s",
+                      }}
+                      onMouseEnter={(e) => { if (feedbackText.trim()) e.currentTarget.style.filter = "brightness(1.15)"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.filter = "none"; }}
+                    >
+                      Reject Submission
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           );
         })}

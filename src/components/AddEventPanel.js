@@ -64,6 +64,8 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
   const [submitting, setSubmitting] = useState(false);
   const [showValidationHint, setShowValidationHint] = useState(false);
   const [showEndDate, setShowEndDate] = useState(isEditing ? !!editingEvent.endYear : false);
+  const isStudentEditProposal = isEditing && !isTeacher && !revisionMode && editingEvent?.status === "approved";
+  const [editRationale, setEditRationale] = useState("");
 
   const update = (field, value) => {
     setForm((f) => ({ ...f, [field]: value }));
@@ -128,12 +130,13 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
     if (fc.imageUrl === "mandatory" && !form.imageUrl.trim()) e.imageUrl = true;
     if (fc.region === "mandatory" && !form.region.trim()) e.region = true;
     if (fc.location === "mandatory" && form.latitude == null) e.location = true;
+    if (isStudentEditProposal && !editRationale.trim()) e.editRationale = true;
     setErrors(e);
     setWarnings(w);
     return Object.keys(e).length === 0;
   };
 
-  const FIELD_NAMES = { title: "Title", year: "Year", month: "Month", day: "Day", endYear: "End Year", endMonth: "End Month", endDay: "End Day", period: "Time Period", tags: "Tags", description: "Description", sourceNote: "Source Citation", sourceUrl: "Source URL", imageUrl: "Image URL", region: "Region", location: "Location" };
+  const FIELD_NAMES = { title: "Title", year: "Year", month: "Month", day: "Day", endYear: "End Year", endMonth: "End Month", endDay: "End Day", period: "Time Period", tags: "Tags", description: "Description", sourceNote: "Source Citation", sourceUrl: "Source URL", imageUrl: "Image URL", region: "Region", location: "Location", editRationale: "Edit Rationale" };
 
   const handleSubmit = async () => {
     if (!validate()) {
@@ -162,6 +165,9 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
       Object.keys(data).forEach((k) => {
         if (fc[k] === "hidden" || data[k] === null || data[k] === undefined || data[k] === "") delete data[k];
       });
+      if (isStudentEditProposal) {
+        data.editRationale = editRationale.trim();
+      }
       await onAdd(data, { submitAsPending });
       onClose();
     } catch (err) {
@@ -721,6 +727,30 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
                 Click the map to place a pin for this event's location
               </p>
             )}
+          </div>
+          )}
+
+          {/* Edit Rationale (student edit proposals only) */}
+          {isStudentEditProposal && (
+          <div>
+            <label htmlFor="aep-edit-rationale" style={{
+              ...labelStyle,
+              color: errors.editRationale ? theme.errorRed : theme.textTertiary,
+            }}>Reason for Edit *</label>
+            <textarea
+              id="aep-edit-rationale"
+              value={editRationale}
+              onChange={(e) => { setEditRationale(e.target.value); setErrors((prev) => ({ ...prev, editRationale: undefined })); }}
+              placeholder="Why should this change be made? What evidence supports your suggested revision?"
+              rows={3}
+              style={{
+                ...fieldStyle("editRationale"),
+                resize: "vertical",
+                lineHeight: 1.5,
+              }}
+              aria-invalid={errors.editRationale ? "true" : undefined}
+              aria-describedby={errors.editRationale ? "aep-validation-hint" : undefined}
+            />
           </div>
           )}
 

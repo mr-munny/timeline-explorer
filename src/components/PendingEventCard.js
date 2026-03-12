@@ -34,7 +34,7 @@ export default function PendingEventCard({
   onStartEdit, onSaveEdit, onSetEditForm, onToggleEditTag, onCancelEdit,
   onApprove, onReject,
   onEditPendingEvent, onWithdraw,
-  feedbackId, feedbackText, feedbackType,
+  feedbackId, feedbackText, feedbackType, feedbackMode,
   onFeedbackOpen, onFeedbackChange, onFeedbackSubmit, onFeedbackCancel,
   autoModeratorEnabled,
 }) {
@@ -409,6 +409,35 @@ export default function PendingEventCard({
                     })}
                   </div>
                 )}
+                {event.editRationale && (
+                  <div style={{
+                    padding: `${SPACING[2]} ${SPACING[2.5]}`,
+                    background: theme.subtleBg,
+                    borderRadius: RADII.md,
+                    borderLeft: `3px solid ${theme.textTertiary}`,
+                    marginBottom: SPACING[1],
+                  }}>
+                    <div style={{
+                      fontSize: FONT_SIZES.micro,
+                      fontWeight: 700,
+                      fontFamily: FONT_MONO,
+                      color: theme.textTertiary,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.05em",
+                      marginBottom: SPACING[1],
+                    }}>
+                      Student's Rationale
+                    </div>
+                    <div style={{
+                      fontSize: FONT_SIZES.tiny,
+                      fontFamily: FONT_SERIF,
+                      color: theme.textDescription,
+                      lineHeight: 1.5,
+                    }}>
+                      {event.editRationale}
+                    </div>
+                  </div>
+                )}
               </>
             );
           })() : (
@@ -714,34 +743,39 @@ export default function PendingEventCard({
               {isProcessing ? "..." : <><Icon icon={checkIcon} width={14} style={{ verticalAlign: "middle", marginRight: 3 }} />Approve</>}
             </button>
           </div>
-          {/* Inline feedback textarea */}
-          {feedbackId === event.id && feedbackType === "event" && (
+          {/* Inline feedback textarea (revision or rejection) */}
+          {feedbackId === event.id && feedbackType === "event" && (() => {
+            const isRejection = feedbackMode === "rejection";
+            const accentColor = isRejection ? theme.errorRed : theme.feedbackAmber;
+            const accentBg = isRejection ? (theme.errorRed || "#DC2626") + "08" : theme.feedbackAmberBg;
+            const accentText = isRejection ? theme.errorRed : theme.feedbackAmberText;
+            return (
             <div style={{
               marginTop: SPACING[2.5],
               padding: `${SPACING[3]} ${SPACING[3]}`,
-              background: theme.feedbackAmberBg,
+              background: accentBg,
               borderRadius: RADII.lg,
-              border: `1.5px solid ${theme.feedbackAmber}`,
+              border: `1.5px solid ${accentColor}`,
             }}>
               <label style={{
                 fontSize: FONT_SIZES.tiny,
                 fontWeight: 700,
                 fontFamily: FONT_MONO,
-                color: theme.feedbackAmberText,
+                color: accentText,
                 textTransform: "uppercase",
                 letterSpacing: "0.05em",
                 marginBottom: SPACING[1.5],
                 display: "block",
               }}>
-                Feedback for Student
+                {isRejection ? "Reason for Rejection" : "Feedback for Student"}
               </label>
               <textarea
                 autoFocus
                 value={feedbackText}
                 onChange={(e) => onFeedbackChange(e.target.value)}
-                placeholder="What should the student fix or improve?"
+                placeholder={isRejection ? "Why is this submission being rejected?" : "What should the student fix or improve?"}
                 rows={3}
-                style={{ ...inputStyle, borderColor: theme.feedbackAmber }}
+                style={{ ...inputStyle, borderColor: accentColor }}
               />
               <div style={{ display: "flex", gap: SPACING[1.5], justifyContent: "flex-end", marginTop: SPACING[2] }}>
                 <button
@@ -766,10 +800,10 @@ export default function PendingEventCard({
                 <button
                   onClick={() => onFeedbackSubmit("event", event.id)}
                   disabled={!feedbackText.trim() || isProcessing}
-                  aria-label="Send feedback"
+                  aria-label={isRejection ? "Reject submission" : "Send feedback"}
                   style={{
                     padding: `${SPACING[1.5]} ${SPACING[3]}`,
-                    background: feedbackText.trim() ? theme.feedbackAmber : theme.inputBorder,
+                    background: feedbackText.trim() ? accentColor : theme.inputBorder,
                     color: "#fff",
                     border: "none",
                     borderRadius: RADII.md,
@@ -782,11 +816,12 @@ export default function PendingEventCard({
                   onMouseEnter={(e) => { if (feedbackText.trim()) e.currentTarget.style.filter = "brightness(1.15)"; }}
                   onMouseLeave={(e) => { e.currentTarget.style.filter = "none"; }}
                 >
-                  Send Feedback
+                  {isRejection ? "Reject Submission" : "Send Feedback"}
                 </button>
               </div>
             </div>
-          )}
+            );
+          })()}
           </>
           )}
         </>

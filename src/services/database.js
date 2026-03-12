@@ -203,8 +203,17 @@ export async function approveEvent(eventId) {
   await update(eventRef, { status: "approved" });
 }
 
-// Teacher: reject an event (remove it)
-export async function rejectEvent(eventId) {
+// Teacher: reject an event with feedback
+export async function rejectEvent(eventId, feedback) {
+  const eventRef = ref(db, `events/${eventId}`);
+  await update(eventRef, {
+    status: "rejected",
+    rejectionFeedback: feedback,
+  });
+}
+
+// Student: dismiss a rejected event (removes it)
+export async function dismissRejectedEvent(eventId) {
   const eventRef = ref(db, `events/${eventId}`);
   await remove(eventRef);
 }
@@ -261,8 +270,17 @@ export async function approveConnection(connectionId) {
   await update(connRef, { status: "approved" });
 }
 
-// Teacher: reject a connection (remove it)
-export async function rejectConnection(connectionId) {
+// Teacher: reject a connection with feedback
+export async function rejectConnection(connectionId, feedback) {
+  const connRef = ref(db, `connections/${connectionId}`);
+  await update(connRef, {
+    status: "rejected",
+    rejectionFeedback: feedback,
+  });
+}
+
+// Student: dismiss a rejected connection (removes it)
+export async function dismissRejectedConnection(connectionId) {
   const connRef = ref(db, `connections/${connectionId}`);
   await remove(connRef);
 }

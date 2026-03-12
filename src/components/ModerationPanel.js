@@ -17,6 +17,7 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
   const [feedbackId, setFeedbackId] = useState(null);
   const [feedbackText, setFeedbackText] = useState("");
   const [feedbackType, setFeedbackType] = useState(null);
+  const [feedbackMode, setFeedbackMode] = useState(null); // "revision" or "rejection"
 
   const handleApprove = async (event) => {
     setProcessing(event.id);
@@ -24,7 +25,7 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
       if (event.editOf) {
         // Edit proposal: apply changes to original event, remove proposal
         const original = findEvent(event.editOf);
-        const { editOf, addedBy, addedByEmail, addedByUid, status, dateAdded, id, section, ...edits } = event;
+        const { editOf, addedBy, addedByEmail, addedByUid, status, dateAdded, id, section, editRationale, ...edits } = event;
         const existingHistory = original?.editHistory || [];
         // Compute which fields changed for edit history
         const changes = {};
@@ -59,15 +60,11 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
     setProcessing(null);
   };
 
-  const handleReject = async (eventId) => {
-    if (!window.confirm("Reject this submission? It will be removed.")) return;
-    setProcessing(eventId);
-    try {
-      await rejectEvent(eventId);
-    } catch (err) {
-      console.error("Reject failed:", err);
-    }
-    setProcessing(null);
+  const handleReject = (eventId) => {
+    setFeedbackId(eventId);
+    setFeedbackType("event");
+    setFeedbackMode("rejection");
+    setFeedbackText("");
   };
 
   const startEdit = (event) => {
@@ -116,7 +113,7 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
         await approveConnectionDeletion(conn.id, conn.deleteOf);
       } else if (conn.editOf) {
         const originalConn = findConnection(conn.editOf);
-        const { editOf, addedBy, addedByEmail, addedByUid, status, dateAdded, id, section, editHistory: _, ...edits } = conn;
+        const { editOf, addedBy, addedByEmail, addedByUid, status, dateAdded, id, section, editHistory: _, editRationale, ...edits } = conn;
         const existingHistory = originalConn?.editHistory || [];
         const changes = {};
         if (originalConn) {
@@ -146,15 +143,11 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
     setProcessing(null);
   };
 
-  const handleRejectConnection = async (connId) => {
-    if (!window.confirm("Reject this connection? It will be removed.")) return;
-    setProcessing(connId);
-    try {
-      await rejectConnection(connId);
-    } catch (err) {
-      console.error("Reject connection failed:", err);
-    }
-    setProcessing(null);
+  const handleRejectConnection = (connId) => {
+    setFeedbackId(connId);
+    setFeedbackType("connection");
+    setFeedbackMode("rejection");
+    setFeedbackText("");
   };
 
   const saveConnEdit = async (connId) => {
@@ -168,22 +161,37 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
     setProcessing(null);
   };
 
-  const handleRequestRevision = async (itemType, itemId) => {
+  const handleFeedbackSubmit = async (itemType, itemId) => {
     if (!feedbackText.trim()) return;
     setProcessing(itemId);
     try {
-      await requestRevision(
-        itemType === "event" ? "events" : "connections",
-        itemId,
-        feedbackText.trim(),
-        userName,
-        user?.email
-      );
+      if (feedbackMode === "rejection") {
+        const feedback = {
+          text: feedbackText.trim(),
+          givenBy: userName,
+          givenByEmail: user?.email,
+          date: new Date().toISOString(),
+        };
+        if (itemType === "event") {
+          await rejectEvent(itemId, feedback);
+        } else {
+          await rejectConnection(itemId, feedback);
+        }
+      } else {
+        await requestRevision(
+          itemType === "event" ? "events" : "connections",
+          itemId,
+          feedbackText.trim(),
+          userName,
+          user?.email
+        );
+      }
       setFeedbackId(null);
       setFeedbackText("");
       setFeedbackType(null);
+      setFeedbackMode(null);
     } catch (err) {
-      console.error("Request revision failed:", err);
+      console.error(feedbackMode === "rejection" ? "Reject failed:" : "Request revision failed:", err);
     }
     setProcessing(null);
   };
@@ -194,6 +202,7 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
   const handleFeedbackOpen = (id, type) => {
     setFeedbackId(id);
     setFeedbackType(type);
+    setFeedbackMode("revision");
     setFeedbackText("");
   };
 
@@ -201,6 +210,7 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
     setFeedbackId(null);
     setFeedbackText("");
     setFeedbackType(null);
+    setFeedbackMode(null);
   };
 
   const handleStartConnEdit = (connId, description) => {
@@ -397,8 +407,9 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                 feedbackType={feedbackType}
                 onFeedbackOpen={handleFeedbackOpen}
                 onFeedbackChange={setFeedbackText}
-                onFeedbackSubmit={handleRequestRevision}
+                onFeedbackSubmit={handleFeedbackSubmit}
                 onFeedbackCancel={handleFeedbackCancel}
+                feedbackMode={feedbackMode}
                 autoModeratorEnabled={autoModeratorEnabled}
               />
             ))}
@@ -417,6 +428,12 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
             processing={processing}
             onReject={handleReject}
             hasPendingItems={pendingEvents.length > 0}
+            feedbackId={feedbackId}
+            feedbackText={feedbackText}
+            feedbackMode={feedbackMode}
+            onFeedbackChange={setFeedbackText}
+            onFeedbackSubmit={handleFeedbackSubmit}
+            onFeedbackCancel={handleFeedbackCancel}
           />
         )}
 
@@ -461,8 +478,9 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                 feedbackType={feedbackType}
                 onFeedbackOpen={handleFeedbackOpen}
                 onFeedbackChange={setFeedbackText}
-                onFeedbackSubmit={handleRequestRevision}
+                onFeedbackSubmit={handleFeedbackSubmit}
                 onFeedbackCancel={handleFeedbackCancel}
+                feedbackMode={feedbackMode}
               />
             ))}
           </div>
@@ -480,6 +498,12 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
             processing={processing}
             onReject={handleRejectConnection}
             hasPendingItems={pendingConnections.length > 0}
+            feedbackId={feedbackId}
+            feedbackText={feedbackText}
+            feedbackMode={feedbackMode}
+            onFeedbackChange={setFeedbackText}
+            onFeedbackSubmit={handleFeedbackSubmit}
+            onFeedbackCancel={handleFeedbackCancel}
           />
         )}
       </div>

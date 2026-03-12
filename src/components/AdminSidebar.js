@@ -5,8 +5,9 @@ import inboxArrowDown from "@iconify-icons/mdi/inbox-arrow-down";
 import plusIcon from "@iconify-icons/mdi/plus";
 import checkIcon from "@iconify-icons/mdi/check";
 import accountGroup from "@iconify-icons/mdi/account-group";
+import robotIcon from "@iconify-icons/mdi/robot";
 
-export default function AdminSidebar({ sections, selectedTab, onSelectTab, pendingCount, onAddSection, isSuperAdmin }) {
+export default function AdminSidebar({ sections, selectedTab, onSelectTab, pendingCount, onAddSection, isSuperAdmin, showAutoMod }) {
   const { theme } = useTheme();
   const [addingNew, setAddingNew] = useState(false);
   const [newName, setNewName] = useState("");
@@ -101,6 +102,35 @@ export default function AdminSidebar({ sections, selectedTab, onSelectTab, pendi
           >
             <Icon icon={accountGroup} width={16} />
             Teachers
+          </button>
+        )}
+        {(isSuperAdmin || showAutoMod) && (
+          <button
+            onClick={() => onSelectTab("automod")}
+            aria-current={selectedTab === "automod" ? "page" : undefined}
+            style={{
+              width: "100%",
+              padding: `${SPACING["2.5"]} ${SPACING[3]}`,
+              borderRadius: RADII.md,
+              border: selectedTab === "automod" ? `1.5px solid ${theme.accentGold}` : `1.5px solid transparent`,
+              background: selectedTab === "automod" ? theme.accentGold + "15" : "transparent",
+              color: selectedTab === "automod" ? theme.accentGold : theme.textPrimary,
+              fontSize: FONT_SIZES.micro,
+              fontFamily: FONT_MONO,
+              fontWeight: 700,
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: SPACING[2],
+              transition: "all 0.15s",
+              textAlign: "left",
+              marginTop: SPACING[1],
+            }}
+            onMouseEnter={(e) => { if (selectedTab !== "automod") e.currentTarget.style.background = theme.subtleBg; }}
+            onMouseLeave={(e) => { if (selectedTab !== "automod") e.currentTarget.style.background = "transparent"; }}
+          >
+            <Icon icon={robotIcon} width={16} />
+            Auto-moderator
           </button>
         )}
       </nav>

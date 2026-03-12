@@ -4,6 +4,7 @@ import AdminSidebar from "./AdminSidebar";
 import AdminSectionSettings from "./AdminSectionSettings";
 import ModerationPanel from "./ModerationPanel";
 import TeacherManagement from "./TeacherManagement";
+import AutoModeratorPanel from "./AutoModeratorPanel";
 
 export default function AdminView({
   sections,
@@ -32,6 +33,8 @@ export default function AdminView({
   autoModeratorEnabled,
   autoModeratorVisible,
   effectiveTeacherUid,
+  bounties = [],
+  onBountyApproval,
 }) {
   const { theme } = useTheme();
   const [selectedTab, setSelectedTab] = useState("moderation");
@@ -44,7 +47,7 @@ export default function AdminView({
   );
 
   // If the selected section was deleted, fall back to moderation
-  const effectiveTab = (selectedSection || selectedTab === "moderation" || selectedTab === "teachers") ? selectedTab : "moderation";
+  const effectiveTab = (selectedSection || selectedTab === "moderation" || selectedTab === "teachers" || selectedTab === "automod") ? selectedTab : "moderation";
 
   return (
     <div role="region" aria-label="Administration" style={{
@@ -59,6 +62,7 @@ export default function AdminView({
         pendingCount={pendingCount}
         onAddSection={onAddSection}
         isSuperAdmin={isSuperAdmin}
+        showAutoMod={autoModeratorVisible}
       />
 
       <div style={{
@@ -84,6 +88,15 @@ export default function AdminView({
             autoModeratorVisible={autoModeratorVisible}
             isSuperAdmin={isSuperAdmin}
             teacherUid={effectiveTeacherUid}
+            onBountyApproval={onBountyApproval}
+            bounties={bounties}
+          />
+        ) : effectiveTab === "automod" ? (
+          <AutoModeratorPanel
+            isSuperAdmin={isSuperAdmin}
+            autoModeratorVisible={autoModeratorVisible}
+            autoModeratorEnabled={autoModeratorEnabled}
+            teacherUid={effectiveTeacherUid}
           />
         ) : effectiveTab === "teachers" && isSuperAdmin ? (
           <TeacherManagement
@@ -101,6 +114,11 @@ export default function AdminView({
             onRenameSection={onRenameSection}
             reassignStudentSection={reassignStudentSection}
             removeStudentSection={removeStudentSection}
+            bounties={bounties}
+            allEvents={allEvents}
+            displayPeriods={displayPeriods}
+            userName={userName}
+            userUid={user?.uid}
           />
         ) : null}
       </div>

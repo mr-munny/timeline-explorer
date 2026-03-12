@@ -28,6 +28,7 @@ export default function EventList({
   onUnlinkEasterEgg,
   easterEggDiscoveries,
   user,
+  bounties,
 }) {
   const { theme } = useTheme();
   const eventListRef = useRef(null);
@@ -122,7 +123,7 @@ export default function EventList({
       {/* Contributors sidebar */}
       {showContributors && (
         <aside style={{ width: 220, flexShrink: 0 }} aria-label="Contributors">
-          <ContributorSidebar events={approvedEvents} teacherEmail={teacherEmail} easterEggDiscoveries={easterEggDiscoveries} />
+          <ContributorSidebar events={approvedEvents} teacherEmail={teacherEmail} easterEggDiscoveries={easterEggDiscoveries} bounties={bounties} />
         </aside>
       )}
     </div>

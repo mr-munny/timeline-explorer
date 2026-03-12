@@ -17,7 +17,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 const LIGHT_STYLE = "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json";
 const DARK_STYLE = "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json";
 
-export default function AddEventPanel({ onAdd, onClose, userName, timelineStart = 1910, timelineEnd = 2000, periods = [], fieldConfig, editingEvent, isTeacher, revisionMode = false, feedback = null }) {
+export default function AddEventPanel({ onAdd, onClose, userName, timelineStart = 1910, timelineEnd = 2000, periods = [], fieldConfig, editingEvent, isTeacher, revisionMode = false, feedback = null, bountyHints = null, bountyId = null, bountyTitle = null }) {
   const fc = { ...DEFAULT_FIELD_CONFIG, ...(fieldConfig || {}) };
   const { theme, mode, getThemedSourceTypeBg } = useTheme();
   const isEditing = !!editingEvent;
@@ -48,9 +48,9 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
     endYear: "",
     endMonth: "",
     endDay: "",
-    period: "",
-    tags: [],
-    sourceType: "Primary",
+    period: bountyHints?.period || "",
+    tags: bountyHints?.tags || [],
+    sourceType: bountyHints?.sourceType || "Primary",
     description: "",
     sourceNote: "",
     sourceUrl: "",
@@ -168,6 +168,9 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
       if (isStudentEditProposal) {
         data.editRationale = editRationale.trim();
       }
+      if (bountyId) {
+        data.bountyId = bountyId;
+      }
       await onAdd(data, { submitAsPending });
       onClose();
     } catch (err) {
@@ -246,6 +249,29 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
 
         {revisionMode && <FeedbackBanner feedback={feedback} />}
 
+        {bountyTitle && (
+          <div style={{
+            padding: `${SPACING[2.5]} ${SPACING[3]}`,
+            background: "#0D948810",
+            border: "1.5px solid #0D948830",
+            borderRadius: RADII.lg,
+            marginBottom: SPACING[2],
+            display: "flex",
+            alignItems: "center",
+            gap: SPACING[2],
+          }}>
+            <Icon icon={lightbulbOutline} width={16} style={{ color: "#0D9488", flexShrink: 0 }} />
+            <div>
+              <div style={{ fontSize: FONT_SIZES.micro, fontWeight: 700, fontFamily: FONT_MONO, color: "#0D9488", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                Bounty
+              </div>
+              <div style={{ fontSize: FONT_SIZES.tiny, fontFamily: FONT_SERIF, color: theme.textDescription, lineHeight: 1.4 }}>
+                {bountyTitle}
+              </div>
+            </div>
+          </div>
+        )}
+
         <div style={{ display: "flex", flexDirection: "column", gap: SPACING["3.5"] || "0.875rem" }}>
           {/* Title + Year row */}
           <div style={{ display: "grid", gridTemplateColumns: fc.year !== "hidden" ? "1fr 100px" : "1fr", gap: SPACING["2.5"] }}>
@@ -256,7 +282,7 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
                 id="aep-title"
                 value={form.title}
                 onChange={(e) => update("title", e.target.value)}
-                placeholder="What happened?"
+                placeholder={bountyHints?.title || "What happened?"}
                 style={fieldStyle("title")}
                 aria-invalid={errors.title ? "true" : undefined}
                 aria-describedby={errors.title ? "aep-validation-hint" : undefined}
@@ -270,7 +296,7 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
                 id="aep-year"
                 value={form.year}
                 onChange={(e) => update("year", e.target.value)}
-                placeholder={String(Math.round((timelineStart + timelineEnd) / 2))}
+                placeholder={bountyHints?.year || String(Math.round((timelineStart + timelineEnd) / 2))}
                 type="number"
                 style={{
                   ...fieldStyle("year"),
@@ -547,7 +573,7 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
               id="aep-description"
               value={form.description}
               onChange={(e) => update("description", e.target.value)}
-              placeholder="What happened and why does it matter? Use evidence from your sources."
+              placeholder={bountyHints?.description || "What happened and why does it matter? Use evidence from your sources."}
               rows={4}
               style={{
                 ...fieldStyle("description"),
@@ -629,7 +655,7 @@ export default function AddEventPanel({ onAdd, onClose, userName, timelineStart 
               id="aep-region"
               value={form.region}
               onChange={(e) => update("region", e.target.value)}
-              placeholder="e.g. Europe, Pacific, National..."
+              placeholder={bountyHints?.region || "e.g. Europe, Pacific, National..."}
               style={fieldStyle("region")}
               aria-invalid={errors.region ? "true" : undefined}
             />

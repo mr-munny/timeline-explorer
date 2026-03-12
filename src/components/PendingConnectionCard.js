@@ -7,6 +7,7 @@ import cancelIcon from "@iconify-icons/mdi/cancel";
 import contentSave from "@iconify-icons/mdi/content-save";
 import arrowRightBold from "@iconify-icons/mdi/arrow-right-bold";
 import commentAlertOutline from "@iconify-icons/mdi/comment-alert-outline";
+import targetIcon from "@iconify-icons/mdi/bullseye-arrow";
 import { useTheme, FONT_MONO, FONT_SERIF, FONT_SIZES, SPACING, RADII } from "../contexts/ThemeContext";
 import IconButton from "./IconButton";
 
@@ -284,6 +285,28 @@ export default function PendingConnectionCard({
             );
           })() : (
             <>
+              {conn.bountyId && (
+                <div
+                  style={{
+                    fontSize: FONT_SIZES.tiny,
+                    fontWeight: 700,
+                    fontFamily: FONT_MONO,
+                    color: "#0D9488",
+                    background: "#0D948812",
+                    padding: `${SPACING[0.5] || "0.1875rem"} ${SPACING[2]}`,
+                    borderRadius: RADII.sm,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: SPACING[1],
+                    marginBottom: SPACING[1.5],
+                    textTransform: "uppercase",
+                    letterSpacing: "0.05em",
+                  }}
+                >
+                  <Icon icon={targetIcon} width={12} />
+                  Bounty Response
+                </div>
+              )}
               <p style={{
                 fontSize: FONT_SIZES.tiny, lineHeight: 1.6, color: theme.textDescription,
                 margin: `0 0 ${SPACING[2]} 0`, fontFamily: FONT_SERIF,

@@ -9,6 +9,7 @@ import vectorLink from "@iconify-icons/mdi/vector-link";
 import cogOutline from "@iconify-icons/mdi/cog-outline";
 import arrowLeft from "@iconify-icons/mdi/arrow-left";
 import bellRingOutline from "@iconify-icons/mdi/bell-ring-outline";
+import targetIcon from "@iconify-icons/mdi/bullseye-arrow";
 import IconButton from "./IconButton";
 
 export default function TimelineHeader({
@@ -35,6 +36,8 @@ export default function TimelineHeader({
   myRejectedEvents = [],
   myRejectedConnections = [],
   setShowRevisionPanel,
+  openBountyCount = 0,
+  setShowBountyBoard,
 }) {
   const revisionCount = myRevisionEvents.length + myRevisionConnections.length + myRejectedEvents.length + myRejectedConnections.length;
   const pendingCount = pendingEvents.length + pendingConnections.length;
@@ -262,6 +265,22 @@ export default function TimelineHeader({
                     style={headerBtnStyle}
                   >
                     Pending ({pendingCount})
+                  </IconButton>
+                )}
+                {openBountyCount > 0 && (
+                  <IconButton
+                    icon={targetIcon}
+                    onClick={() => setShowBountyBoard(true)}
+                    title={`${openBountyCount} open bounties`}
+                    size={14}
+                    color="#0D9488"
+                    hoverBg="#0D948815"
+                    style={{
+                      ...headerBtnStyle,
+                      borderColor: "#0D9488",
+                    }}
+                  >
+                    Bounties ({openBountyCount})
                   </IconButton>
                 )}
                 <button

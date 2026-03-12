@@ -3,36 +3,49 @@ import { Icon } from "@iconify/react";
 import accountGroup from "@iconify-icons/mdi/account-group";
 import trophyOutline from "@iconify-icons/mdi/trophy-outline";
 import puzzleOutline from "@iconify-icons/mdi/puzzle-outline";
+import targetIcon from "@iconify-icons/mdi/bullseye-arrow";
 import { useTheme, FONT_MONO, FONT_SIZES, SPACING, RADII } from "../contexts/ThemeContext";
 
-export default function ContributorSidebar({ events, teacherEmail, easterEggDiscoveries }) {
+export default function ContributorSidebar({ events, teacherEmail, easterEggDiscoveries, bounties = [] }) {
   const { theme } = useTheme();
 
   const contributors = useMemo(() => {
     const byName = {};
     events.forEach((e) => {
       if (!byName[e.addedBy]) {
-        byName[e.addedBy] = { count: 0, discoveryCount: 0, email: e.addedByEmail };
+        byName[e.addedBy] = { count: 0, discoveryCount: 0, bountyCount: 0, email: e.addedByEmail };
       }
       byName[e.addedBy].count += 1;
     });
     if (easterEggDiscoveries) {
       easterEggDiscoveries.forEach((d) => {
         if (!byName[d.discoveredBy]) {
-          byName[d.discoveredBy] = { count: 0, discoveryCount: 0, email: d.discoveredByEmail };
+          byName[d.discoveredBy] = { count: 0, discoveryCount: 0, bountyCount: 0, email: d.discoveredByEmail };
         }
         byName[d.discoveredBy].discoveryCount += 1;
       });
     }
+    // Count completed bounties per student
+    if (bounties) {
+      bounties.forEach((b) => {
+        if (b.status === "completed" && b.completedBy) {
+          if (!byName[b.completedBy]) {
+            byName[b.completedBy] = { count: 0, discoveryCount: 0, bountyCount: 0, email: "" };
+          }
+          byName[b.completedBy].bountyCount += 1;
+        }
+      });
+    }
     return Object.entries(byName)
       .sort((a, b) => b[1].count - a[1].count)
-      .map(([name, { count, discoveryCount, email }]) => ({
+      .map(([name, { count, discoveryCount, bountyCount, email }]) => ({
         name,
         count,
         discoveryCount,
+        bountyCount,
         isTeacher: email === teacherEmail,
       }));
-  }, [events, easterEggDiscoveries, teacherEmail]);
+  }, [events, easterEggDiscoveries, bounties, teacherEmail]);
 
   const topContributor = contributors.find((x) => !x.isTeacher);
 
@@ -109,6 +122,36 @@ export default function ContributorSidebar({ events, teacherEmail, easterEggDisc
               >
                 {c.count}
               </span>
+              {c.bountyCount > 0 && (
+                <span
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 1,
+                  }}
+                  title={`${c.bountyCount} ${c.bountyCount === 1 ? "bounty" : "bounties"} completed`}
+                >
+                  {Array.from({ length: Math.min(c.bountyCount, 8) }).map((_, i) => (
+                    <Icon
+                      key={i}
+                      icon={targetIcon}
+                      width={9}
+                      style={{ color: "#0D9488" }}
+                      aria-hidden="true"
+                    />
+                  ))}
+                  {c.bountyCount > 8 && (
+                    <span style={{
+                      fontSize: FONT_SIZES.micro,
+                      fontFamily: FONT_MONO,
+                      color: "#0D9488",
+                      fontWeight: 700,
+                    }}>
+                      +{c.bountyCount - 8}
+                    </span>
+                  )}
+                </span>
+              )}
               {c.discoveryCount > 0 && (
                 <span
                   style={{

@@ -718,6 +718,77 @@ export function subscribeToAllStudentSections(callback) {
   });
 }
 
+// ── Bounties ────────────────────────────────────────────────
+
+const bountiesRef = ref(db, "bounties");
+
+// Listen to bounties for a single section
+export function subscribeToBounties(section, callback) {
+  const q = query(bountiesRef, orderByChild("section"), equalTo(section));
+  return onValue(q, (snapshot) => {
+    const bounties = [];
+    snapshot.forEach((child) => {
+      bounties.push({ id: child.key, ...child.val() });
+    });
+    callback(bounties);
+  });
+}
+
+// Listen to bounties across multiple sections (admin view)
+export function subscribeToBountiesForSections(sectionIds, callback) {
+  const bountiesMap = {};
+  const unsubscribes = [];
+  for (const secId of sectionIds) {
+    const q = query(bountiesRef, orderByChild("section"), equalTo(secId));
+    const unsub = onValue(q, (snapshot) => {
+      const bounties = [];
+      snapshot.forEach((child) => {
+        bounties.push({ id: child.key, ...child.val() });
+      });
+      bountiesMap[secId] = bounties;
+      const merged = Object.values(bountiesMap).flat();
+      callback(merged);
+    });
+    unsubscribes.push(unsub);
+  }
+  if (sectionIds.length === 0) callback([]);
+  return () => unsubscribes.forEach((fn) => fn());
+}
+
+// Create a new bounty
+export async function createBounty(bountyData) {
+  const newRef = push(bountiesRef);
+  await set(newRef, {
+    ...bountyData,
+    status: "open",
+    createdAt: new Date().toISOString(),
+  });
+  return newRef.key;
+}
+
+// Update a bounty
+export async function updateBounty(bountyId, updates) {
+  const bountyRef = ref(db, `bounties/${bountyId}`);
+  await update(bountyRef, updates);
+}
+
+// Delete a bounty
+export async function deleteBounty(bountyId) {
+  const bountyRef = ref(db, `bounties/${bountyId}`);
+  await remove(bountyRef);
+}
+
+// Mark a bounty as completed (called when teacher approves a bounty submission)
+export async function completeBounty(bountyId, studentName, studentUid) {
+  const bountyRef = ref(db, `bounties/${bountyId}`);
+  await update(bountyRef, {
+    status: "completed",
+    completedBy: studentName,
+    completedByUid: studentUid,
+    completedAt: new Date().toISOString(),
+  });
+}
+
 // ── Easter Egg Discoveries ──────────────────────────────────
 
 export async function linkEasterEgg(eventId, eggId, visibility, teacherName) {

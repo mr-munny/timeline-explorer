@@ -12,6 +12,8 @@ import {
   subscribeToFieldConfig,
   subscribeToAutoModerator,
   subscribeToEasterEggDiscoveries,
+  subscribeToBounties,
+  subscribeToBountiesForSections,
 } from "../services/database";
 
 export default function useFirebaseSubscriptions({
@@ -34,6 +36,7 @@ export default function useFirebaseSubscriptions({
   const [autoModeratorEnabled, setAutoModeratorEnabled] = useState(false);
   const [autoModeratorVisible, setAutoModeratorVisible] = useState(false);
   const [easterEggDiscoveries, setEasterEggDiscoveries] = useState([]);
+  const [bounties, setBounties] = useState([]);
 
   // Filter sections by teacher ownership (client-side)
   const activeSections = useMemo(() => {
@@ -183,6 +186,18 @@ export default function useFirebaseSubscriptions({
     return () => unsub();
   }, [user, section]);
 
+  // Subscribe to bounties (per-section for students, multi-section for admin)
+  useEffect(() => {
+    if (!user) return;
+    if (isTeacher && showAdminView) {
+      const unsub = subscribeToBountiesForSections(teacherSectionIds, setBounties);
+      return () => unsub();
+    } else {
+      const unsub = subscribeToBounties(section, setBounties);
+      return () => unsub();
+    }
+  }, [user, section, isTeacher, showAdminView, teacherSectionIds]);
+
   return {
     allEvents,
     allConnections,
@@ -201,5 +216,6 @@ export default function useFirebaseSubscriptions({
     autoModeratorEnabled,
     autoModeratorVisible,
     easterEggDiscoveries,
+    bounties,
   };
 }

@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-An interactive educational web app where students explore a filterable chronological timeline of history events. Students submit events and cause-effect connections for teacher review; approved items appear on the shared timeline and events are archived to Google Sheets. Supports BCE dates, configurable time periods, dark mode, per-section customization, multi-teacher administration, an interactive world map view, AI auto-moderation, and hidden Easter egg games.
+An interactive educational web app where students explore a filterable chronological timeline of history events. Students submit events and cause-effect connections for teacher review; approved items appear on the shared timeline and events are archived to Google Sheets. Supports BCE dates, configurable time periods, dark mode, per-section customization, multi-teacher administration, an interactive world map view, AI auto-moderation, hidden Easter egg games, and a teacher-driven bounty board system.
 
 **Live site:** https://mr-munny.github.io/timeline-explorer
 
@@ -26,6 +26,8 @@ src/
 ├── components/
 │   ├── AddConnectionPanel.js      # Modal form for creating/editing cause-effect connections
 │   ├── AddEventPanel.js           # Modal form for student event submission
+│   ├── BountyBoard.js             # Student-facing modal listing open/completed bounties
+│   ├── BountyEditor.js            # Teacher bounty management in admin section settings
 │   ├── AdminSectionSettings.js    # Per-section settings: periods, range, question, fields, palette, roster
 │   ├── AdminSidebar.js            # Tab navigation for admin views (moderation/settings/teachers)
 │   ├── AdminView.js               # Top-level admin container with sidebar + content panels
@@ -166,6 +168,7 @@ Copy `.env.example` to `.env.local` and fill in real values:
   dateAdded: string,        // ISO 8601
   editHistory: array,       // Optional [{name, email, date, changes}]
   editOf: string,           // Optional, ID of original event when proposing an edit
+  bountyId: string,         // Optional, ID of bounty this event fulfills
   aiReview: { score, reason } // Optional, result from AI auto-moderator
 }
 ```
@@ -184,7 +187,36 @@ Copy `.env.example` to `.env.local` and fill in real values:
   dateAdded: string,        // ISO 8601
   editHistory: array,       // Optional [{name, email, date, changes}]
   editOf: string,           // Optional, ID of original connection (edit proposal)
-  deleteOf: string          // Optional, ID of connection student wants deleted
+  deleteOf: string,         // Optional, ID of connection student wants deleted
+  bountyId: string          // Optional, ID of bounty this connection fulfills
+}
+```
+
+### Bounty (stored at `/bounties/{id}` in Firebase)
+```js
+{
+  type: "event" | "connection", // What kind of submission is requested
+  title: string,                // Bounty display title
+  description: string,          // Teacher instructions/context
+  hints: {                      // Pre-fill hints shown as placeholders
+    title: string,              // For event bounties
+    year: string,
+    period: string,
+    description: string,
+    tags: string[],
+    region: string,
+    causeEventId: string,       // For connection bounties
+    effectEventId: string,
+    connectionDescription: string,
+  },
+  section: string,
+  createdBy: string,            // Teacher display name
+  createdByUid: string,
+  createdAt: string,            // ISO 8601
+  status: "open" | "completed",
+  completedBy: string,          // Student name (set on approval)
+  completedByUid: string,
+  completedAt: string,
 }
 ```
 
@@ -244,6 +276,7 @@ Teachers manage sections via AdminSectionSettings. Students self-select via Sect
 | `/settings/autoModerator` | AI moderator global config (visible, per-teacher toggles) |
 | `/easterEggs/{eventId}` | Easter egg metadata linked to events |
 | `/easterEggDiscoveries/{eventId}/{uid}` | Per-user Easter egg discovery records |
+| `/bounties/{id}` | Bounty objects (per-section, teacher-posted) |
 | `/defaultPeriods` | Default periods template |
 | `/defaultCompellingQuestion` | Default compelling question template |
 | `/defaultTimelineRange` | Default timeline range template |
@@ -319,3 +352,4 @@ Teachers manage sections via AdminSectionSettings. Students self-select via Sect
 - Multi-teacher support uses join codes and email invites; the env var teacher is automatically the super admin
 - AI auto-moderator is a per-teacher opt-in setting; super admin controls global visibility of the feature
 - Easter eggs are linked to specific events and tracked per-user in Firebase
+- Bounty board is per-section: teachers post bounties in AdminSectionSettings, students see them via a header button, and completed bounties show as "kill counter" target icons in the leaderboard

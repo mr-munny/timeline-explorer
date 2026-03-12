@@ -23,6 +23,7 @@ import TimePeriodsEditor from "./TimePeriodsEditor";
 import CompellingQuestionEditor from "./CompellingQuestionEditor";
 import FieldConfigEditor from "./FieldConfigEditor";
 import PaletteSelector from "./PaletteSelector";
+import BountyEditor from "./BountyEditor";
 
 export default function AdminSectionSettings({
   sectionId,
@@ -33,6 +34,11 @@ export default function AdminSectionSettings({
   onRenameSection,
   reassignStudentSection,
   removeStudentSection,
+  bounties = [],
+  allEvents = [],
+  displayPeriods = [],
+  userName,
+  userUid,
 }) {
   const { theme } = useTheme();
 
@@ -394,6 +400,18 @@ export default function AdminSectionSettings({
           sections={sections}
           onReassign={reassignStudentSection}
           onRemove={removeStudentSection}
+        />
+
+        <div style={dividerStyle} />
+
+        {/* Bounty Board */}
+        <BountyEditor
+          section={sectionId}
+          bounties={bounties}
+          periods={displayPeriods}
+          approvedEvents={allEvents.filter((e) => e.status === "approved" && e.section === sectionId)}
+          userName={userName}
+          userUid={userUid}
         />
 
         <div style={dividerStyle} />

@@ -3,6 +3,7 @@ import { Icon } from "@iconify/react";
 import closeIcon from "@iconify-icons/mdi/close";
 import sendIcon from "@iconify-icons/mdi/send";
 import arrowRightBold from "@iconify-icons/mdi/arrow-right-bold";
+import lightbulbOutline from "@iconify-icons/mdi/lightbulb-outline";
 import { useTheme, FONT_MONO, FONT_SERIF, FONT_SIZES, SPACING, RADII, Z_INDEX } from "../contexts/ThemeContext";
 import FeedbackBanner from "./FeedbackBanner";
 import ModalShell from "./ModalShell";
@@ -227,11 +228,11 @@ function EventSearchDropdown({ label, events, selectedId, onSelect, excludeId, p
   );
 }
 
-export default function AddConnectionPanel({ onAdd, onClose, userName, approvedEvents, periods, prefilledCause, prefilledEffect, editingConnection, isTeacher, revisionMode = false, feedback = null }) {
+export default function AddConnectionPanel({ onAdd, onClose, userName, approvedEvents, periods, prefilledCause, prefilledEffect, editingConnection, isTeacher, revisionMode = false, feedback = null, bountyHints = null, bountyId = null, bountyTitle = null }) {
   const { theme } = useTheme();
   const isEditing = !!editingConnection;
-  const [causeEventId, setCauseEventId] = useState(isEditing ? editingConnection.causeEventId : (prefilledCause || null));
-  const [effectEventId, setEffectEventId] = useState(isEditing ? editingConnection.effectEventId : (prefilledEffect || null));
+  const [causeEventId, setCauseEventId] = useState(isEditing ? editingConnection.causeEventId : (prefilledCause || bountyHints?.causeEventId || null));
+  const [effectEventId, setEffectEventId] = useState(isEditing ? editingConnection.effectEventId : (prefilledEffect || bountyHints?.effectEventId || null));
   const [description, setDescription] = useState(isEditing ? editingConnection.description : "");
   const isStudentEditProposal = isEditing && !isTeacher && !revisionMode && editingConnection?.status === "approved";
   const [editRationale, setEditRationale] = useState("");
@@ -258,6 +259,9 @@ export default function AddConnectionPanel({ onAdd, onClose, userName, approvedE
       const data = { causeEventId, effectEventId, description: description.trim() };
       if (isStudentEditProposal) {
         data.editRationale = editRationale.trim();
+      }
+      if (bountyId) {
+        data.bountyId = bountyId;
       }
       await onAdd(data);
       onClose();
@@ -324,6 +328,29 @@ export default function AddConnectionPanel({ onAdd, onClose, userName, approvedE
 
         {revisionMode && <FeedbackBanner feedback={feedback} />}
 
+        {bountyTitle && (
+          <div style={{
+            padding: `${SPACING[2.5]} ${SPACING[3]}`,
+            background: "#0D948810",
+            border: "1.5px solid #0D948830",
+            borderRadius: RADII.lg,
+            marginBottom: SPACING[2],
+            display: "flex",
+            alignItems: "center",
+            gap: SPACING[2],
+          }}>
+            <Icon icon={lightbulbOutline} width={16} style={{ color: "#0D9488", flexShrink: 0 }} />
+            <div>
+              <div style={{ fontSize: FONT_SIZES.micro, fontWeight: 700, fontFamily: FONT_MONO, color: "#0D9488", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                Bounty
+              </div>
+              <div style={{ fontSize: FONT_SIZES.tiny, fontFamily: FONT_SERIF, color: theme.textDescription, lineHeight: 1.4 }}>
+                {bountyTitle}
+              </div>
+            </div>
+          </div>
+        )}
+
         <div style={{ display: "flex", flexDirection: "column", gap: SPACING["3.5"] || "0.875rem" }}>
           <EventSearchDropdown
             label="Cause Event *"
@@ -361,7 +388,7 @@ export default function AddConnectionPanel({ onAdd, onClose, userName, approvedE
               id="acp-description"
               value={description}
               onChange={(e) => { setDescription(e.target.value); setErrors((err) => ({ ...err, description: undefined })); }}
-              placeholder="How does the cause event lead to the effect event? What is the connection?"
+              placeholder={bountyHints?.connectionDescription || "How does the cause event lead to the effect event? What is the connection?"}
               rows={3}
               style={{
                 width: "100%",

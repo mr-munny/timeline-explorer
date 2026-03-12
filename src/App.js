@@ -3,7 +3,7 @@ import { useAuth } from "./contexts/AuthContext";
 import { useTheme, FONT_MONO, FONT_SERIF, FONT_SIZES, SPACING } from "./contexts/ThemeContext";
 import { getPeriod, DEFAULT_PERIODS, DEFAULT_FIELD_CONFIG } from "./data/constants";
 import { compareEventDates } from "./utils/dateUtils";
-import { savePeriods, saveSections, saveCompellingQuestion, saveTimelineRange, saveFieldConfig, assignStudentSection, reassignStudentSection, removeStudentSection, unlinkEasterEgg, dismissRejectedEvent, dismissRejectedConnection } from "./services/database";
+import { savePeriods, saveSections, saveCompellingQuestion, saveTimelineRange, saveFieldConfig, assignStudentSection, reassignStudentSection, removeStudentSection, unlinkEasterEgg, dismissRejectedEvent, dismissRejectedConnection, completeBounty } from "./services/database";
 import useFirebaseSubscriptions from "./hooks/useFirebaseSubscriptions";
 import useEventHandlers from "./hooks/useEventHandlers";
 import useConnectionHandlers from "./hooks/useConnectionHandlers";
@@ -23,6 +23,7 @@ import EventList from "./components/EventList";
 import RevisionPanel from "./components/RevisionPanel";
 import EasterEggShell from "./easterEggs/EasterEggShell";
 import EasterEggLinkDialog from "./components/EasterEggLinkDialog";
+import BountyBoard from "./components/BountyBoard";
 
 const WorldMapView = lazy(() => import("./components/WorldMapView"));
 
@@ -70,6 +71,8 @@ export default function App() {
   const revisingEvent = modal.type === 'reviseEvent' ? modal.payload : null;
   const revisingConnection = modal.type === 'reviseConnection' ? modal.payload : null;
   const linkEasterEggEvent = modal.type === 'linkEasterEgg' ? modal.payload : null;
+  const showBountyBoard = modal.type === 'bountyBoard';
+  const bountyAcceptPayload = modal.type === 'bountyAcceptEvent' || modal.type === 'bountyAcceptConnection' ? modal.payload : null;
 
   // Stable modal dispatch helpers (passed to hooks and child components)
   const closeModal = useCallback(() => dispatchModal({ type: 'CLOSE' }), []);
@@ -109,6 +112,7 @@ export default function App() {
     autoModeratorEnabled,
     autoModeratorVisible,
     easterEggDiscoveries,
+    bounties,
   } = useFirebaseSubscriptions({ user, isTeacher, section, showAdminView, effectiveTeacherUid });
   const defaultSection = section;
 
@@ -243,6 +247,12 @@ export default function App() {
   const myRejectedConnections = useMemo(
     () => rejectedConnections.filter((c) => c.addedByUid === user?.uid),
     [rejectedConnections, user]
+  );
+
+  // Open bounties for the current section (student view)
+  const openBounties = useMemo(
+    () => bounties.filter((b) => b.status === "open" && b.section === section),
+    [bounties, section]
   );
 
   // Lookup: eventId -> { causes: [connections where event is cause], effects: [connections where event is effect] }
@@ -390,6 +400,15 @@ export default function App() {
     revisingConnection,
     setRevisingConnection,
   });
+
+  // When a bounty submission is approved, mark the bounty as completed
+  const handleBountyApproval = useCallback(async (bountyId, studentName, studentUid) => {
+    try {
+      await completeBounty(bountyId, studentName, studentUid);
+    } catch (err) {
+      console.error("Failed to complete bounty:", err);
+    }
+  }, []);
 
   // Count unique student contributors (exclude any teacher-created events)
   const teacherEmail = teacherData?.email || user?.email;
@@ -543,6 +562,8 @@ export default function App() {
         myRejectedEvents={myRejectedEvents}
         myRejectedConnections={myRejectedConnections}
         setShowRevisionPanel={() => dispatchModal({ type: 'OPEN', modalType: 'revisionPanel' })}
+        openBountyCount={openBounties.length}
+        setShowBountyBoard={() => dispatchModal({ type: 'OPEN', modalType: 'bountyBoard' })}
       />
 
       {/* Admin View (full page, replaces timeline content) */}
@@ -574,6 +595,8 @@ export default function App() {
           autoModeratorEnabled={autoModeratorEnabled}
           autoModeratorVisible={autoModeratorVisible}
           effectiveTeacherUid={effectiveTeacherUid}
+          bounties={bounties}
+          onBountyApproval={handleBountyApproval}
         />
       )}
 
@@ -694,6 +717,7 @@ export default function App() {
             onUnlinkEasterEgg={handleUnlinkEasterEgg}
             easterEggDiscoveries={easterEggDiscoveries}
             user={user}
+            bounties={bounties}
           />
         )}
 
@@ -847,6 +871,56 @@ export default function App() {
           isTeacher={isTeacher}
           revisionMode
           feedback={revisingConnection.feedback}
+        />
+      )}
+
+      {/* Bounty Board Modal (students) */}
+      {showBountyBoard && (
+        <BountyBoard
+          bounties={openBounties}
+          completedBounties={bounties.filter((b) => b.status === "completed" && b.section === section)}
+          onAccept={(bounty) => {
+            if (bounty.type === "connection") {
+              dispatchModal({ type: 'OPEN', modalType: 'bountyAcceptConnection', payload: bounty });
+            } else {
+              dispatchModal({ type: 'OPEN', modalType: 'bountyAcceptEvent', payload: bounty });
+            }
+          }}
+          onClose={closeModal}
+          periods={periods}
+          approvedEvents={approvedEvents}
+        />
+      )}
+
+      {/* Bounty Accept: Add Event with hints */}
+      {modal.type === 'bountyAcceptEvent' && bountyAcceptPayload && (
+        <AddEventPanel
+          onAdd={handleAddEvent}
+          onClose={closeModal}
+          userName={userName}
+          timelineStart={timelineStart}
+          timelineEnd={timelineEnd}
+          periods={periods}
+          fieldConfig={activeFieldConfig}
+          isTeacher={isTeacher}
+          bountyHints={bountyAcceptPayload.hints}
+          bountyId={bountyAcceptPayload.id}
+          bountyTitle={bountyAcceptPayload.title}
+        />
+      )}
+
+      {/* Bounty Accept: Add Connection with hints */}
+      {modal.type === 'bountyAcceptConnection' && bountyAcceptPayload && (
+        <AddConnectionPanel
+          onAdd={handleAddConnection}
+          onClose={closeModal}
+          userName={userName}
+          approvedEvents={approvedEvents}
+          periods={periods}
+          isTeacher={isTeacher}
+          bountyHints={bountyAcceptPayload.hints}
+          bountyId={bountyAcceptPayload.id}
+          bountyTitle={bountyAcceptPayload.title}
         />
       )}
 

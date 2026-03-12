@@ -21,6 +21,10 @@
           ".write": true,
           ".validate": "newData.hasChildren(['recommendation', 'confidence', 'reasoning']) && newData.child('recommendation').isString() && newData.child('confidence').isNumber() && newData.child('reasoning').isString()"
         },
+        "similarityReport": {
+          ".write": true,
+          ".validate": "newData.hasChildren(['noveltyScore', 'reasoning']) && newData.child('noveltyScore').isNumber() && newData.child('reasoning').isString()"
+        },
         ".write": "auth != null && (auth.token.email.matches(/.*@universityprep\\.org$/) || auth.token.email === 'roiboi1234@gmail.com') && ((!data.exists() && newData.child('status').val() === 'pending') || root.child('teachers').child(auth.uid).exists() || (data.child('status').val() === 'needs_revision' && data.child('addedByUid').val() === auth.uid && newData.child('status').val() === 'pending') || (data.child('status').val() === 'pending' && data.child('addedByUid').val() === auth.uid && newData.child('status').val() === 'pending') || ((data.child('status').val() === 'pending' || data.child('status').val() === 'needs_revision') && data.child('addedByUid').val() === auth.uid && !newData.exists()))"
       }
     },
@@ -63,6 +67,11 @@
           ".write": "auth != null && root.child('teachers').child(auth.uid).child('isSuperAdmin').val() === true"
         },
         "teachers": {
+          "$uid": {
+            ".write": "auth != null && $uid === auth.uid && root.child('teachers').child(auth.uid).exists()"
+          }
+        },
+        "similarityCheckers": {
           "$uid": {
             ".write": "auth != null && $uid === auth.uid && root.child('teachers').child(auth.uid).exists()"
           }

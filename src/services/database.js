@@ -383,6 +383,12 @@ export async function saveAutoModeratorEnabled(teacherUid, enabled) {
   await set(teacherRef, enabled);
 }
 
+// Save per-teacher similarity checker enabled toggle
+export async function saveSimilarityCheckerEnabled(teacherUid, enabled) {
+  const teacherRef = ref(db, `settings/autoModerator/similarityCheckers/${teacherUid}`);
+  await set(teacherRef, enabled);
+}
+
 // ── Color Palette ───────────────────────────────────────────
 
 // Listen to a section's selected color palette ID

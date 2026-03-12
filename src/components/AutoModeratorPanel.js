@@ -1,10 +1,10 @@
 import { useTheme, FONT_MONO, FONT_SERIF, FONT_SIZES, SPACING, RADII } from "../contexts/ThemeContext";
-import { saveAutoModeratorVisible, saveAutoModeratorEnabled } from "../services/database";
+import { saveAutoModeratorVisible, saveAutoModeratorEnabled, saveSimilarityCheckerEnabled } from "../services/database";
 import { Icon } from "@iconify/react";
 import eyeIcon from "@iconify-icons/mdi/eye";
 import eyeOffIcon from "@iconify-icons/mdi/eye-off";
 
-export default function AutoModeratorPanel({ isSuperAdmin, autoModeratorVisible, autoModeratorEnabled, teacherUid }) {
+export default function AutoModeratorPanel({ isSuperAdmin, autoModeratorVisible, autoModeratorEnabled, similarityCheckerEnabled, teacherUid }) {
   const { theme } = useTheme();
 
   const ToggleSwitch = ({ enabled, onToggle, label }) => (
@@ -180,6 +180,47 @@ export default function AutoModeratorPanel({ isSuperAdmin, autoModeratorVisible,
             enabled={autoModeratorEnabled}
             onToggle={() => teacherUid && saveAutoModeratorEnabled(teacherUid, !autoModeratorEnabled)}
             label={autoModeratorEnabled ? "On" : "Off"}
+          />
+        </div>
+      </div>
+      {/* Similarity Checker feature */}
+      <div style={{
+        padding: `${SPACING[4]} ${SPACING[4]}`,
+        borderRadius: RADII.lg,
+        border: `1.5px solid ${theme.cardBorder}`,
+        background: theme.cardBg,
+        marginTop: SPACING[3],
+      }}>
+        <div style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+        }}>
+          <div style={{ flex: 1, marginRight: SPACING[4] }}>
+            <h3 style={{
+              fontSize: FONT_SIZES.sm,
+              fontWeight: 700,
+              margin: 0,
+              fontFamily: FONT_SERIF,
+              color: theme.textPrimary,
+              marginBottom: SPACING[1],
+            }}>
+              Similarity Checker
+            </h3>
+            <p style={{
+              fontSize: FONT_SIZES.micro,
+              color: theme.textSecondary,
+              margin: 0,
+              fontFamily: FONT_MONO,
+              lineHeight: 1.5,
+            }}>
+              When enabled, new submissions are compared against existing events in the same section. The AI detects potential duplicates and reports a novelty score to help identify redundant entries.
+            </p>
+          </div>
+          <ToggleSwitch
+            enabled={similarityCheckerEnabled}
+            onToggle={() => teacherUid && saveSimilarityCheckerEnabled(teacherUid, !similarityCheckerEnabled)}
+            label={similarityCheckerEnabled ? "On" : "Off"}
           />
         </div>
       </div>

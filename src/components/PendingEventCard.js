@@ -642,6 +642,69 @@ export default function PendingEventCard({
             );
           })()}
 
+          {/* AI Similarity Report */}
+          {!readOnly && event.similarityReport && (() => {
+            const report = event.similarityReport;
+            const score = report.noveltyScore;
+            const isNovel = score >= 0.8;
+            const isSuspect = score >= 0.4 && score < 0.8;
+            const isDuplicate = score < 0.4;
+            const colorSet = isNovel
+              ? { border: theme.successGreen || "#16A34A", bg: (theme.successGreen || "#16A34A") + "12", text: theme.successGreen || "#16A34A", label: "Likely Novel" }
+              : isSuspect
+              ? { border: theme.feedbackAmber, bg: theme.feedbackAmberBg, text: theme.feedbackAmber, label: "Similar Event Found" }
+              : { border: theme.errorRed, bg: (theme.errorRed || "#DC2626") + "12", text: theme.errorRed, label: "Possible Duplicate" };
+            return (
+              <div style={{
+                padding: `${SPACING[2.5]} ${SPACING[3]}`,
+                background: colorSet.bg,
+                border: `1.5px solid ${colorSet.border}`,
+                borderRadius: RADII.lg,
+                marginBottom: SPACING[2.5],
+              }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: SPACING[1] }}>
+                  <span style={{
+                    fontSize: FONT_SIZES.tiny,
+                    fontWeight: 700,
+                    fontFamily: FONT_MONO,
+                    color: colorSet.text,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.05em",
+                  }}>
+                    {colorSet.label}
+                  </span>
+                  <span style={{
+                    fontSize: FONT_SIZES.micro,
+                    fontFamily: FONT_MONO,
+                    color: theme.textSecondary,
+                  }}>
+                    Novelty: {Math.round(score * 100)}%
+                  </span>
+                </div>
+                {report.mostSimilarEventTitle && (isDuplicate || isSuspect) && (
+                  <div style={{
+                    fontSize: FONT_SIZES.micro,
+                    fontFamily: FONT_MONO,
+                    color: theme.textSecondary,
+                    marginBottom: SPACING[1],
+                  }}>
+                    Closest match: <strong style={{ color: theme.textPrimary }}>{report.mostSimilarEventTitle}</strong>
+                    {report.similarity != null && <> ({Math.round(report.similarity * 100)}% similar)</>}
+                  </div>
+                )}
+                <p style={{
+                  fontSize: FONT_SIZES.tiny,
+                  fontFamily: FONT_SERIF,
+                  color: theme.textDescription,
+                  margin: 0,
+                  lineHeight: 1.5,
+                }}>
+                  {report.reasoning}
+                </p>
+              </div>
+            );
+          })()}
+
           {/* Pending AI review indicator */}
           {!readOnly && !event.aiReview && autoModeratorEnabled && !event.editOf && (
             <div style={{

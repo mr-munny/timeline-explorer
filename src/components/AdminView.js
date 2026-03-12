@@ -32,6 +32,7 @@ export default function AdminView({
   onImpersonate,
   autoModeratorEnabled,
   autoModeratorVisible,
+  similarityCheckerEnabled,
   effectiveTeacherUid,
   bounties = [],
   onBountyApproval,
@@ -96,6 +97,7 @@ export default function AdminView({
             isSuperAdmin={isSuperAdmin}
             autoModeratorVisible={autoModeratorVisible}
             autoModeratorEnabled={autoModeratorEnabled}
+            similarityCheckerEnabled={similarityCheckerEnabled}
             teacherUid={effectiveTeacherUid}
           />
         ) : effectiveTab === "teachers" && isSuperAdmin ? (

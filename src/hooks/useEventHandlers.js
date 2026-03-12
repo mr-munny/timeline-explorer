@@ -3,6 +3,7 @@ import { submitEvent, deleteEvent, updateEvent, resubmitEvent } from "../service
 import { saveTimelineRange } from "../services/database";
 import { writeToSheet } from "../services/sheets";
 import { sendToAutoModerator } from "../services/autoModerator";
+import { sendToSimilarityChecker } from "../services/similarityChecker";
 import { floorToDecade, ceilToDecade } from "../utils/dateUtils";
 
 export default function useEventHandlers({
@@ -20,7 +21,9 @@ export default function useEventHandlers({
   revisingEvent,
   setRevisingEvent,
   autoModeratorEnabled,
+  similarityCheckerEnabled,
   periods,
+  events,
 }) {
   // Auto-expand timeline range when event outside range is approved
   const handleEventApproved = useCallback((event) => {
@@ -66,11 +69,17 @@ export default function useEventHandlers({
       if (isTeacher && !treatAsStudent) {
         writeToSheet(eventData);
         handleEventApproved(eventData);
-      } else if (autoModeratorEnabled) {
-        sendToAutoModerator(newEventId, eventData, periods);
+      } else {
+        if (autoModeratorEnabled) {
+          sendToAutoModerator(newEventId, eventData, periods);
+        }
+        if (similarityCheckerEnabled) {
+          const sectionEvents = events.filter((e) => e.section === defaultSection);
+          sendToSimilarityChecker(newEventId, eventData, sectionEvents);
+        }
       }
     },
-    [user, isTeacher, userName, defaultSection, handleEventApproved, autoModeratorEnabled, periods]
+    [user, isTeacher, userName, defaultSection, handleEventApproved, autoModeratorEnabled, similarityCheckerEnabled, periods, events]
   );
 
   const handleDeleteEvent = useCallback(async (eventId) => {
@@ -134,9 +143,13 @@ export default function useEventHandlers({
         if (autoModeratorEnabled) {
           sendToAutoModerator(newEventId, editData, periods);
         }
+        if (similarityCheckerEnabled) {
+          const sectionEvents = events.filter((e) => e.section === (editingEvent.section || defaultSection));
+          sendToSimilarityChecker(newEventId, editData, sectionEvents);
+        }
       }
     },
-    [editingEvent, isTeacher, user, userName, defaultSection, autoModeratorEnabled, periods]
+    [editingEvent, isTeacher, user, userName, defaultSection, autoModeratorEnabled, similarityCheckerEnabled, periods, events]
   );
 
   const handleRevisionResubmit = useCallback(
@@ -160,9 +173,13 @@ export default function useEventHandlers({
       if (autoModeratorEnabled) {
         sendToAutoModerator(revisingEvent.id, { ...revisingEvent, ...updates }, periods);
       }
+      if (similarityCheckerEnabled) {
+        const sectionEvents = events.filter((e) => e.section === revisingEvent.section);
+        sendToSimilarityChecker(revisingEvent.id, { ...revisingEvent, ...updates }, sectionEvents);
+      }
       setRevisingEvent(null);
     },
-    [revisingEvent, setRevisingEvent, autoModeratorEnabled, periods]
+    [revisingEvent, setRevisingEvent, autoModeratorEnabled, similarityCheckerEnabled, periods, events]
   );
 
   return {

@@ -111,6 +111,7 @@ export default function App() {
     allStudentAssignments,
     autoModeratorEnabled,
     autoModeratorVisible,
+    similarityCheckerEnabled,
     easterEggDiscoveries,
     bounties,
   } = useFirebaseSubscriptions({ user, isTeacher, section, showAdminView, effectiveTeacherUid });
@@ -378,7 +379,9 @@ export default function App() {
     revisingEvent,
     setRevisingEvent,
     autoModeratorEnabled,
+    similarityCheckerEnabled,
     periods,
+    events: allEvents,
   });
 
   const {
@@ -594,6 +597,7 @@ export default function App() {
           onImpersonate={setImpersonating}
           autoModeratorEnabled={autoModeratorEnabled}
           autoModeratorVisible={autoModeratorVisible}
+          similarityCheckerEnabled={similarityCheckerEnabled}
           effectiveTeacherUid={effectiveTeacherUid}
           bounties={bounties}
           onBountyApproval={handleBountyApproval}

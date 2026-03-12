@@ -35,6 +35,7 @@ export default function useFirebaseSubscriptions({
   const [allStudentAssignments, setAllStudentAssignments] = useState([]);
   const [autoModeratorEnabled, setAutoModeratorEnabled] = useState(false);
   const [autoModeratorVisible, setAutoModeratorVisible] = useState(false);
+  const [similarityCheckerEnabled, setSimilarityCheckerEnabled] = useState(false);
   const [easterEggDiscoveries, setEasterEggDiscoveries] = useState([]);
   const [bounties, setBounties] = useState([]);
 
@@ -175,6 +176,9 @@ export default function useFirebaseSubscriptions({
       setAutoModeratorEnabled(
         autoModTeacherUid ? !!(data?.teachers?.[autoModTeacherUid]) : false
       );
+      setSimilarityCheckerEnabled(
+        autoModTeacherUid ? !!(data?.similarityCheckers?.[autoModTeacherUid]) : false
+      );
     });
     return () => unsub();
   }, [user, autoModTeacherUid]);
@@ -215,6 +219,7 @@ export default function useFirebaseSubscriptions({
     allStudentAssignments,
     autoModeratorEnabled,
     autoModeratorVisible,
+    similarityCheckerEnabled,
     easterEggDiscoveries,
     bounties,
   };

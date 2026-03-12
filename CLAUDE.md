@@ -14,7 +14,7 @@ An interactive educational web app where students explore a filterable chronolog
 - **Icons:** @iconify/react with @iconify-icons/mdi (Material Design Icons)
 - **Maps:** MapLibre GL JS via react-map-gl
 - **Deployment:** GitHub Pages via `gh-pages` package
-- **Integrations:** Google Sheets via Apps Script webhook; AI auto-moderator via Power Automate webhook
+- **Integrations:** Google Sheets via Apps Script webhook; AI auto-moderator via Power Automate webhook; AI similarity/duplicate checker via Power Automate webhook
 
 ## Source Structure
 
@@ -80,7 +80,8 @@ src/
 ├── services/
 │   ├── autoModerator.js           # Power Automate webhook for AI content review
 │   ├── database.js                # Firebase CRUD for events, connections, sections, teachers, settings
-│   └── sheets.js                  # Google Sheets write-on-approve webhook
+│   ├── sheets.js                  # Google Sheets write-on-approve webhook
+│   └── similarityChecker.js       # Power Automate webhook for AI duplicate/similarity detection
 ├── data/
 │   ├── constants.js               # COLOR_PALETTES, DEFAULT_PERIODS, TAGS, SOURCE_TYPES, getPeriod()
 │   ├── regionCentroids.js         # Region name → [lat, lon] mapping for map markers
@@ -139,6 +140,7 @@ Copy `.env.example` to `.env.local` and fill in real values:
 | `REACT_APP_APPS_SCRIPT_URL` | Deployed Google Apps Script URL for Sheets integration |
 | `REACT_APP_ALLOW_ALL_DOMAINS` | Set to `"true"` to allow any email domain (useful for dev/testing) |
 | `REACT_APP_AUTOMOD_WEBHOOK_URL` | Power Automate webhook URL for AI auto-moderator |
+| `REACT_APP_SIMILARITY_WEBHOOK_URL` | Power Automate webhook URL for AI similarity/duplicate detection |
 
 ## Key Data Models
 
@@ -170,6 +172,7 @@ Copy `.env.example` to `.env.local` and fill in real values:
   editOf: string,           // Optional, ID of original event when proposing an edit
   bountyId: string,         // Optional, ID of bounty this event fulfills
   aiReview: { score, reason } // Optional, result from AI auto-moderator
+  similarityReport: { noveltyScore, mostSimilarEventId, mostSimilarEventTitle, similarity, reasoning } // Optional, result from AI similarity checker
 }
 ```
 
@@ -273,6 +276,7 @@ Teachers manage sections via AdminSectionSettings. Students self-select via Sect
 | `/sectionSettings/{section}/compellingQuestion` | `{text, enabled}` |
 | `/sectionSettings/{section}/timelineRange` | `{start, end}` |
 | `/sectionSettings/{section}/fieldConfig` | Field visibility config object |
+| `/events/{id}/similarityReport` | AI similarity/duplicate analysis result |
 | `/settings/autoModerator` | AI moderator global config (visible, per-teacher toggles) |
 | `/easterEggs/{eventId}` | Easter egg metadata linked to events |
 | `/easterEggDiscoveries/{eventId}/{uid}` | Per-user Easter egg discovery records |

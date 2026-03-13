@@ -139,14 +139,7 @@ export default function useEventHandlers({
           addedByUid: user.uid,
           section: editingEvent.section || (defaultSection),
         };
-        const newEventId = await submitEvent(editData);
-        if (autoModeratorEnabled) {
-          sendToAutoModerator(newEventId, editData, periods);
-        }
-        if (similarityCheckerEnabled) {
-          const sectionEvents = events.filter((e) => e.section === (editingEvent.section || defaultSection));
-          sendToSimilarityChecker(newEventId, editData, sectionEvents);
-        }
+        await submitEvent(editData);
       }
     },
     [editingEvent, isTeacher, user, userName, defaultSection, autoModeratorEnabled, similarityCheckerEnabled, periods, events]

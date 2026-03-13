@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { approveEvent, rejectEvent, updateEvent, approveEdit, approveConnection, rejectConnection, updateConnection, approveConnectionEdit, approveConnectionDeletion, requestRevision } from "../services/database";
 import { writeToSheet } from "../services/sheets";
+import { sendToAutoModerator } from "../services/autoModerator";
+import { sendToSimilarityChecker } from "../services/similarityChecker";
 import { useTheme, FONT_MONO, FONT_SERIF, FONT_SIZES, SPACING, RADII } from "../contexts/ThemeContext";
 import PendingEventCard from "./PendingEventCard";
 import PendingConnectionCard from "./PendingConnectionCard";
 import AwaitingRevisionSection from "./AwaitingRevisionSection";
 
-export default function ModerationPanel({ pendingEvents, pendingConnections = [], needsRevisionEvents = [], needsRevisionConnections = [], allEvents = [], allConnections = [], periods = [], periodsBySection = {}, getSectionName = (id) => id, onEventApproved, readOnly = false, user, userName, onEditPendingEvent, onEditPendingConnection, onWithdraw, autoModeratorEnabled = false, autoModeratorVisible = false, isSuperAdmin = false, teacherUid, onBountyApproval, bounties = [] }) {
+export default function ModerationPanel({ pendingEvents, pendingConnections = [], needsRevisionEvents = [], needsRevisionConnections = [], allEvents = [], allConnections = [], periods = [], periodsBySection = {}, getSectionName = (id) => id, onEventApproved, readOnly = false, user, userName, onEditPendingEvent, onEditPendingConnection, onWithdraw, autoModeratorEnabled = false, autoModeratorVisible = false, similarityCheckerEnabled = false, isSuperAdmin = false, teacherUid, onBountyApproval, bounties = [] }) {
   const { theme } = useTheme();
   const [activeTab, setActiveTab] = useState("events");
   const [editingId, setEditingId] = useState(null);
@@ -18,6 +20,33 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
   const [feedbackText, setFeedbackText] = useState("");
   const [feedbackType, setFeedbackType] = useState(null);
   const [feedbackMode, setFeedbackMode] = useState(null); // "revision" or "rejection"
+  const [autoModSending, setAutoModSending] = useState(false);
+
+  const unreviewedEvents = pendingEvents.filter((e) =>
+    !e.editOf && ((autoModeratorEnabled && !e.aiReview) || (similarityCheckerEnabled && !e.similarityReport))
+  );
+
+  const handleBatchAutoMod = async () => {
+    if (unreviewedEvents.length === 0 || autoModSending) return;
+    setAutoModSending(true);
+    try {
+      const promises = [];
+      for (const event of unreviewedEvents) {
+        if (autoModeratorEnabled && !event.aiReview) {
+          const sectionPeriods = periodsBySection[event.section] || periods;
+          promises.push(sendToAutoModerator(event.id, event, sectionPeriods));
+        }
+        if (similarityCheckerEnabled && !event.similarityReport) {
+          const sectionEvents = allEvents.filter((e) => e.section === event.section);
+          promises.push(sendToSimilarityChecker(event.id, event, sectionEvents));
+        }
+      }
+      await Promise.all(promises);
+    } catch (err) {
+      console.error("Batch AI review failed:", err);
+    }
+    setAutoModSending(false);
+  };
 
   const handleApprove = async (event) => {
     setProcessing(event.id);
@@ -268,6 +297,30 @@ export default function ModerationPanel({ pendingEvents, pendingConnections = []
                 : ""}
             </p>
           </div>
+          {!readOnly && (isSuperAdmin || (autoModeratorVisible && (autoModeratorEnabled || similarityCheckerEnabled))) && unreviewedEvents.length > 0 && (
+            <button
+              onClick={handleBatchAutoMod}
+              disabled={autoModSending}
+              style={{
+                padding: `${SPACING[2]} ${SPACING[4]}`,
+                background: autoModSending ? theme.accent + "99" : theme.accent,
+                color: "#fff",
+                border: "none",
+                borderRadius: RADII.sm,
+                fontSize: FONT_SIZES.micro,
+                fontFamily: FONT_MONO,
+                fontWeight: 700,
+                cursor: autoModSending ? "default" : "pointer",
+                opacity: autoModSending ? 0.85 : 1,
+                transition: "all 0.15s",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {autoModSending
+                ? "Sending…"
+                : `AI Review ${unreviewedEvents.length} unreviewed`}
+            </button>
+          )}
         </div>
 
         {/* Tabs */}

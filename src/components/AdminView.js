@@ -87,6 +87,7 @@ export default function AdminView({
             userName={userName}
             autoModeratorEnabled={autoModeratorEnabled}
             autoModeratorVisible={autoModeratorVisible}
+            similarityCheckerEnabled={similarityCheckerEnabled}
             isSuperAdmin={isSuperAdmin}
             teacherUid={effectiveTeacherUid}
             onBountyApproval={onBountyApproval}

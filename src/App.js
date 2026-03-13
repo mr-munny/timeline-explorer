@@ -878,7 +878,7 @@ export default function App() {
         />
       )}
 
-      {/* Bounty Board Modal (students) */}
+      {/* Bounty Board Modal */}
       {showBountyBoard && (
         <BountyBoard
           bounties={openBounties}
@@ -893,6 +893,10 @@ export default function App() {
           onClose={closeModal}
           periods={periods}
           approvedEvents={approvedEvents}
+          isTeacher={isTeacher}
+          section={section}
+          userName={userName}
+          userUid={user?.uid}
         />
       )}
 

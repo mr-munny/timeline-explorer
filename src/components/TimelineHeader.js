@@ -267,11 +267,11 @@ export default function TimelineHeader({
                     Pending ({pendingCount})
                   </IconButton>
                 )}
-                {openBountyCount > 0 && (
+                {(isTeacher || openBountyCount > 0) && (
                   <IconButton
                     icon={targetIcon}
                     onClick={() => setShowBountyBoard(true)}
-                    title={`${openBountyCount} open bounties`}
+                    title={isTeacher ? "Manage bounties" : `${openBountyCount} open bounties`}
                     size={14}
                     color="#0D9488"
                     hoverBg="#0D948815"
@@ -280,7 +280,9 @@ export default function TimelineHeader({
                       borderColor: "#0D9488",
                     }}
                   >
-                    Bounties ({openBountyCount})
+                    {isTeacher
+                      ? `Bounties${openBountyCount > 0 ? ` (${openBountyCount})` : ""}`
+                      : `Bounties (${openBountyCount})`}
                   </IconButton>
                 )}
                 <button

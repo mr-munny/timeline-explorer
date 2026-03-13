@@ -2,11 +2,14 @@ import { Icon } from "@iconify/react";
 import targetIcon from "@iconify-icons/mdi/bullseye-arrow";
 import checkCircleOutline from "@iconify-icons/mdi/check-circle-outline";
 import arrowRightBold from "@iconify-icons/mdi/arrow-right-bold";
+import deleteIcon from "@iconify-icons/mdi/delete-outline";
 import { useTheme, FONT_MONO, FONT_SERIF, FONT_SIZES, SPACING, RADII } from "../contexts/ThemeContext";
 import { getPeriod } from "../data/constants";
+import { deleteBounty } from "../services/database";
 import ModalShell, { ModalCloseButton } from "./ModalShell";
+import BountyEditor from "./BountyEditor";
 
-export default function BountyBoard({ bounties, completedBounties, onAccept, onClose, periods, approvedEvents }) {
+export default function BountyBoard({ bounties, completedBounties, onAccept, onClose, periods, approvedEvents, isTeacher = false, section, userName, userUid }) {
   const { theme } = useTheme();
 
   const findEvent = (id) => approvedEvents.find((e) => e.id === id);
@@ -36,7 +39,9 @@ export default function BountyBoard({ bounties, completedBounties, onAccept, onC
           color: theme.textSecondary,
           margin: `0 0 ${SPACING[4]} 0`,
         }}>
-          Your teacher is looking for these events and connections. Accept a bounty to get started.
+          {isTeacher
+            ? "Post bounties to direct student contributions. Students can accept and fulfill them."
+            : "Your teacher is looking for these events and connections. Accept a bounty to get started."}
         </p>
 
         {bounties.length === 0 && completedBounties.length === 0 && (
@@ -161,29 +166,58 @@ export default function BountyBoard({ bounties, completedBounties, onAccept, onC
                   </div>
                 )}
 
-                <button
-                  onClick={() => onAccept(bounty)}
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: SPACING[1],
-                    padding: `${SPACING[1.5]} ${SPACING[3]}`,
-                    background: "#0D9488",
-                    color: "#fff",
-                    border: "none",
-                    borderRadius: RADII.md,
-                    fontSize: FONT_SIZES.micro,
-                    fontFamily: FONT_MONO,
-                    fontWeight: 700,
-                    cursor: "pointer",
-                    transition: "filter 0.15s",
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.filter = "brightness(1.15)"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.filter = "none"; }}
-                >
-                  <Icon icon={targetIcon} width={13} />
-                  Accept Bounty
-                </button>
+                <div style={{ display: "flex", alignItems: "center", gap: SPACING[2] }}>
+                  {!isTeacher && (
+                    <button
+                      onClick={() => onAccept(bounty)}
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: SPACING[1],
+                        padding: `${SPACING[1.5]} ${SPACING[3]}`,
+                        background: "#0D9488",
+                        color: "#fff",
+                        border: "none",
+                        borderRadius: RADII.md,
+                        fontSize: FONT_SIZES.micro,
+                        fontFamily: FONT_MONO,
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        transition: "filter 0.15s",
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.filter = "brightness(1.15)"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.filter = "none"; }}
+                    >
+                      <Icon icon={targetIcon} width={13} />
+                      Accept Bounty
+                    </button>
+                  )}
+                  {isTeacher && (
+                    <button
+                      onClick={async () => { if (window.confirm("Delete this bounty?")) { try { await deleteBounty(bounty.id); } catch (err) { console.error("Failed to delete bounty:", err); } } }}
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: SPACING[1],
+                        padding: `${SPACING[1.5]} ${SPACING[2.5]}`,
+                        background: "none",
+                        border: `1.5px solid ${theme.inputBorder}`,
+                        borderRadius: RADII.md,
+                        fontSize: FONT_SIZES.micro,
+                        fontFamily: FONT_MONO,
+                        color: theme.textMuted,
+                        cursor: "pointer",
+                        transition: "all 0.15s",
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.color = theme.errorRed; e.currentTarget.style.borderColor = theme.errorRed; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.color = theme.textMuted; e.currentTarget.style.borderColor = theme.inputBorder; }}
+                      aria-label="Delete bounty"
+                    >
+                      <Icon icon={deleteIcon} width={13} />
+                      Delete
+                    </button>
+                  )}
+                </div>
               </div>
             ))}
           </div>
@@ -239,6 +273,18 @@ export default function BountyBoard({ bounties, completedBounties, onAccept, onC
               ))}
             </div>
           </>
+        )}
+        {isTeacher && (
+          <div style={{ marginTop: SPACING[4], borderTop: `1px solid ${theme.inputBorder}`, paddingTop: SPACING[4] }}>
+            <BountyEditor
+              section={section}
+              bounties={[]}
+              periods={periods}
+              approvedEvents={approvedEvents}
+              userName={userName}
+              userUid={userUid}
+            />
+          </div>
         )}
       </div>
     </ModalShell>
